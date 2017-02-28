@@ -1,21 +1,36 @@
-/**
- * Copyright (c) 2-2-2017 Abdullateef Qallaa. All rights reserved.
+/*
+ * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
- * Github: https://github.com/Laateef/Nar
+ * Github: https://github.com/Laateef/Salsabil
  *
- * This file is part of the Nar Project.
- * See the LICENSE file for terms of use.
+ * This file is part of the Salsabil project.
  *
- * @file
-*/
+ * Salsabil is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
+ * (at your option) any later version.
+ * 
+ * Salsabil is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "Exception.hpp"
 
-Exception::Exception(const std::string& message)
-    : mMessage(message)
-{}
+using namespace Salsabil;
 
-const char* Exception::what() const noexcept
-{
+Exception::Exception(const char* message)
+: mMessage(message) {
+}
+
+Exception::Exception(const std::string& message)
+: mMessage(message) {
+}
+
+const char* Exception::what() const noexcept {
     return mMessage.c_str();
 }
