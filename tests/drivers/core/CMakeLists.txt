@@ -20,4 +20,8 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
-add_library(core_driver Exception.cpp SqlDriverFactory.cpp SqlDriverRegistrar.cpp)
+add_executable(sql_driver_factory_tests SqlDriverFactoryTest.cpp)
+
+target_link_libraries(sql_driver_factory_tests gmock_main core_driver sqlite_driver sqlite3_backend)
+
+add_test(sql_driver_factory_tests sql_driver_factory_tests)

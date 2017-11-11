@@ -19,15 +19,10 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** 
- * @file   ISqlDriver.hpp
- * @author Abdullatif Kalla
- *
- * Created on March 2, 2017, 11:49 PM
- */
+#ifndef SALSABIL_SQLDRIVER_HPP
+#define SALSABIL_SQLDRIVER_HPP
 
-#ifndef SALSABIL_ISQLDRIVER_HPP
-#define SALSABIL_ISQLDRIVER_HPP
+#include <string>
 
 namespace Salsabil {
 
@@ -54,7 +49,7 @@ namespace Salsabil {
      * {@code 
      * using namespace Salsabil;
      * 
-     * ISqlDriver sd;
+     * SqlConsole* sc;
      * try {
      *  sd.open(":memory:");
      *  sd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY)");
@@ -104,16 +99,17 @@ namespace Salsabil {
      * }
      * /////////////////////////////////////////////////////////////////////////
      */
-    class ISqlDriver {
+    class SqlDriver {
     public:
 
-        virtual ~ISqlDriver() {
+        virtual ~SqlDriver() {
         }
+        
         /** @brief Returns the name of this driver. */
         virtual std::string driverName() const = 0;
 
         /** @brief Returns an instance of this driver. */
-        virtual ISqlDriver* create() const = 0;
+        virtual SqlDriver* create() const = 0;
 
         /** 
          * @brief Opens a connection to database databaseFileName.
@@ -179,6 +175,9 @@ namespace Salsabil {
         /** @brief Returns the 64bit-integer value of the field <i>columnIndex</i> in the current row. */
         virtual int64_t getInt64(int columnIndex) const = 0;
 
+        /** @brief Returns the float value of the field <i>columnIndex</i> in the current row. */
+        virtual float getFloat(int columnIndex) const = 0;
+
         /** @brief Returns the double value of the field <i>columnIndex</i> in the current row. */
         virtual double getDouble(int columnIndex) const = 0;
 
@@ -231,5 +230,5 @@ namespace Salsabil {
 
     };
 }
-#endif /* SALSABIL_ISQLDRIVER_HPP */
+#endif /* SALSABIL_SQLDRIVER_HPP */
 
