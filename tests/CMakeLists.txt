@@ -20,6 +20,18 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
+include_directories(
+${gtest_SOURCE_DIR} 
+${gtest_SOURCE_DIR}/include
+)
+
+enable_testing()
+
 project(Tests)
 
+add_subdirectory(core)
+
 add_subdirectory(drivers)
+
+
+

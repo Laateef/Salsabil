@@ -54,5 +54,6 @@ public:
     MOCK_CONST_METHOD2(bindCString, void(int, const char*));
     MOCK_CONST_METHOD2(bindStdString, void(int, const std::string&));
     MOCK_CONST_METHOD3(bindBlob, void(int, const void*, std::size_t));
+    MOCK_METHOD0(tableSet, std::set<std::string>(void));
 
 };

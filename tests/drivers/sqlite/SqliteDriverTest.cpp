@@ -20,8 +20,8 @@
  */
 
 #include "gmock/gmock.h"
-#include "SqliteDriver.hpp"
-#include "Exception.hpp"
+#include "drivers/sqlite/SqliteDriver.hpp"
+#include "drivers/core/Exception.hpp"
 
 using namespace ::testing;
 using namespace Salsabil;
@@ -65,7 +65,7 @@ TEST(SqliteDriver, ThrowsIfAskedToFetchRowForNonQuerySqlStatements) {
     ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
     ssd.execute();
 
-    ASSERT_THROW(ssd.nextRow(), Exception);
+    ASSERT_FALSE(ssd.nextRow());
 }
 
 TEST(SqliteDriver, ThrowsIfAskedToFetchRowAfterFetchingAllRowsForQuerySqlStatements) {
@@ -79,10 +79,21 @@ TEST(SqliteDriver, ThrowsIfAskedToFetchRowAfterFetchingAllRowsForQuerySqlStateme
     ssd.execute();
     ssd.prepare("SELECT * FROM tbl");
     ssd.execute();
-
+    
+    ASSERT_TRUE(ssd.nextRow());
     ASSERT_TRUE(ssd.nextRow());
     ASSERT_FALSE(ssd.nextRow());
-    ASSERT_THROW(ssd.nextRow(), Exception);
+}
+
+TEST(SqliteDriver, FetchNextReturnsFalseIfQueryResultSetHasNoRows) {
+    SqliteDriver ssd;
+    ssd.open(":memory:");
+    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
+    ssd.execute();
+    ssd.prepare("SELECT * FROM tbl");
+    ssd.execute();
+
+    ASSERT_FALSE(ssd.nextRow());
 }
 
 TEST(SqliteDriver, TestsNullResult) {
@@ -173,4 +184,15 @@ TEST(SqliteDriver, ThrowsIfValueIsBoundToOutOfRangeIndexedParameterInPreparedSta
     ASSERT_THROW(ssd.bindCString(7, "some_thing"), Exception);
     ASSERT_THROW(ssd.bindStdString(8, std::string("some_thing")), Exception);
     ASSERT_THROW(ssd.bindBlob(9, nullptr, 0), Exception);
+}
+
+TEST(SqliteDriver, TestsTableExistence) {
+    SqliteDriver ssd;
+    ssd.open(":memory:");
+    ssd.prepare("CREATE TABLE tb(id INT PRIMARY KEY, num1 INT, num2 INT)");
+    ssd.execute();
+    auto tables = ssd.tableSet();
+    
+    EXPECT_THAT(tables.size(), Eq(1u));
+    ASSERT_TRUE(tables.find("tb") != tables.end());
 }

@@ -20,9 +20,9 @@
  */
 
 #include "SqliteDriver.hpp"
-#include "Exception.hpp"
+#include "drivers/core/Exception.hpp"
+#include "backends/sqlite3/sqlite3.h"
 
-#include "sqlite3.h"
 #include <iostream>
 
 using namespace Salsabil;
@@ -32,15 +32,23 @@ SqliteDriver::SqliteDriver()
 , mStatement(nullptr) {
 }
 
+std::string SqliteDriver::driverName() const {
+    return "sqilte";
+}
+
+SqliteDriver* SqliteDriver::create() const {
+
+}
+
 void SqliteDriver::open(const std::string& databaseFileName) {
-    int errorCode = sqlite3_open_v2(databaseFileName.c_str(), &mHandle, SQLITE_OPEN_READWRITE, nullptr);
-    if (errorCode != SQLITE_OK) {
+    int code = sqlite3_open_v2(databaseFileName.c_str(), &mHandle, SQLITE_OPEN_READWRITE, nullptr);
+    if (code != SQLITE_OK) {
         throw Exception("Error occured while opening " + databaseFileName + " with error code " +
-                std::to_string(errorCode) + " " + sqlite3_errmsg(mHandle));
+                std::to_string(code) + " " + sqlite3_errmsg(mHandle));
     }
 }
 
-bool SqliteDriver::isOpen() {
+bool SqliteDriver::isOpen() const {
     if (mHandle)
         return true;
 
@@ -48,91 +56,89 @@ bool SqliteDriver::isOpen() {
 }
 
 void SqliteDriver::close() {
-    int errorCode = sqlite3_close_v2(mHandle);
-    if (errorCode != SQLITE_OK) {
+    int code = sqlite3_close_v2(mHandle);
+    if (code != SQLITE_OK) {
         const char* fileName = sqlite3_db_filename(mHandle, "main");
 
         throw Exception("Error occured while closing " + std::string(fileName ? fileName : "") +
-                " with error code " + std::to_string(errorCode) + " " + sqlite3_errmsg(mHandle));
+                " with error code " + std::to_string(code) + " " + sqlite3_errmsg(mHandle));
     }
     mHandle = nullptr;
 }
 
 void SqliteDriver::prepare(const std::string& sqlStatement) {
-    int errorCode = sqlite3_prepare_v2(mHandle, sqlStatement.c_str(), -1, &mStatement, nullptr);
-    if (errorCode != SQLITE_OK) {
+    int code = sqlite3_prepare_v2(mHandle, sqlStatement.c_str(), -1, &mStatement, nullptr);
+    if (code != SQLITE_OK) {
         throw Exception("Error occured while preparing " + sqlStatement + " with error code " +
-                std::to_string(errorCode) + " " + sqlite3_errmsg(mHandle));
+                std::to_string(code) + " " + sqlite3_errmsg(mHandle));
     }
+    mDelayCycleFlag = true;
+    mNextFetchFlag = false;
 }
 
 void SqliteDriver::execute() {
-    int errorCode = sqlite3_step(mStatement);
-    switch (errorCode) {
-        case SQLITE_DONE:
-            finalize();
-        case SQLITE_ROW:
-            return;
-        default:
-            throw Exception("Error occured while executing with error code " + std::to_string(errorCode) + " " +
-                    sqlite3_errmsg(mHandle));
+    int code = sqlite3_step(mStatement);
+    if (code == SQLITE_ROW) {
+        mNextFetchFlag = true;
+    } else if (code == SQLITE_DONE) {
+        finalize();
+        mNextFetchFlag = false;
+    } else {
+        throw Exception("Error occured while executing with error code " + std::to_string(code) + " " + sqlite3_errmsg(mHandle));
     }
 }
 
 bool SqliteDriver::nextRow() {
-    if (mStatement) {
-        switch (int errorCode = sqlite3_step(mStatement)) {
-            case SQLITE_ROW:
-                return true;
-            case SQLITE_DONE:
-                finalize();
-                return false;
-            default:
-                throw Exception("Error occured while fetching the next row with error message " +
-                        std::to_string(errorCode) + " " + sqlite3_errmsg(mHandle));
-        }
-    } else {
-        throw Exception("No statement executed to fetch from!");
+    if (mDelayCycleFlag) {
+        mDelayCycleFlag = false;
+        return mNextFetchFlag;
     }
+
+    execute();
+    return mNextFetchFlag;
 }
 
-bool SqliteDriver::isNull(int columnIndex) {
+bool SqliteDriver::isNull(int columnIndex) const {
     return sqlite3_column_type(mStatement, columnIndex) == SQLITE_NULL;
 }
 
-int SqliteDriver::getInt(int columnIndex) {
+int SqliteDriver::getInt(int columnIndex) const {
     return sqlite3_column_int(mStatement, columnIndex);
 }
 
-int64_t SqliteDriver::getInt64(int columnIndex) {
+int64_t SqliteDriver::getInt64(int columnIndex) const {
     return sqlite3_column_int64(mStatement, columnIndex);
 }
 
-double SqliteDriver::getDouble(int columnIndex) {
+float SqliteDriver::getFloat(int columnIndex) const {
+    return static_cast<float> (getDouble(columnIndex));
+}
+
+double SqliteDriver::getDouble(int columnIndex) const {
     return sqlite3_column_double(mStatement, columnIndex);
 }
 
-const unsigned char* SqliteDriver::getRawString(int columnIndex) {
+const unsigned char* SqliteDriver::getRawString(int columnIndex) const {
     return sqlite3_column_text(mStatement, columnIndex);
 }
 
-const char* SqliteDriver::getCString(int columnIndex) {
+const char* SqliteDriver::getCString(int columnIndex) const {
     return reinterpret_cast<const char*> (getRawString(columnIndex));
 }
 
-std::string SqliteDriver::getStdString(int columnIndex) {
+std::string SqliteDriver::getStdString(int columnIndex) const {
     return std::string(getCString(columnIndex));
 }
 
-std::size_t SqliteDriver::getSize(int columnIndex) {
+std::size_t SqliteDriver::getSize(int columnIndex) const {
     return sqlite3_column_bytes(mStatement, columnIndex);
 }
 
-const void* SqliteDriver::getBlob(int columnIndex) {
+const void* SqliteDriver::getBlob(int columnIndex) const {
     return sqlite3_column_blob(mStatement, columnIndex);
 }
 
-void SqliteDriver::bindNull(int position) {
+void SqliteDriver::bindNull(int position) const {
     int errorCode = sqlite3_bind_null(mStatement, position);
     if (errorCode != SQLITE_OK) {
         throw Exception("Error occured while binding parameter at position " + std::to_string(position) +
@@ -140,7 +146,7 @@ void SqliteDriver::bindNull(int position) {
     }
 }
 
-void SqliteDriver::bindInt(int position, int value) {
+void SqliteDriver::bindInt(int position, int value) const {
     int errorCode = sqlite3_bind_int(mStatement, position, value);
     if (errorCode != SQLITE_OK) {
         throw Exception("Error occured while binding parameter at position " + std::to_string(position) +
@@ -148,7 +154,7 @@ void SqliteDriver::bindInt(int position, int value) {
     }
 }
 
-void SqliteDriver::bindInt64(int position, int64_t value) {
+void SqliteDriver::bindInt64(int position, int64_t value) const {
     int errorCode = sqlite3_bind_int64(mStatement, position, value);
     if (errorCode != SQLITE_OK) {
         throw Exception("Error occured while binding parameter at position " + std::to_string(position) +
@@ -156,7 +162,7 @@ void SqliteDriver::bindInt64(int position, int64_t value) {
     }
 }
 
-void SqliteDriver::bindDouble(int position, double value) {
+void SqliteDriver::bindDouble(int position, double value) const {
     int errorCode = sqlite3_bind_double(mStatement, position, value);
     if (errorCode != SQLITE_OK) {
         throw Exception("Error occured while binding parameter at position " + std::to_string(position) +
@@ -164,7 +170,7 @@ void SqliteDriver::bindDouble(int position, double value) {
     }
 }
 
-void SqliteDriver::bindCString(int position, const char* str) {
+void SqliteDriver::bindCString(int position, const char* str) const {
     int errorCode = sqlite3_bind_text(mStatement, position, str, -1, SQLITE_TRANSIENT);
     if (errorCode != SQLITE_OK) {
         throw Exception("Error occured while binding parameter " + std::string(str) + " at position " +
@@ -173,7 +179,7 @@ void SqliteDriver::bindCString(int position, const char* str) {
     }
 }
 
-void SqliteDriver::bindStdString(int position, const std::string& str) {
+void SqliteDriver::bindStdString(int position, const std::string & str) const {
     int errorCode = sqlite3_bind_text(mStatement, position, str.c_str(), -1, SQLITE_TRANSIENT);
     if (errorCode != SQLITE_OK) {
         throw Exception("Error occured while binding parameter " + str + " at position " +
@@ -182,7 +188,7 @@ void SqliteDriver::bindStdString(int position, const std::string& str) {
     }
 }
 
-void SqliteDriver::bindBlob(int position, void* blob, std::size_t size) {
+void SqliteDriver::bindBlob(int position, const void* blob, std::size_t size) const {
     int errorCode = sqlite3_bind_blob(mStatement, position, blob, size, SQLITE_TRANSIENT);
     if (errorCode != SQLITE_OK) {
         throw Exception("Error occured while binding parameter at position " + std::to_string(position) +
@@ -190,15 +196,30 @@ void SqliteDriver::bindBlob(int position, void* blob, std::size_t size) {
     }
 }
 
-void SqliteDriver::finalize() {
-    if (mHandle && mStatement) {
-        int errorCode = sqlite3_finalize(mStatement);
-        if (errorCode != SQLITE_OK) {
-            throw Exception("Error occured while deleting last statement with error code " +
-                    std::to_string(errorCode) + " " + sqlite3_errmsg(mHandle));
+std::set<std::string> SqliteDriver::tableSet() {
+    std::set<std::string> tables;
+
+    try {
+        prepare("SELECT name FROM sqlite_master WHERE type='table'");
+        execute();
+        while (nextRow()) {
+            tables.insert(getStdString(0));
         }
-        mStatement = nullptr;
+
+    } catch (Exception &exp) {
+        throw Exception("Error occured while fetching the table names");
     }
+
+    return tables;
+}
+
+void SqliteDriver::finalize() {
+    int code = sqlite3_finalize(mStatement);
+    if (code != SQLITE_OK) {
+        std::cerr << "Error occured while finalizing the last statement with error code " +
+                std::to_string(code) + " " + sqlite3_errmsg(mHandle) << std::endl;
+    }
+    mStatement = nullptr;
 }
 
 SqliteDriver::~SqliteDriver() {

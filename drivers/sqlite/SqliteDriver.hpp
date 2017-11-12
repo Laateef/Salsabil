@@ -22,7 +22,7 @@
 #ifndef SALSABIL_SQLITEDRIVER_HPP
 #define SALSABIL_SQLITEDRIVER_HPP
 
-#include <string>
+#include "drivers/core/SqlDriver.hpp"
 
 struct sqlite3;
 struct sqlite3_stmt;
@@ -98,30 +98,38 @@ namespace Salsabil {
      * }
      * }
      */
-    class SqliteDriver {
+    class SqliteDriver : public SqlDriver {
     public:
         /** @brief Constructs a SqliteDriver. */
         SqliteDriver();
+
+        virtual ~SqliteDriver();
+
+        /** @brief Returns the name of this SQL driver. */
+        virtual std::string driverName() const;
+
+        /** @brief Returns an instance of this driver. */
+        virtual SqliteDriver* create() const;
 
         /** 
          * @brief Opens a connection to database databaseFileName.
          * @param databaseFileName location of the database file.
          * @throw Exception if database file not found. 
          */
-        void open(const std::string& databaseFileName);
+        virtual void open(const std::string& databaseFileName);
 
         /** 
          * @brief Returns the state of connectivity with the database.
          * @retval true if the connection to database is still open.
          * @retval false otherwise.
          */
-        bool isOpen();
+        virtual bool isOpen() const;
 
         /** 
          * @brief Closes the current connection to database.
          * @throw Exception if an error occurred while trying to close the database connection. 
          */
-        void close();
+        virtual void close();
 
         /** 
          * @brief Prepares the SQL statement sqlStatement for execution.
@@ -130,13 +138,13 @@ namespace Salsabil {
          * The statement sqlStatement may not contain more than one SQL statement. 
          * @throw Exception if an error occurred while trying to prepare the statement. 
          */
-        void prepare(const std::string& sqlStatement);
+        virtual void prepare(const std::string& sqlStatement);
 
         /** 
          * @brief Executes the latest SQL statement prepared.
          * @throw Exception if an error occurred while trying to execute the statement. 
          */
-        void execute();
+        virtual void execute();
 
         /**  
          * @brief Fetches the next row from the result set if available.
@@ -146,7 +154,7 @@ namespace Salsabil {
          * statement or while trying to fetch beyond the last row in the result 
          * set (i.e., after #nextRow() has been called and returned false). 
          */
-        bool nextRow();
+        virtual bool nextRow();
 
         /**  
          * @name Result Retrieving Functions
@@ -159,31 +167,34 @@ namespace Salsabil {
          * @retval true if the value is NULL.
          * @retval false otherwise.
          */
-        bool isNull(int columnIndex);
+        virtual bool isNull(int columnIndex) const;
 
         /** @brief Returns the integer value of the field <i>columnIndex</i> in the current row. */
-        int getInt(int columnIndex);
+        virtual int getInt(int columnIndex) const;
 
         /** @brief Returns the 64bit-integer value of the field <i>columnIndex</i> in the current row. */
-        int64_t getInt64(int columnIndex);
+        virtual int64_t getInt64(int columnIndex) const;
+
+        /** @brief Returns the float value of the field <i>columnIndex</i> in the current row. */
+        virtual float getFloat(int columnIndex) const;
 
         /** @brief Returns the double value of the field <i>columnIndex</i> in the current row. */
-        double getDouble(int columnIndex);
+        virtual double getDouble(int columnIndex) const;
 
         /** @brief Returns the string value of the field <i>columnIndex</i> in the current row as raw data pointer. */
-        const unsigned char* getRawString(int columnIndex);
+        virtual const unsigned char* getRawString(int columnIndex) const;
 
         /** @brief Returns the string value of the field <i>columnIndex</i> in the current row as a C-string. */
-        const char* getCString(int columnIndex);
+        virtual const char* getCString(int columnIndex) const;
 
         /** @brief Returns the string value of the field <i>columnIndex</i> in the current row as a STL-string. */
-        std::string getStdString(int columnIndex);
+        virtual std::string getStdString(int columnIndex) const;
 
         /** @brief Returns the value size of the field <i>columnIndex</i> in the current row in bytes. */
-        std::size_t getSize(int columnIndex);
+        virtual std::size_t getSize(int columnIndex) const;
 
         /** @brief Returns the blob value of the field <i>columnIndex</i> in the current row as a void pointer. */
-        const void* getBlob(int columnIndex);
+        virtual const void* getBlob(int columnIndex) const;
         //@}
 
         /**  
@@ -196,34 +207,37 @@ namespace Salsabil {
          */
         //@{
         /** Binds a NULL to the placeholder at <i>position</i>. */
-        void bindNull(int position);
+        virtual void bindNull(int position) const;
 
         /** Binds an integer to the placeholder at <i>position</i>. */
-        void bindInt(int position, int value);
+        virtual void bindInt(int position, int value) const;
 
         /** Binds a 64bit integer to the placeholder at <i>position</i>. */
-        void bindInt64(int position, int64_t value);
+        virtual void bindInt64(int position, int64_t value) const;
 
         /** Binds a double to the placeholder at <i>position</i>. */
-        void bindDouble(int position, double value);
+        virtual void bindDouble(int position, double value) const;
 
         /** Binds a C literal string to the placeholder at <i>position</i>. */
-        void bindCString(int position, const char* str);
+        virtual void bindCString(int position, const char* str) const;
 
         /** Binds a standard literal string to the placeholder at <i>position</i>. */
-        void bindStdString(int position, const std::string& str);
+        virtual void bindStdString(int position, const std::string& str) const;
 
         /** Binds a non-typed array <i>blob</i> of length <i>size</i> to the placeholder at <i>position</i>. */
-        void bindBlob(int position, void* blob, std::size_t size);
+        virtual void bindBlob(int position, const void* blob, std::size_t size) const;
         //@}
 
-        ~SqliteDriver();
+        /** Returns a list(as a vector of strings) containing the existing database tables. */
+        virtual std::set<std::string> tableSet();
 
     private:
         void finalize();
 
         sqlite3* mHandle;
         sqlite3_stmt* mStatement;
+        bool mNextFetchFlag;
+        bool mDelayCycleFlag;
     };
 }
 #endif // SALSABIL_SQLITEDRIVER_HPP

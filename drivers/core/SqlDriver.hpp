@@ -23,6 +23,7 @@
 #define SALSABIL_SQLDRIVER_HPP
 
 #include <string>
+#include <set>
 
 namespace Salsabil {
 
@@ -227,6 +228,9 @@ namespace Salsabil {
         /** Binds a non-typed array <i>blob</i> of length <i>size</i> to the placeholder at <i>position</i>. */
         virtual void bindBlob(int position, const void* blob, std::size_t size) const = 0;
         //@}
+        
+        /** Returns a list(as a vector of strings) containing the existing database tables. */
+        virtual std::set<std::string> tableSet() = 0;
 
     };
 }
