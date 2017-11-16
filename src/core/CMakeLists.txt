@@ -18,15 +18,4 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.11)
-
-add_definitions(-g)
-
-add_definitions(-O0)
-
-add_definitions(-Wall)
-
-add_library(sqlite3_backend sqlite3.c)
-
-
-
+add_library(core_lib Exception.cpp SqlDriverFactory.cpp)

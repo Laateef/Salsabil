@@ -20,8 +20,8 @@
  */
 
 #include "SqliteDriver.hpp"
-#include "drivers/core/Exception.hpp"
-#include "backends/sqlite3/sqlite3.h"
+#include "Exception.hpp"
+#include "sqlite3/sqlite3.h"
 
 #include <iostream>
 
@@ -33,11 +33,11 @@ SqliteDriver::SqliteDriver()
 }
 
 std::string SqliteDriver::driverName() const {
-    return "sqilte";
+    return "sqlite";
 }
 
 SqliteDriver* SqliteDriver::create() const {
-
+    return new SqliteDriver;
 }
 
 void SqliteDriver::open(const std::string& databaseFileName) {
@@ -86,6 +86,11 @@ void SqliteDriver::execute() {
     } else {
         throw Exception("Error occured while executing with error code " + std::to_string(code) + " " + sqlite3_errmsg(mHandle));
     }
+}
+
+void SqliteDriver::execute(const std::string& sqlStatement) {
+    prepare(sqlStatement);
+    execute();
 }
 
 bool SqliteDriver::nextRow() {
@@ -196,14 +201,14 @@ void SqliteDriver::bindBlob(int position, const void* blob, std::size_t size) co
     }
 }
 
-std::set<std::string> SqliteDriver::tableSet() {
-    std::set<std::string> tables;
+std::vector<std::string> SqliteDriver::tableList() {
+    std::vector<std::string> tables;
 
     try {
         prepare("SELECT name FROM sqlite_master WHERE type='table'");
         execute();
         while (nextRow()) {
-            tables.insert(getStdString(0));
+            tables.push_back(getStdString(0));
         }
 
     } catch (Exception &exp) {
@@ -211,6 +216,23 @@ std::set<std::string> SqliteDriver::tableSet() {
     }
 
     return tables;
+}
+
+std::vector<std::string> SqliteDriver::columnList(const std::string& table) {
+    std::vector<std::string> columns;
+
+    try {
+        prepare("PRAGMA table_info(" + table + ")");
+        execute();
+        while (nextRow()) {
+            columns.push_back(getStdString(1));
+        }
+
+    } catch (Exception &exp) {
+        throw Exception("Error occured while fetching the table names");
+    }
+
+    return columns;
 }
 
 void SqliteDriver::finalize() {

@@ -22,7 +22,7 @@
 #ifndef SALSABIL_SQLITEDRIVER_HPP
 #define SALSABIL_SQLITEDRIVER_HPP
 
-#include "drivers/core/SqlDriver.hpp"
+#include "SqlDriver.hpp"
 
 struct sqlite3;
 struct sqlite3_stmt;
@@ -146,6 +146,12 @@ namespace Salsabil {
          */
         virtual void execute();
 
+        /** 
+         * @brief This convenience function prepares and executes the SQL statement <i>sqlStatement</i> in one call.
+         * @throw Exception if an error occurred. 
+         */
+        virtual void execute(const std::string& sqlStatement);
+
         /**  
          * @brief Fetches the next row from the result set if available.
          * @retval true if a row is fetched.
@@ -229,7 +235,10 @@ namespace Salsabil {
         //@}
 
         /** Returns a list(as a vector of strings) containing the existing database tables. */
-        virtual std::set<std::string> tableSet();
+        virtual std::vector<std::string> tableList();
+
+        /** Returns a list(as a vector of strings) containing the columns of the table <i>table</i> in order. */
+        virtual std::vector<std::string> columnList(const std::string& table);
 
     private:
         void finalize();

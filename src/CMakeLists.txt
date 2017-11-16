@@ -18,10 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.11)
+add_subdirectory(core)
 
-add_executable(sql_driver_factory_tests SqlDriverFactoryTest.cpp)
+add_subdirectory(drivers)
 
-target_link_libraries(sql_driver_factory_tests gmock_main core_driver sqlite_driver sqlite3_backend)
-
-add_test(sql_driver_factory_tests sql_driver_factory_tests)

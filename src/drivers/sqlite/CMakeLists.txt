@@ -18,8 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.11)
+add_library(sqlite_driver_lib SqliteDriver.cpp)
 
-add_subdirectory(core)
-
-add_subdirectory(sqlite)
+target_link_libraries(sqlite_driver_lib core_lib)

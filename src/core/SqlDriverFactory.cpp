@@ -20,16 +20,24 @@
  */
 
 
-#ifndef SALSABIL_SQLDRIVERREGISTRAR_HPP
-#define SALSABIL_SQLDRIVERREGISTRAR_HPP
+#include "SqlDriverFactory.hpp"
+#include "SqlDriver.hpp"
 
-namespace Salsabil {
+using namespace std;
+using namespace Salsabil;
 
-    class SqlDriverRegistrar {
-    public:
-        explicit SqlDriverRegistrar();
-    };
+std::map<std::string, SqlDriver*> SqlDriverFactory::mDriverMap;
+
+SqlDriverFactory::~SqlDriverFactory() {
+    for (auto iter = mDriverMap.begin(); iter != mDriverMap.end(); ++iter) {
+        delete iter->second;
+        mDriverMap.erase(iter);
+    }
 }
 
-#endif /* SALSABIL_SQLDRIVERREGISTRAR_HPP */
-
+SqlDriver* SqlDriverFactory::getDriver(const std::string& driverName) {
+    decltype(mDriverMap)::const_iterator iter = mDriverMap.find(driverName);
+    if (iter == mDriverMap.end())
+        throw Exception("Driver not found!");
+    return (*iter).second->create();
+}

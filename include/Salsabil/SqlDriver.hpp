@@ -23,7 +23,7 @@
 #define SALSABIL_SQLDRIVER_HPP
 
 #include <string>
-#include <set>
+#include <vector>
 
 namespace Salsabil {
 
@@ -105,7 +105,7 @@ namespace Salsabil {
 
         virtual ~SqlDriver() {
         }
-        
+
         /** @brief Returns the name of this driver. */
         virtual std::string driverName() const = 0;
 
@@ -133,7 +133,7 @@ namespace Salsabil {
         virtual void close() = 0;
 
         /** 
-         * @brief Prepares the SQL statement sqlStatement for execution.
+         * @brief Prepares the SQL statement <i>sqlStatement</i> for execution.
          * The statement may contain placeholders for binding values. Currently, only 
          * the ODBC style (? placeholders) is supported.
          * The statement sqlStatement may not contain more than one SQL statement. 
@@ -142,10 +142,16 @@ namespace Salsabil {
         virtual void prepare(const std::string& sqlStatement) = 0;
 
         /** 
-         * @brief Executes the latest SQL statement prepared.
+         * @brief Executes the latest prepared SQL statement.
          * @throw Exception if an error occurred while trying to execute the statement. 
          */
         virtual void execute() = 0;
+
+        /** 
+         * @brief This convenience function prepares and executes the SQL statement <i>sqlStatement</i> in one call.
+         * @throw Exception if an error occurred. 
+         */
+        virtual void execute(const std::string& sqlStatement) = 0;
 
         /**  
          * @brief Fetches the next row from the result set if available.
@@ -228,9 +234,12 @@ namespace Salsabil {
         /** Binds a non-typed array <i>blob</i> of length <i>size</i> to the placeholder at <i>position</i>. */
         virtual void bindBlob(int position, const void* blob, std::size_t size) const = 0;
         //@}
-        
+
         /** Returns a list(as a vector of strings) containing the existing database tables. */
-        virtual std::set<std::string> tableSet() = 0;
+        virtual std::vector<std::string> tableList() = 0;
+
+        /** Returns a list(as a vector of strings) containing the columns of the table <i>table</i> in order. */
+        virtual std::vector<std::string> columnList(const std::string& table) = 0;
 
     };
 }

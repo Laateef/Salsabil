@@ -19,15 +19,18 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef SALSABIL_SQLDRIVERMOCK_HPP
+#define SALSABIL_SQLDRIVERMOCK_HPP
+
 #include <stdint.h>
 
 #include "gmock/gmock.h"
-#include "drivers/core/SqlDriver.hpp"
+#include "SqlDriver.hpp"
 
 using namespace ::testing;
 using namespace Salsabil;
 
-class MockDriver : public SqlDriver {
+class SqlDriverMock : public SqlDriver {
 public:
     MOCK_CONST_METHOD0(driverName, std::string(void));
     MOCK_CONST_METHOD0(create, SqlDriver*(void));
@@ -36,6 +39,7 @@ public:
     MOCK_METHOD0(close, void(void));
     MOCK_METHOD1(prepare, void(const std::string&));
     MOCK_METHOD0(execute, void(void));
+    MOCK_METHOD1(execute, void(const std::string&));
     MOCK_METHOD0(nextRow, bool(void));
     MOCK_CONST_METHOD1(isNull, bool(int));
     MOCK_CONST_METHOD1(getInt, int(int));
@@ -54,6 +58,8 @@ public:
     MOCK_CONST_METHOD2(bindCString, void(int, const char*));
     MOCK_CONST_METHOD2(bindStdString, void(int, const std::string&));
     MOCK_CONST_METHOD3(bindBlob, void(int, const void*, std::size_t));
-    MOCK_METHOD0(tableSet, std::set<std::string>(void));
-
+    MOCK_METHOD0(tableList, std::vector<std::string>(void));
+    MOCK_METHOD1(columnList, std::vector<std::string>(const std::string&));
 };
+
+#endif // SALSABIL_SQLDRIVERMOCK_HPP

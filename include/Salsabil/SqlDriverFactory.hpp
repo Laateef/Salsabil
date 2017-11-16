@@ -19,13 +19,39 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SqlDriverRegistrar.hpp"
-#include "SqlDriverFactory.hpp"
-#include "drivers/sqlite/SqliteDriver.hpp"
 
-using namespace Salsabil;
+#ifndef SALSABIL_SQLDRIVERFACTORY_HPP
+#define SALSABIL_SQLDRIVERFACTORY_HPP
 
-SqlDriverRegistrar::SqlDriverRegistrar() {
-    SqlDriverFactory::registerDriver<SqliteDriver>("sqlite");
+#include <map>
+
+#include "Exception.hpp"
+
+namespace Salsabil {
+    class SqlDriver;
+
+    class SqlDriverFactory {
+    public:
+
+        explicit SqlDriverFactory() {
+        }
+
+        ~SqlDriverFactory();
+
+        template<typename DriverType>
+        static void registerDriver(const std::string& driverName) {
+            if (mDriverMap.find(driverName) != mDriverMap.end())
+                throw Exception("A driver with the same name exists!");
+
+            mDriverMap[driverName] = new DriverType;
+        }
+
+        static SqlDriver* getDriver(const std::string& driverName);
+
+    private:
+        static std::map<std::string, SqlDriver*> mDriverMap;
+    };
 }
+
+#endif // SALSABIL_SQLDRIVERFACTORY_HPP 
 

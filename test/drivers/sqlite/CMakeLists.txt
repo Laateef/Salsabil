@@ -18,24 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 2.8.11)
+add_executable(sqlite_driver_test SqliteDriverTest.cpp)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+target_link_libraries(sqlite_driver_test sqlite_driver_lib core_lib sqlite3_backend gmock_main)
 
-include_directories(${CMAKE_SOURCE_DIR} include/Salsabil src lib)
-
-project(Salsabil)
-
-add_subdirectory(src)
-
-add_subdirectory(lib)
-
-add_subdirectory(test)
-
-
-
-
-
-
-
-
+add_test(sqlite_driver_test sqlite_driver_test)

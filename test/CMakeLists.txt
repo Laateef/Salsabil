@@ -20,8 +20,28 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
-add_executable(sqlite_driver_tests SqliteDriverTest.cpp)
+include_directories(
+${gtest_SOURCE_DIR} 
+${gtest_SOURCE_DIR}/include
+)
 
-target_link_libraries(sqlite_driver_tests gmock_main core_driver sqlite_driver sqlite3_backend)
+enable_testing()
 
-add_test(sqlite_driver_tests sqlite_driver_tests)
+
+project(Tests)
+
+add_subdirectory(core)
+
+add_subdirectory(drivers)
+
+
+add_executable(main_test SqlTableConfigurerTest.cpp SqlProviderTest.cpp)
+
+target_link_libraries(main_test gmock_main sqlite3_backend core_lib sqlite_driver_lib)
+
+add_test(main_test main_test)
+
+
+
+
+

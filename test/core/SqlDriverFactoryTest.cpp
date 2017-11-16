@@ -19,28 +19,19 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#include "SqlDriverMock.hpp"
+#include "Exception.hpp"
 #include "SqlDriverFactory.hpp"
-#include "SqlDriver.hpp"
-#include "SqlDriverRegistrar.hpp"
 
-using namespace std;
+using namespace ::testing;
 using namespace Salsabil;
 
-std::map<std::string, SqlDriver*> SqlDriverFactory::mDriverMap;
+TEST(SqlDriverFactory, ThrowsWhenTryingToRegisterExistentDriver) {
+    SqlDriverFactory::registerDriver<SqlDriverMock>("MockDriver");
 
-SqlDriverFactory::~SqlDriverFactory() {
-    for (auto iter = mDriverMap.begin(); iter != mDriverMap.end(); ++iter) {
-        delete iter->second;
-        mDriverMap.erase(iter);
-    }
+    ASSERT_THROW(SqlDriverFactory::registerDriver<SqlDriverMock>("MockDriver"), Exception);
 }
 
-SqlDriver* SqlDriverFactory::getDriver(const std::string& driverName) {
-    static SqlDriverRegistrar instance;
-    
-    decltype(mDriverMap)::const_iterator iter = mDriverMap.find(driverName);
-    if (iter == mDriverMap.end())
-        throw Exception("Driver not found!");
-    return (*iter).second->create();
+TEST(SqlDriverFactory, ThrowsWhenTryingToGetNonExistentDriver) {
+    ASSERT_THROW(SqlDriverFactory::getDriver("aDriver"), Exception);
 }

@@ -20,8 +20,8 @@
  */
 
 #include "gmock/gmock.h"
-#include "drivers/sqlite/SqliteDriver.hpp"
-#include "drivers/core/Exception.hpp"
+#include "SqliteDriver.hpp"
+#include "Exception.hpp"
 
 using namespace ::testing;
 using namespace Salsabil;
@@ -191,8 +191,8 @@ TEST(SqliteDriver, TestsTableExistence) {
     ssd.open(":memory:");
     ssd.prepare("CREATE TABLE tb(id INT PRIMARY KEY, num1 INT, num2 INT)");
     ssd.execute();
-    auto tables = ssd.tableSet();
+    auto tables = ssd.tableList();
     
     EXPECT_THAT(tables.size(), Eq(1u));
-    ASSERT_TRUE(tables.find("tb") != tables.end());
+    ASSERT_TRUE(std::find(tables.begin(), tables.end(), "tb") != tables.end());
 }

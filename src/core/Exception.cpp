@@ -4,7 +4,7 @@
  * Github: https://github.com/Laateef/Salsabil
  *
  * This file is part of the Salsabil project.
- * 
+ *
  * Salsabil is free software: you can redistribute it and/or modify 
  * it under the terms of the GNU General Public License as published by 
  * the Free Software Foundation, either version 3 of the License, or 
@@ -19,19 +19,18 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SqlDriverMock.hpp"
-#include "drivers/core/Exception.hpp"
-#include "drivers/core/SqlDriverFactory.hpp"
+#include "Exception.hpp"
 
-using namespace ::testing;
 using namespace Salsabil;
 
-TEST(SqlDriverFactory, ThrowsWhenTryingToRegisterExistentDriver) {
-    SqlDriverFactory::registerDriver<MockDriver>("MockDriver");
-
-    ASSERT_THROW(SqlDriverFactory::registerDriver<MockDriver>("MockDriver"), Exception);
+Exception::Exception(const char* message)
+: mMessage(message) {
 }
 
-TEST(SqlDriverFactory, ThrowsWhenTryingToGetNonExistentDriver) {
-    ASSERT_THROW(SqlDriverFactory::getDriver("aDriver"), Exception);
+Exception::Exception(const std::string& message)
+: mMessage(message) {
+}
+
+const char* Exception::what() const noexcept {
+    return mMessage.c_str();
 }
