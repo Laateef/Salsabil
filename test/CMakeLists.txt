@@ -35,11 +35,6 @@ add_subdirectory(core)
 add_subdirectory(drivers)
 
 
-add_executable(main_test SqlTableConfigurerTest.cpp SqlProviderTest.cpp)
-
-target_link_libraries(main_test gmock_main sqlite3_backend core_lib sqlite_driver_lib)
-
-add_test(main_test main_test)
 
 
 
