@@ -49,13 +49,13 @@ TEST(SqlStatementBuilder, GeneratesSelectColumnFromTableWhereColumnNotEqualToPar
 }
 
 TEST(SqlStatementBuilder, GeneratesSelectColumnFromTableWhereColumnGreaterThanParameter) {
-    ASSERT_THAT(SqlStatementBuilder().SELECT("name").FROM("product").WHERE("price").greaterThan(12.5f).asString(),
+    ASSERT_THAT(SqlStatementBuilder().SELECT("name").FROM("product").WHERE("price").greaterThan(12.5).asString(),
             Eq("SELECT name FROM product WHERE price > 12.5"));
 }
 
 TEST(SqlStatementBuilder, GeneratesSelectColumnFromTableWhereColumnGreaterThanOrEqualToParameter) {
-    ASSERT_THAT(SqlStatementBuilder().SELECT("name").FROM("product").WHERE("price").greaterThanOrEqualTo(12.5).asString(),
-            Eq("SELECT name FROM product WHERE price >= 12.5"));
+    ASSERT_THAT(SqlStatementBuilder().SELECT("id").FROM("measurement").WHERE("temp").greaterThanOrEqualTo(-85.5).asString(),
+            Eq("SELECT id FROM measurement WHERE temp >= -85.5"));
 }
 
 TEST(SqlStatementBuilder, GeneratesSelectColumnFromTableWhereColumnLessThanParameter) {
@@ -64,19 +64,45 @@ TEST(SqlStatementBuilder, GeneratesSelectColumnFromTableWhereColumnLessThanParam
 }
 
 TEST(SqlStatementBuilder, GeneratesSelectColumnFromTableWhereColumnLessThanOrEqualToParameter) {
-    ASSERT_THAT(SqlStatementBuilder().SELECT("name").FROM("item").WHERE("id").lessThanOrEqualTo(12).asString(),
-            Eq("SELECT name FROM item WHERE id <= 12"));
+    ASSERT_THAT(SqlStatementBuilder().SELECT("name").FROM("item").WHERE("id").lessThanOrEqualTo(32).asString(),
+            Eq("SELECT name FROM item WHERE id <= 32"));
 }
 
-TEST(SqlStatementBuilder, GeneratesSelectGivenMultipleWhereConditions) {
+TEST(SqlStatementBuilder, GeneratesSelectGivenAndWhereCondition) {
     ASSERT_THAT(SqlStatementBuilder().SELECT("name")
             .FROM("user")
             .WHERE("id")
             .equalTo(45)
             .AND("session_count")
             .greaterThan(3)
-            .OR("user_group")
-            .notEqualTo("'admin'")
             .asString(),
-            Eq("SELECT name FROM user WHERE id = 45 AND session_count > 3 OR user_group <> 'admin'"));
+            Eq("SELECT name FROM user WHERE id = 45 AND session_count > 3"));
 }
+
+TEST(SqlStatementBuilder, GeneratesSelectGivenOrWhereCondition) {
+    ASSERT_THAT(SqlStatementBuilder().SELECT("name")
+            .FROM("user")
+            .WHERE("id")
+            .equalTo(45)
+            .OR("user_group")
+            .notEqualTo("admin")
+            .asString(),
+            Eq("SELECT name FROM user WHERE id = 45 OR user_group <> 'admin'"));
+}
+
+TEST(SqlStatementBuilder, GeneratesInsertIntoTableValues) {
+    ASSERT_THAT(SqlStatementBuilder().INSERT_INTO("user").VALUES(12, "Ali", 37.4).asString(), Eq("INSERT INTO user VALUES (12, 'Ali', 37.4)"));
+}
+
+//TEST(SqlStatementBuilder, GeneratesInsertIntoTableGivenColumnsAndValues) {
+//    ASSERT_THAT(SqlStatementBuilder().SELECT("name")
+//            .FROM("user")
+//            .WHERE("id")
+//            .equalTo(45)
+//            .AND("session_count")
+//            .greaterThan(3)
+//            .OR("user_group")
+//            .notEqualTo("'admin'")
+//            .asString(),
+//            Eq("SELECT name FROM user WHERE id = 45 AND session_count > 3 OR user_group <> 'admin'"));
+//}

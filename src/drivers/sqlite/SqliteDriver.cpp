@@ -167,6 +167,10 @@ void SqliteDriver::bindInt64(int position, int64_t value) const {
     }
 }
 
+void SqliteDriver::bindFloat(int position, float value) const {
+    bindDouble(position, value);
+}
+
 void SqliteDriver::bindDouble(int position, double value) const {
     int errorCode = sqlite3_bind_double(mStatement, position, value);
     if (errorCode != SQLITE_OK) {

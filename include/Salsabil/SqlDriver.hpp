@@ -222,6 +222,9 @@ namespace Salsabil {
         /** Binds a 64bit integer to the placeholder at <i>position</i>. */
         virtual void bindInt64(int position, int64_t value) const = 0;
 
+        /** Binds a float to the placeholder at <i>position</i>. */
+        virtual void bindFloat(int position, float value) const = 0;
+
         /** Binds a double to the placeholder at <i>position</i>. */
         virtual void bindDouble(int position, double value) const = 0;
 

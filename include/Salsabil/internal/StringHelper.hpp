@@ -31,7 +31,20 @@ namespace Salsabil {
 
         // returns a delimiter-separated concatenation of the strings in stringList.
 
-        std::string join(const std::vector<std::string>& stringList, std::string delimiter);
+//        std::string join(const std::vector<std::string>& stringList, std::string delimiter);
+
+        template<class Iter>
+        std::string join(Iter first, Iter last, std::string delimiter) {
+            std::string result;
+            auto it = first;
+
+            if (it != last)
+                result.append(*it++);
+
+            for (; it != last; ++it)
+                result.append(delimiter).append(*it);
+            return result;
+        }
 
         std::string toUpper(std::string s);
 

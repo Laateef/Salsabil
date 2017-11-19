@@ -23,6 +23,7 @@
 #define SALSABIL_SQLSTATEMENTBUILDER_HPP
 
 #include "internal/SqlSelectClause.hpp"
+#include "internal/SqlInsertClause.hpp"
 
 namespace Salsabil {
 
@@ -33,8 +34,10 @@ namespace Salsabil {
 
         SqlFromClause SELECT_ALL_FROM(const std::string& table);
 
+        SqlInsertClause INSERT_INTO(const std::string& table, std::vector<std::string> columnList = {});
+
         std::string asString() const;
-        
+
     private:
         std::string mSqlString;
     };

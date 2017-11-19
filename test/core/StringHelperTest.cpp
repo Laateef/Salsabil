@@ -28,7 +28,7 @@ using namespace Salsabil;
 TEST(JoinVectorOfStringIntoStringFunction, returnsEmptyStringForEmptyVector) {
     std::vector<std::string> vs;
 
-    ASSERT_THAT(Utility::join(vs, " "), Eq(""));
+    ASSERT_THAT(Utility::join(vs.begin(), vs.end(), " "), Eq(""));
 }
 
 TEST(JoinVectorOfStringIntoStringFunction, returnsTheSameStringForOneStringVector) {
@@ -36,7 +36,7 @@ TEST(JoinVectorOfStringIntoStringFunction, returnsTheSameStringForOneStringVecto
 
     vs.push_back("A String");
 
-    ASSERT_THAT(Utility::join(vs, " "), Eq("A String"));
+    ASSERT_THAT(Utility::join(vs.begin(), vs.end(), " "), Eq("A String"));
 }
 
 TEST(JoinVectorOfStringIntoStringFunction, returnsDelimiterConcatenatedStringForMultipleStringVector) {
@@ -46,5 +46,5 @@ TEST(JoinVectorOfStringIntoStringFunction, returnsDelimiterConcatenatedStringFor
     vs.push_back("Another String");
     vs.push_back("One More String");
 
-    ASSERT_THAT(Utility::join(vs, "-"), Eq("A String-Another String-One More String"));
+    ASSERT_THAT(Utility::join(vs.begin(), vs.end(), "-"), Eq("A String-Another String-One More String"));
 }

@@ -23,19 +23,6 @@
 
 using namespace Salsabil;
 
-std::string Utility::join(const std::vector<std::string>& stringList, std::string delimiter) {
-    std::string result;
-    auto it = stringList.begin();
-    auto end = stringList.end();
-
-    if (it != end)
-        result.append(*it++);
-
-    for (; it != end; ++it)
-        result.append(delimiter).append(*it);
-    return result;
-}
-
 std::string Utility::toUpper(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(),
             [](unsigned char c) {
@@ -87,7 +74,7 @@ std::string Utility::toString(long double value) {
 }
 
 std::string Utility::toString(const char* value) {
-    return std::string(value);
+    return "'" + std::string(value) + "'";
 }
 
 std::string Utility::toString(std::string value) {

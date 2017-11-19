@@ -54,6 +54,7 @@ public:
     MOCK_CONST_METHOD1(bindNull, void(int));
     MOCK_CONST_METHOD2(bindInt, void(int, int));
     MOCK_CONST_METHOD2(bindInt64, void(int, int64_t));
+    MOCK_CONST_METHOD2(bindFloat, void(int, float));
     MOCK_CONST_METHOD2(bindDouble, void(int, double));
     MOCK_CONST_METHOD2(bindCString, void(int, const char*));
     MOCK_CONST_METHOD2(bindStdString, void(int, const std::string&));

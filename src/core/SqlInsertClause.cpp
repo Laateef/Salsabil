@@ -19,23 +19,39 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SqlStatementBuilder.hpp"
 #include "internal/SqlInsertClause.hpp"
+#include "internal/StringHelper.hpp"
+#include "Exception.hpp"
 
 using namespace Salsabil;
 
-SqlSelectClause SqlStatementBuilder::SELECT(const std::string& column) {
-    return SqlSelectClause(mSqlString, column);
+SqlInsertClause::SqlInsertClause(std::string& sql, const std::string& table, std::vector<std::string> columnList)
+: mSqlString(sql)
+, mColumnList(columnList) {
+    append("INSERT INTO " + table);
+    if (columnList.size() > 0) {
+        append(" (");
+        append(Utility::join(columnList.begin(), columnList.end(), ", "));
+        append(")");
+
+    }
 }
 
-SqlFromClause SqlStatementBuilder::SELECT_ALL_FROM(const std::string& table) {
-    return SqlSelectClause(mSqlString, "*").FROM(table);
+SqlInsertClause& SqlInsertClause::parameterizeValues() {
+    std::vector<std::string> questionMarkList(mColumnList.size(), "?");
+    if (questionMarkList.empty())
+        throw Exception("could not parameterize, the column list is empty!");
+
+    append(" VALUES (" + Utility::join(questionMarkList.begin(), questionMarkList.end(), ", ") + ")");
+
+    return *this;
 }
 
-SqlInsertClause SqlStatementBuilder::INSERT_INTO(const std::string& table, std::vector<std::string> columnList) {
-    return SqlInsertClause(mSqlString, table, columnList);
+void SqlInsertClause::append(const std::string& sqlFragment) {
+
+    mSqlString += sqlFragment;
 }
 
-std::string SqlStatementBuilder::asString() const {
+std::string SqlInsertClause::asString() const {
     return mSqlString;
 }
