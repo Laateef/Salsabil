@@ -33,7 +33,7 @@ add_subdirectory(core)
 add_subdirectory(drivers)
 
 
-add_executable(main_test SqlTableConfigurerTest.cpp)
+add_executable(main_test SqlTableConfigurerTest.cpp SqlRepositoryTest.cpp)
 
 target_link_libraries(main_test gmock_main core_lib)
 
