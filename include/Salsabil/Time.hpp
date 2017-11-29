@@ -72,17 +72,13 @@ namespace Salsabil {
         }
 
         Time()
-        : mTimePoint(Nanoseconds(0)) {
+        : mTimePoint(std::chrono::system_clock::now().time_since_epoch()) {
         }
 
         bool isValid() const {
             if (toHours() > 24)
                 return false;
             return true;
-        }
-
-        static Time now() {
-            return Time(std::chrono::system_clock::now().time_since_epoch());
         }
 
         int8_t toHours() const {

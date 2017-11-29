@@ -25,15 +25,13 @@
 using namespace ::testing;
 using namespace Salsabil;
 
-TEST(TimeTest, ZeroWhenCreated) {
-    Time t;
-
-    ASSERT_THAT(t.hours(), Eq(0));
-    ASSERT_THAT(t.minutes(), Eq(0));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
+TEST(TimeTest, InitializesToCurrentTimeIfDefaultConstructed) {
+    Time myTime;
+    std::time_t tTime = std::time(nullptr);
+    std::tm* tmTime = std::gmtime(&tTime);
+    ASSERT_THAT(myTime.hours(), Eq(tmTime->tm_hour));
+    ASSERT_THAT(myTime.minutes(), Eq(tmTime->tm_min));
+    ASSERT_THAT(myTime.seconds(), Eq(tmTime->tm_sec));
 }
 
 TEST(TimeTest, isValidReturnsFalseIfHoursExceded24) {
