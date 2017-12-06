@@ -39,108 +39,161 @@ namespace Salsabil {
         using Microseconds = std::chrono::microseconds;
         using Nanoseconds = std::chrono::nanoseconds;
 
-        explicit Time(int8_t hours, int8_t minutes, int8_t seconds)
-        : mTimePoint(Hours(hours) + Minutes(minutes) + Seconds(seconds)) {
+        explicit Time(int hours, int minutes, int seconds)
+        : mTimeDuration(Hours(hours) + Minutes(minutes) + Seconds(seconds)) {
         }
 
-        explicit Time(int8_t hours, int8_t minutes, int8_t seconds, int32_t fraction)
-        : mTimePoint(Hours(hours) + Minutes(minutes) + Seconds(seconds) + Nanoseconds(fractionToNanoseconds(fraction))) {
+        explicit Time(int hours, int minutes, int seconds, int milliseconds)
+        : mTimeDuration(Hours(hours) + Minutes(minutes) + Seconds(seconds) + Milliseconds(milliseconds)) {
+        }
+
+        explicit Time(int hours, int minutes, int seconds, const Duration& fractions)
+        : mTimeDuration(Hours(hours) + Minutes(minutes) + Seconds(seconds) + fractions) {
         }
 
         explicit Time(const Duration& duration)
-        : mTimePoint(duration) {
+        : mTimeDuration(duration) {
         }
 
         explicit Time(const TimePoint& timePoint)
-        : mTimePoint(timePoint.time_since_epoch()) {
+        : mTimeDuration(timePoint.time_since_epoch()) {
         }
 
         explicit Time(const std::tm& brokenStdTime)
-        : mTimePoint(Hours(brokenStdTime.tm_hour) + Minutes(brokenStdTime.tm_min) + Seconds(brokenStdTime.tm_sec)) {
+        : mTimeDuration(Hours(brokenStdTime.tm_hour) + Minutes(brokenStdTime.tm_min) + Seconds(brokenStdTime.tm_sec)) {
         }
 
         explicit Time(std::time_t scalarStdTime)
-        : mTimePoint(Seconds(scalarStdTime)) {
+        : mTimeDuration(Seconds(scalarStdTime)) {
         }
 
         Time(const Time& time)
-        : mTimePoint(time.mTimePoint) {
+        : mTimeDuration(time.mTimeDuration) {
         }
 
         Time(Time&& time)
-        : mTimePoint(std::move(time.mTimePoint)) {
+        : mTimeDuration(std::move(time.mTimeDuration)) {
         }
 
         Time()
-        : mTimePoint(std::chrono::system_clock::now().time_since_epoch()) {
+        : mTimeDuration(std::chrono::duration_cast<Nanoseconds>(std::chrono::system_clock::now().time_since_epoch() % Days(1))) {
         }
 
         bool isValid() const {
             if (toHours() > 24)
                 return false;
+
             return true;
         }
 
-        int8_t toHours() const {
-            return std::chrono::duration_cast<Hours>(mTimePoint).count();
+        int toHours() const {
+            return std::chrono::duration_cast<Hours>(mTimeDuration).count();
         }
 
-        int16_t toMinutes() const {
-            return std::chrono::duration_cast<Minutes>(mTimePoint).count();
+        int toMinutes() const {
+            return std::chrono::duration_cast<Minutes>(mTimeDuration).count();
         }
 
-        int32_t toSeconds() const {
-            return std::chrono::duration_cast<Seconds>(mTimePoint).count();
+        long toSeconds() const {
+            return std::chrono::duration_cast<Seconds>(mTimeDuration).count();
         }
 
-        int32_t toMilliseconds() const {
-            return std::chrono::duration_cast<Milliseconds>(mTimePoint).count();
+        long toMilliseconds() const {
+            return std::chrono::duration_cast<Milliseconds>(mTimeDuration).count();
         }
 
-        int64_t toMicroseconds() const {
-            return std::chrono::duration_cast<Microseconds>(mTimePoint).count();
+        long long toMicroseconds() const {
+            return std::chrono::duration_cast<Microseconds>(mTimeDuration).count();
         }
 
-        int64_t toNanoseconds() const {
-            return std::chrono::duration_cast<Nanoseconds>(mTimePoint).count();
+        long long toNanoseconds() const {
+            return std::chrono::duration_cast<Nanoseconds>(mTimeDuration).count();
         }
 
         int hours() const {
-            return std::chrono::duration_cast<Hours>(mTimePoint % Days(1)).count();
+            return std::chrono::duration_cast<Hours>(mTimeDuration % Days(1)).count();
         }
 
         int minutes() const {
-            return std::chrono::duration_cast<Minutes>(mTimePoint % Hours(1)).count();
+            return std::chrono::duration_cast<Minutes>(mTimeDuration % Hours(1)).count();
         }
 
         int seconds() const {
-            return std::chrono::duration_cast<Seconds>(mTimePoint % Minutes(1)).count();
+            return std::chrono::duration_cast<Seconds>(mTimeDuration % Minutes(1)).count();
         }
 
         int milliseconds() const {
-            return std::chrono::duration_cast<Milliseconds>(mTimePoint % Seconds(1)).count();
+            return std::chrono::duration_cast<Milliseconds>(mTimeDuration % Seconds(1)).count();
         }
 
-        int microseconds() const {
-            return std::chrono::duration_cast<Microseconds>(mTimePoint % Milliseconds(1)).count();
+        long microseconds() const {
+            return std::chrono::duration_cast<Microseconds>(mTimeDuration % Seconds(1)).count();
         }
 
-        int nanoseconds() const {
-            return std::chrono::duration_cast<Nanoseconds>(mTimePoint % Microseconds(1)).count();
+        long nanoseconds() const {
+            return std::chrono::duration_cast<Nanoseconds>(mTimeDuration % Seconds(1)).count();
         }
 
         Time addDuration(const Duration& duration) const {
-            return Time(mTimePoint + duration);
+            return Time(mTimeDuration + duration);
         }
 
         Time subtractDuration(const Duration& duration) const {
-            return Time(mTimePoint - duration);
+            return Time(mTimeDuration - duration);
+        }
+
+        Time addHours(int hours) const {
+            return Time(mTimeDuration + Hours(hours));
+        }
+
+        Time subtractHours(int hours) const {
+            return Time(mTimeDuration - Hours(hours));
+        }
+
+        Time addMinutes(int minutes) const {
+            return Time(mTimeDuration + Minutes(minutes));
+        }
+
+        Time subtractMinutes(int minutes) const {
+            return Time(mTimeDuration - Minutes(minutes));
+        }
+
+        Time addSeconds(int seconds) const {
+            return Time(mTimeDuration + Seconds(seconds));
+        }
+
+        Time subtractSeconds(int seconds) const {
+            return Time(mTimeDuration - Seconds(seconds));
+        }
+
+        Time addMilliseconds(int milliseconds) const {
+            return Time(mTimeDuration + Milliseconds(milliseconds));
+        }
+
+        Time subtractMilliseconds(int milliseconds) const {
+            return Time(mTimeDuration - Milliseconds(milliseconds));
+        }
+
+        Time addMicroseconds(int microseconds) const {
+            return Time(mTimeDuration + Microseconds(microseconds));
+        }
+
+        Time subtractMicroseconds(int microseconds) const {
+            return Time(mTimeDuration - Microseconds(microseconds));
+        }
+
+        Time addNanoseconds(int nanoseconds) const {
+            return Time(mTimeDuration + Nanoseconds(nanoseconds));
+        }
+
+        Time subtractNanoseconds(int nanoseconds) const {
+            return Time(mTimeDuration - Nanoseconds(nanoseconds));
         }
 
         std::string toString(const std::string& format) const {
             std::stringstream output;
 
-            for (std::size_t pos = 0; pos < format.size(); ++pos) {
+            for (int pos = 0; pos < format.size(); ++pos) {
                 char currChar = format[pos];
                 char nextChar = (pos + 1) < format.size() ? format[pos + 1] : '\0';
                 if (currChar == 'h') {
@@ -177,8 +230,8 @@ namespace Salsabil {
                     }
                     output << seconds();
                 } else if (currChar == 'f') {
-                    std::size_t precision = std::count(format.begin() + pos, format.end(), 'f');
-                    std::string fraction = std::to_string(std::chrono::duration_cast<Nanoseconds>(mTimePoint % Seconds(1)).count());
+                    const int precision = std::count(format.begin() + pos, format.end(), 'f');
+                    std::string fraction = std::to_string(std::chrono::duration_cast<Nanoseconds>(mTimeDuration % Seconds(1)).count());
                     std::string padddedFraction = fraction.insert(0, 9 - fraction.size(), '0');
                     output << padddedFraction.substr(0, precision);
                     pos += precision - 1; // Skip the f..., have been read.
@@ -198,9 +251,9 @@ namespace Salsabil {
             std::stringstream input;
             input << timeString;
             int _hours = 0, _minutes = 0, _seconds = 0;
-            int64_t _fractions = 0;
+            long _fractions = 0;
 
-            for (std::size_t pos = 0; pos < format.size(); ++pos) {
+            for (int pos = 0; pos < format.size(); ++pos) {
                 char currChar = format[pos];
                 char nextChar = (pos + 1) < format.size() ? format[pos + 1] : '\0';
                 if (currChar == 'h') {
@@ -239,7 +292,7 @@ namespace Salsabil {
                     input >> _seconds;
                 } else if (currChar == 'f') {
                     input >> _fractions;
-                    _fractions = fractionToNanoseconds(_fractions);
+                    _fractions = fractionsToNanoseconds(_fractions);
                     pos += std::count(format.begin() + pos, format.end(), 'f') - 1; // Skip the f..., have been read.
                 } else {
                     input.seekg(input.tellg() + decltype(input)::pos_type(1));
@@ -250,7 +303,7 @@ namespace Salsabil {
         }
 
         std::chrono::system_clock::time_point toTimePoint() const {
-            return std::chrono::system_clock::time_point(mTimePoint);
+            return std::chrono::system_clock::time_point(mTimeDuration);
         }
 
         std::tm toBrokenStdTime() const {
@@ -266,49 +319,49 @@ namespace Salsabil {
         }
 
         bool operator<(const Time& time) const {
-            return this->mTimePoint < time.mTimePoint;
+            return this->mTimeDuration < time.mTimeDuration;
         }
 
         bool operator<=(const Time& time) const {
-            return this->mTimePoint <= time.mTimePoint;
+            return this->mTimeDuration <= time.mTimeDuration;
         }
 
         bool operator>(const Time& time) const {
-            return this->mTimePoint > time.mTimePoint;
+            return this->mTimeDuration > time.mTimeDuration;
         }
 
         bool operator>=(const Time& time) const {
-            return this->mTimePoint >= time.mTimePoint;
+            return this->mTimeDuration >= time.mTimeDuration;
         }
 
         bool operator==(const Time& time) const {
-            return this->mTimePoint == time.mTimePoint;
+            return this->mTimeDuration == time.mTimeDuration;
         }
 
         bool operator!=(const Time& time) const {
-            return this->mTimePoint != time.mTimePoint;
+            return this->mTimeDuration != time.mTimeDuration;
         }
 
         Time& operator=(const Time& time) {
-            this->mTimePoint = time.mTimePoint;
+            this->mTimeDuration = time.mTimeDuration;
             return *this;
         }
 
         Time& operator=(Time&& time) {
-            this->mTimePoint = std::move(time.mTimePoint);
+            this->mTimeDuration = std::move(time.mTimeDuration);
             return *this;
         }
 
     private:
 
-        static int32_t fractionToNanoseconds(int32_t fraction) {
-            const char Precision = 9;
+        static long fractionsToNanoseconds(long fraction) {
+            const int Precision = 9;
             std::string fractionString = std::to_string(fraction);
             std::string padddedFractionString = fractionString.append(Precision - fractionString.size(), '0');
             return std::stol(padddedFractionString);
         }
 
-        Duration mTimePoint;
+        Duration mTimeDuration;
     };
 
     std::ostream& operator<<(std::ostream& os, const Time& t) {
@@ -317,7 +370,7 @@ namespace Salsabil {
     }
 
     std::istream& operator>>(std::istream& is, Time& t) {
-        const char TimeFormatWidth = 8;
+        const int TimeFormatWidth = 8;
         std::vector<char> result(TimeFormatWidth); // vector is guaranteed to be contiguous in C++03
         is.read(&result[0], TimeFormatWidth);
         std::string str(&result[0], &result[TimeFormatWidth]);

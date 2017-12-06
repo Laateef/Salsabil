@@ -29,224 +29,122 @@ TEST(TimeTest, InitializesToCurrentTimeIfDefaultConstructed) {
     Time myTime;
     std::time_t tTime = std::time(nullptr);
     std::tm* tmTime = std::gmtime(&tTime);
+
     ASSERT_THAT(myTime.hours(), Eq(tmTime->tm_hour));
     ASSERT_THAT(myTime.minutes(), Eq(tmTime->tm_min));
     ASSERT_THAT(myTime.seconds(), Eq(tmTime->tm_sec));
+
+    ASSERT_TRUE(myTime.isValid());
+}
+
+TEST(TimeTest, InitializesToGivenTime) {
+    Time myTime(13, 44, 2);
+    ASSERT_THAT(myTime.hours(), Eq(13));
+    ASSERT_THAT(myTime.minutes(), Eq(44));
+    ASSERT_THAT(myTime.seconds(), Eq(2));
+    ASSERT_THAT(myTime.milliseconds(), Eq(0));
+    ASSERT_THAT(myTime.microseconds(), Eq(0));
+    ASSERT_THAT(myTime.nanoseconds(), Eq(0));
+}
+
+TEST(TimeTest, InitializesToGivenTimeWithFractions) {
+    Time myTime(13, 44, 2, Time::Nanoseconds(781945521));
+    ASSERT_THAT(myTime.hours(), Eq(13));
+    ASSERT_THAT(myTime.minutes(), Eq(44));
+    ASSERT_THAT(myTime.seconds(), Eq(2));
+    ASSERT_THAT(myTime.milliseconds(), Eq(781));
+    ASSERT_THAT(myTime.microseconds(), Eq(781945));
+    ASSERT_THAT(myTime.nanoseconds(), Eq(781945521));
 }
 
 TEST(TimeTest, isValidReturnsFalseIfHoursExceded24) {
-    ASSERT_TRUE(Time().isValid());
+    ASSERT_TRUE(Time(Time::Hours(24)).isValid());
     ASSERT_FALSE(Time(Time::Hours(25)).isValid());
 }
 
+TEST(TimeTest, TestsComparisons) {
+    ASSERT_TRUE(Time(7, 9, 2, Time::Nanoseconds(675869233)) < Time(7, 45, 22, Time::Nanoseconds(536969233)));
+    ASSERT_TRUE(Time(7, 9, 2, Time::Nanoseconds(536969435)) <= Time(7, 9, 2, Time::Nanoseconds(536969435)));
+    ASSERT_TRUE(Time(8, 9, 2, Time::Nanoseconds(675869676)) > Time(7, 45, 22, Time::Nanoseconds(536969212)));
+    ASSERT_TRUE(Time(7, 46, 2, Time::Nanoseconds(675869112)) >= Time(7, 45, 22, Time::Nanoseconds(536969112)));
+    ASSERT_TRUE(Time(15, 4, 12, Time::Nanoseconds(554969231)) == Time(15, 4, 12, Time::Nanoseconds(554969231)));
+    ASSERT_TRUE(Time(7, 9, 2, Time::Nanoseconds(675869123)) != Time(4, 45, 22, Time::Nanoseconds(536969321)));
+}
+
+TEST(TimeTest, ConstructFromDurations) {
+    ASSERT_THAT(Time(Time::Hours(23)), Eq(Time(23, 0, 0)));
+    ASSERT_THAT(Time(Time::Minutes(178)), Eq(Time(2, 58, 0, 0)));
+    ASSERT_THAT(Time(Time::Seconds(7199)), Eq(Time(1, 59, 59, 0)));
+    ASSERT_THAT(Time(Time::Milliseconds(7198943)), Eq(Time(1, 59, 58, 943)));
+    ASSERT_THAT(Time(Time::Microseconds(74362675869)), Eq(Time(20, 39, 22, Time::Microseconds(675869))));
+    ASSERT_THAT(Time(Time::Nanoseconds(8974362675546)), Eq(Time(2, 29, 34, Time::Nanoseconds(362675546))));
+    ASSERT_THAT(Time(Time::Hours(16) + Time::Minutes(18) + Time::Seconds(55) + Time::Milliseconds(178) + Time::Microseconds(221) + Time::Nanoseconds(759)), Eq(Time(16, 18, 55, Time::Nanoseconds(178221759))));
+}
+
 TEST(TimeTest, AddSubtractHours) {
-    Time t(Time::Hours(7));
-
-    ASSERT_THAT(t.hours(), Eq(7));
-    ASSERT_THAT(t.minutes(), Eq(0));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.addDuration(Time::Hours(2));
-
-    ASSERT_THAT(t.hours(), Eq(9));
-    ASSERT_THAT(t.minutes(), Eq(0));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.subtractDuration(Time::Hours(2));
-
-    ASSERT_THAT(t.hours(), Eq(7));
-    ASSERT_THAT(t.minutes(), Eq(0));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
+    ASSERT_THAT(Time(Time::Hours(7)).addHours(2), Eq(Time(9, 0, 0, 0)));
+    ASSERT_THAT(Time(Time::Hours(9)).subtractHours(2), Eq(Time(7, 0, 0, 0)));
 }
 
 TEST(TimeTest, AddSubtractMinutes) {
-    Time t(Time::Minutes(178));
-
-    ASSERT_THAT(t.hours(), Eq(2));
-    ASSERT_THAT(t.minutes(), Eq(58));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.addDuration(Time::Minutes(2));
-
-    ASSERT_THAT(t.hours(), Eq(3));
-    ASSERT_THAT(t.minutes(), Eq(0));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.subtractDuration(Time::Minutes(2));
-    ASSERT_THAT(t.hours(), Eq(2));
-    ASSERT_THAT(t.minutes(), Eq(58));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
+    ASSERT_THAT(Time(Time::Minutes(178)).addMinutes(2), Eq(Time(3, 0, 0, 0)));
+    ASSERT_THAT(Time(Time::Minutes(180)).subtractMinutes(2), Eq(Time(2, 58, 0, 0)));
 }
 
 TEST(TimeTest, AddSubtractSeconds) {
-    Time t(Time::Seconds(7199));
-
-    ASSERT_THAT(t.hours(), Eq(1));
-    ASSERT_THAT(t.minutes(), Eq(59));
-    ASSERT_THAT(t.seconds(), Eq(59));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.addDuration(Time::Seconds(1));
-
-    ASSERT_THAT(t.hours(), Eq(2));
-    ASSERT_THAT(t.minutes(), Eq(0));
-    ASSERT_THAT(t.seconds(), Eq(0));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.subtractDuration(Time::Seconds(1));
-
-    ASSERT_THAT(t.hours(), Eq(1));
-    ASSERT_THAT(t.minutes(), Eq(59));
-    ASSERT_THAT(t.seconds(), Eq(59));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
+    ASSERT_THAT(Time(Time::Seconds(55)).addSeconds(9), Eq(Time(0, 1, 4, 0)));
+    ASSERT_THAT(Time(Time::Seconds(64)).subtractSeconds(9), Eq(Time(0, 0, 55, 0)));
 }
 
 TEST(TimeTest, AddSubtractMilliseconds) {
-    Time t(Time::Milliseconds(7198943));
-
-    ASSERT_THAT(t.hours(), Eq(1));
-    ASSERT_THAT(t.minutes(), Eq(59));
-    ASSERT_THAT(t.seconds(), Eq(58));
-    ASSERT_THAT(t.milliseconds(), Eq(943));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.addDuration(Time::Milliseconds(57));
-
-    ASSERT_THAT(t.hours(), Eq(1));
-    ASSERT_THAT(t.minutes(), Eq(59));
-    ASSERT_THAT(t.seconds(), Eq(59));
-    ASSERT_THAT(t.milliseconds(), Eq(0));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.subtractDuration(Time::Milliseconds(57));
-
-    ASSERT_THAT(t.hours(), Eq(1));
-    ASSERT_THAT(t.minutes(), Eq(59));
-    ASSERT_THAT(t.seconds(), Eq(58));
-    ASSERT_THAT(t.milliseconds(), Eq(943));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
+    ASSERT_THAT(Time(Time::Milliseconds(555)).addMilliseconds(445), Eq(Time(0, 0, 1, 0)));
+    ASSERT_THAT(Time(Time::Milliseconds(1000)).subtractMilliseconds(445), Eq(Time(0, 0, 0, 555)));
 }
 
 TEST(TimeTest, AddSubtractMicroseconds) {
-    Time t(Time::Microseconds(74362675869));
-
-    ASSERT_THAT(t.hours(), Eq(20));
-    ASSERT_THAT(t.minutes(), Eq(39));
-    ASSERT_THAT(t.seconds(), Eq(22));
-    ASSERT_THAT(t.milliseconds(), Eq(675));
-    ASSERT_THAT(t.microseconds(), Eq(869));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.addDuration(Time::Microseconds(131));
-
-    ASSERT_THAT(t.hours(), Eq(20));
-    ASSERT_THAT(t.minutes(), Eq(39));
-    ASSERT_THAT(t.seconds(), Eq(22));
-    ASSERT_THAT(t.milliseconds(), Eq(676));
-    ASSERT_THAT(t.microseconds(), Eq(0));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
-
-    t = t.subtractDuration(Time::Microseconds(131));
-
-    ASSERT_THAT(t.hours(), Eq(20));
-    ASSERT_THAT(t.minutes(), Eq(39));
-    ASSERT_THAT(t.seconds(), Eq(22));
-    ASSERT_THAT(t.milliseconds(), Eq(675));
-    ASSERT_THAT(t.microseconds(), Eq(869));
-    ASSERT_THAT(t.nanoseconds(), Eq(0));
+    ASSERT_THAT(Time(Time::Microseconds(555)).addMicroseconds(445), Eq(Time(0, 0, 0, Time::Microseconds(1000))));
+    ASSERT_THAT(Time(Time::Microseconds(1000)).subtractMicroseconds(445), Eq(Time(0, 0, 0, Time::Microseconds(555))));
 }
 
 TEST(TimeTest, AddSubtractNanoseconds) {
-    Time t(Time::Nanoseconds(8974362675546));
-
-    ASSERT_THAT(t.hours(), Eq(2));
-    ASSERT_THAT(t.minutes(), Eq(29));
-    ASSERT_THAT(t.seconds(), Eq(34));
-    ASSERT_THAT(t.milliseconds(), Eq(362));
-    ASSERT_THAT(t.microseconds(), Eq(675));
-    ASSERT_THAT(t.nanoseconds(), Eq(546));
-
-    t = t.addDuration(Time::Nanoseconds(455));
-
-    ASSERT_THAT(t.hours(), Eq(2));
-    ASSERT_THAT(t.minutes(), Eq(29));
-    ASSERT_THAT(t.seconds(), Eq(34));
-    ASSERT_THAT(t.milliseconds(), Eq(362));
-    ASSERT_THAT(t.microseconds(), Eq(676));
-    ASSERT_THAT(t.nanoseconds(), Eq(1));
-
-    t = t.subtractDuration(Time::Nanoseconds(455));
-
-    ASSERT_THAT(t.hours(), Eq(2));
-    ASSERT_THAT(t.minutes(), Eq(29));
-    ASSERT_THAT(t.seconds(), Eq(34));
-    ASSERT_THAT(t.milliseconds(), Eq(362));
-    ASSERT_THAT(t.microseconds(), Eq(675));
-    ASSERT_THAT(t.nanoseconds(), Eq(546));
+    ASSERT_THAT(Time(Time::Nanoseconds(8974362675556)).addNanoseconds(445), Eq(Time(2, 29, 34, Time::Nanoseconds(362676001))));
+    ASSERT_THAT(Time(Time::Nanoseconds(8974362676001)).subtractNanoseconds(445), Eq(Time(2, 29, 34, Time::Nanoseconds(362675556))));
 }
 
 TEST(TimeTest, Format12Hours) {
-    ASSERT_THAT(Time(Time::Hours(23) + Time::Minutes(45) + Time::Seconds(2)).toString("H:m:s"), StrEq("11:45:2"));
+    ASSERT_THAT(Time(23, 45, 2).toString("H:m:s"), StrEq("11:45:2"));
 }
 
 TEST(TimeTest, Format12HoursTwoDigits) {
-    ASSERT_THAT(Time(Time::Hours(3) + Time::Minutes(45) + Time::Seconds(2)).toString("HH:m:s"), StrEq("03:45:2"));
+    ASSERT_THAT(Time(3, 45, 2).toString("HH:m:s"), StrEq("03:45:2"));
 }
 
 TEST(TimeTest, FormatMeridiemLabelSmallLetters) {
-    ASSERT_THAT(Time(Time::Hours(3) + Time::Minutes(45) + Time::Seconds(2)).toString("HH:mm:ss a"), StrEq("03:45:02 am"));
-    ASSERT_THAT(Time(Time::Hours(13) + Time::Minutes(45) + Time::Seconds(2)).toString("HH:mm:ss a"), StrEq("01:45:02 pm"));
+    ASSERT_THAT(Time(3, 45, 2).toString("HH:mm:ss a"), StrEq("03:45:02 am"));
+    ASSERT_THAT(Time(13, 45, 2).toString("HH:mm:ss a"), StrEq("01:45:02 pm"));
     ASSERT_THAT(Time(Time::Hours(0)).toString("HH:mm:ss a"), StrEq("00:00:00 am"));
     ASSERT_THAT(Time(Time::Hours(12)).toString("HH:mm:ss a"), StrEq("12:00:00 pm"));
     ASSERT_THAT(Time(Time::Hours(24)).toString("HH:mm:ss a"), StrEq("00:00:00 am"));
 }
 
 TEST(TimeTest, FormatMeridiemLabelCapitalLetters) {
-    ASSERT_THAT(Time(Time::Hours(3) + Time::Minutes(45) + Time::Seconds(2)).toString("HH:mm:ss A"), StrEq("03:45:02 AM"));
-    ASSERT_THAT(Time(Time::Hours(13) + Time::Minutes(45) + Time::Seconds(2)).toString("HH:mm:ss A"), StrEq("01:45:02 PM"));
+    ASSERT_THAT(Time(3, 45, 2).toString("HH:mm:ss A"), StrEq("03:45:02 AM"));
+    ASSERT_THAT(Time(13, 45, 2).toString("HH:mm:ss A"), StrEq("01:45:02 PM"));
     ASSERT_THAT(Time(Time::Hours(0)).toString("HH:mm:ss A"), StrEq("00:00:00 AM"));
     ASSERT_THAT(Time(Time::Hours(12)).toString("HH:mm:ss A"), StrEq("12:00:00 PM"));
     ASSERT_THAT(Time(Time::Hours(24)).toString("HH:mm:ss A"), StrEq("00:00:00 AM"));
 }
 
 TEST(TimeTest, FormatPM) {
-    ASSERT_THAT(Time(Time::Hours(3) + Time::Minutes(45) + Time::Seconds(2)).toString("HH:m:s"), StrEq("03:45:2"));
+    ASSERT_THAT(Time(3, 45, 2).toString("HH:m:s"), StrEq("03:45:2"));
 }
 
 TEST(TimeTest, Format24Hours) {
-    ASSERT_THAT(Time(Time::Hours(22) + Time::Minutes(45) + Time::Seconds(2)).toString("h:m:s"), StrEq("22:45:2"));
+    ASSERT_THAT(Time(22, 45, 2).toString("h:m:s"), StrEq("22:45:2"));
 }
 
 TEST(TimeTest, Format24HoursTwoDigits) {
-    ASSERT_THAT(Time(Time::Hours(3) + Time::Minutes(45) + Time::Seconds(2)).toString("hh:m:s"), StrEq("03:45:2"));
+    ASSERT_THAT(Time(3, 45, 2).toString("hh:m:s"), StrEq("03:45:2"));
 }
 
 TEST(TimeTest, FormatMinutes) {
@@ -325,15 +223,6 @@ TEST(TimeTest, FormatsFractionsWhenNanosecondsAreZero) {
     ASSERT_THAT(t.toString("hh:mm:ss.fffffffff"), StrEq("07:09:02.675869000"));
 }
 
-TEST(TimeTest, Comparisons) {
-    ASSERT_TRUE(Time(7, 9, 2, 675869233) < Time(7, 45, 22, 536969233));
-    ASSERT_TRUE(Time(7, 9, 2, 536969435) <= Time(7, 9, 2, 536969435));
-    ASSERT_TRUE(Time(8, 9, 2, 675869676) > Time(7, 45, 22, 536969212));
-    ASSERT_TRUE(Time(7, 46, 2, 675869112) >= Time(7, 45, 22, 536969112));
-    ASSERT_TRUE(Time(15, 4, 12, 554969231) == Time(15, 4, 12, 554969231));
-    ASSERT_TRUE(Time(7, 9, 2, 675869123) != Time(4, 45, 22, 536969321));
-}
-
 TEST(TimeTest, CreatesTimeFromFormattedString) {
     ASSERT_THAT(Time::fromString("9", "h"), Time(Time::Hours(9)));
     ASSERT_THAT(Time::fromString("01", "hh"), Time(Time::Hours(1)));
@@ -350,37 +239,37 @@ TEST(TimeTest, CreatesTimeFromFormattedString) {
     ASSERT_THAT(Time::fromString("1", "f"), Time(Time::Milliseconds(100)));
     ASSERT_THAT(Time::fromString("12", "ff"), Time(Time::Milliseconds(120)));
     ASSERT_THAT(Time::fromString("123", "fff"), Time(Time::Milliseconds(123)));
-    ASSERT_THAT(Time::fromString("1234", "ffff"), Time(Time::Milliseconds(123) + Time::Microseconds(400)));
-    ASSERT_THAT(Time::fromString("12345", "fffff"), Time(Time::Milliseconds(123) + Time::Microseconds(450)));
-    ASSERT_THAT(Time::fromString("123456", "ffffff"), Time(Time::Milliseconds(123) + Time::Microseconds(456)));
-    ASSERT_THAT(Time::fromString("1234567", "fffffff"), Time(Time::Milliseconds(123) + Time::Microseconds(456) + Time::Nanoseconds(700)));
-    ASSERT_THAT(Time::fromString("12345678", "ffffffff"), Time(Time::Milliseconds(123) + Time::Microseconds(456) + Time::Nanoseconds(780)));
-    ASSERT_THAT(Time::fromString("123456789", "fffffffff"), Time(Time::Milliseconds(123) + Time::Microseconds(456) + Time::Nanoseconds(789)));
-    ASSERT_THAT(Time::fromString("14:32:09.123456789", "hh:mm:ss.fffffffff"), Time(14, 32, 9, 123456789));
+    ASSERT_THAT(Time::fromString("1234", "ffff"), Time(Time::Microseconds(123400)));
+    ASSERT_THAT(Time::fromString("12345", "fffff"), Time(Time::Microseconds(123450)));
+    ASSERT_THAT(Time::fromString("123456", "ffffff"), Time(Time::Microseconds(123456)));
+    ASSERT_THAT(Time::fromString("1234567", "fffffff"), Time(Time::Nanoseconds(123456700)));
+    ASSERT_THAT(Time::fromString("12345678", "ffffffff"), Time(Time::Nanoseconds(123456780)));
+    ASSERT_THAT(Time::fromString("123456789", "fffffffff"), Time(Time::Nanoseconds(123456789)));
+    ASSERT_THAT(Time::fromString("14:32:09.123456789", "hh:mm:ss.fffffffff"), Time(14, 32, 9, Time::Nanoseconds(123456789)));
 }
 
 TEST(TimeTest, ReturnsTimeAsNanoseconds) {
-    ASSERT_THAT(Time(23, 56, 33, 978432162).toNanoseconds(), Eq(86193978432162));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toNanoseconds(), Eq(86193978432162));
 }
 
 TEST(TimeTest, ReturnsTimeAsMicroseconds) {
-    ASSERT_THAT(Time(23, 56, 33, 978432162).toMicroseconds(), Eq(86193978432));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMicroseconds(), Eq(86193978432));
 }
 
 TEST(TimeTest, ReturnsTimeAsMilliseconds) {
-    ASSERT_THAT(Time(23, 56, 33, 978432162).toMilliseconds(), Eq(86193978));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMilliseconds(), Eq(86193978));
 }
 
 TEST(TimeTest, ReturnsTimeAsSeconds) {
-    ASSERT_THAT(Time(23, 56, 33, 978432162).toSeconds(), Eq(86193));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toSeconds(), Eq(86193));
 }
 
 TEST(TimeTest, ReturnsTimeAsMinutes) {
-    ASSERT_THAT(Time(23, 56, 33, 978432162).toMinutes(), Eq(1436));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMinutes(), Eq(1436));
 }
 
 TEST(TimeTest, ReturnsTimeAsHours) {
-    ASSERT_THAT(Time(23, 56, 33, 978432162).toHours(), Eq(23));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toHours(), Eq(23));
 }
 
 TEST(TimeTest, ReturnsBrokenStdTimeRepresentation) {
