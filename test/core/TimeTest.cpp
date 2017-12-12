@@ -30,35 +30,36 @@ TEST(TimeTest, InitializesToCurrentTimeIfDefaultConstructed) {
     std::time_t tTime = std::time(nullptr);
     std::tm* tmTime = std::gmtime(&tTime);
 
-    ASSERT_THAT(myTime.hours(), Eq(tmTime->tm_hour));
-    ASSERT_THAT(myTime.minutes(), Eq(tmTime->tm_min));
-    ASSERT_THAT(myTime.seconds(), Eq(tmTime->tm_sec));
+    ASSERT_THAT(myTime.hour(), Eq(tmTime->tm_hour));
+    ASSERT_THAT(myTime.minute(), Eq(tmTime->tm_min));
+    ASSERT_THAT(myTime.second(), Eq(tmTime->tm_sec));
 
     ASSERT_TRUE(myTime.isValid());
 }
 
 TEST(TimeTest, InitializesToGivenTime) {
     Time myTime(13, 44, 2);
-    ASSERT_THAT(myTime.hours(), Eq(13));
-    ASSERT_THAT(myTime.minutes(), Eq(44));
-    ASSERT_THAT(myTime.seconds(), Eq(2));
-    ASSERT_THAT(myTime.milliseconds(), Eq(0));
-    ASSERT_THAT(myTime.microseconds(), Eq(0));
-    ASSERT_THAT(myTime.nanoseconds(), Eq(0));
+    ASSERT_THAT(myTime.hour(), Eq(13));
+    ASSERT_THAT(myTime.minute(), Eq(44));
+    ASSERT_THAT(myTime.second(), Eq(2));
+    ASSERT_THAT(myTime.millisecond(), Eq(0));
+    ASSERT_THAT(myTime.microsecond(), Eq(0));
+    ASSERT_THAT(myTime.nanosecond(), Eq(0));
 }
 
 TEST(TimeTest, InitializesToGivenTimeWithFractions) {
     Time myTime(13, 44, 2, Time::Nanoseconds(781945521));
-    ASSERT_THAT(myTime.hours(), Eq(13));
-    ASSERT_THAT(myTime.minutes(), Eq(44));
-    ASSERT_THAT(myTime.seconds(), Eq(2));
-    ASSERT_THAT(myTime.milliseconds(), Eq(781));
-    ASSERT_THAT(myTime.microseconds(), Eq(781945));
-    ASSERT_THAT(myTime.nanoseconds(), Eq(781945521));
+    ASSERT_THAT(myTime.hour(), Eq(13));
+    ASSERT_THAT(myTime.minute(), Eq(44));
+    ASSERT_THAT(myTime.second(), Eq(2));
+    ASSERT_THAT(myTime.millisecond(), Eq(781));
+    ASSERT_THAT(myTime.microsecond(), Eq(781945));
+    ASSERT_THAT(myTime.nanosecond(), Eq(781945521));
 }
 
 TEST(TimeTest, isValidReturnsFalseIfHoursExceded24) {
-    ASSERT_TRUE(Time(Time::Hours(24)).isValid());
+    ASSERT_TRUE(Time(Time::Hours(23)).isValid());
+    ASSERT_FALSE(Time(Time::Hours(24)).isValid());
     ASSERT_FALSE(Time(Time::Hours(25)).isValid());
 }
 
@@ -111,8 +112,24 @@ TEST(TimeTest, AddSubtractNanoseconds) {
     ASSERT_THAT(Time(Time::Nanoseconds(8974362676001)).subtractNanoseconds(445), Eq(Time(2, 29, 34, Time::Nanoseconds(362675556))));
 }
 
+TEST(TimeTest, TestsAdditionSubtractionOperators) {
+    ASSERT_THAT(Time(11, 23, 11) - Time(10, 23, 11), Eq(Time::Hours(1)));
+    ASSERT_THAT(Time(11, 23, 11) - Time::Hours(10), Eq(Time(1, 23, 11)));
+    ASSERT_THAT(Time(1, 23, 11) + Time::Hours(10), Eq(Time(11, 23, 11)));
+}
+
+TEST(TimeTest, TestsDifferenceBetweenTwoTimes) {
+    ASSERT_THAT(Time::hoursBetween(Time(11, 23, 25), Time(10, 23, 29)), Eq(1));
+    ASSERT_THAT(Time::minutesBetween(Time(11, 23, 11), Time(11, 53, 11)), Eq(-30));
+    ASSERT_THAT(Time::secondsBetween(Time(9, 23, 55), Time(9, 23, 35)), Eq(20));
+    ASSERT_THAT(Time::millisecondsBetween(Time(7, 23, 11, 850), Time(7, 23, 12, 900)), Eq(-1050));
+    ASSERT_THAT(Time::microsecondsBetween(Time(13, 23, 20, Time::Microseconds(789500)), Time(13, 23, 20, Time::Microseconds(789400))), Eq(100));
+    ASSERT_THAT(Time::nanosecondsBetween(Time(18, 56, 5, Time::Nanoseconds(789500235)), Time(18, 56, 5, Time::Nanoseconds(789500135))), Eq(100));
+}
+
 TEST(TimeTest, Format12Hours) {
     ASSERT_THAT(Time(23, 45, 2).toString("H:m:s"), StrEq("11:45:2"));
+    ASSERT_THAT(Time(0, 45, 2).toString("H:m:s"), StrEq("12:45:2"));
 }
 
 TEST(TimeTest, Format12HoursTwoDigits) {
@@ -122,17 +139,15 @@ TEST(TimeTest, Format12HoursTwoDigits) {
 TEST(TimeTest, FormatMeridiemLabelSmallLetters) {
     ASSERT_THAT(Time(3, 45, 2).toString("HH:mm:ss a"), StrEq("03:45:02 am"));
     ASSERT_THAT(Time(13, 45, 2).toString("HH:mm:ss a"), StrEq("01:45:02 pm"));
-    ASSERT_THAT(Time(Time::Hours(0)).toString("HH:mm:ss a"), StrEq("00:00:00 am"));
+    ASSERT_THAT(Time(Time::Hours(0)).toString("HH:mm:ss a"), StrEq("12:00:00 am"));
     ASSERT_THAT(Time(Time::Hours(12)).toString("HH:mm:ss a"), StrEq("12:00:00 pm"));
-    ASSERT_THAT(Time(Time::Hours(24)).toString("HH:mm:ss a"), StrEq("00:00:00 am"));
 }
 
 TEST(TimeTest, FormatMeridiemLabelCapitalLetters) {
     ASSERT_THAT(Time(3, 45, 2).toString("HH:mm:ss A"), StrEq("03:45:02 AM"));
     ASSERT_THAT(Time(13, 45, 2).toString("HH:mm:ss A"), StrEq("01:45:02 PM"));
-    ASSERT_THAT(Time(Time::Hours(0)).toString("HH:mm:ss A"), StrEq("00:00:00 AM"));
+    ASSERT_THAT(Time(Time::Hours(0)).toString("HH:mm:ss A"), StrEq("12:00:00 AM"));
     ASSERT_THAT(Time(Time::Hours(12)).toString("HH:mm:ss A"), StrEq("12:00:00 PM"));
-    ASSERT_THAT(Time(Time::Hours(24)).toString("HH:mm:ss A"), StrEq("00:00:00 AM"));
 }
 
 TEST(TimeTest, FormatPM) {
@@ -275,9 +290,9 @@ TEST(TimeTest, ReturnsTimeAsHours) {
 TEST(TimeTest, ReturnsBrokenStdTimeRepresentation) {
     Time myTime(14, 32, 9);
     std::tm tmTime = myTime.toBrokenStdTime();
-    ASSERT_THAT(tmTime.tm_hour, Eq(myTime.hours()));
-    ASSERT_THAT(tmTime.tm_min, Eq(myTime.minutes()));
-    ASSERT_THAT(tmTime.tm_sec, Eq(myTime.seconds()));
+    ASSERT_THAT(tmTime.tm_hour, Eq(myTime.hour()));
+    ASSERT_THAT(tmTime.tm_min, Eq(myTime.minute()));
+    ASSERT_THAT(tmTime.tm_sec, Eq(myTime.second()));
 }
 
 TEST(TimeTest, ReturnsScalarStdTimeRepresentation) {
@@ -285,3 +300,14 @@ TEST(TimeTest, ReturnsScalarStdTimeRepresentation) {
     std::time_t tTime = myTime.toScalarStdTime();
     ASSERT_THAT(tTime, Eq(myTime.toSeconds()));
 }
+
+TEST(TimeTest, SerializesToDeserializesFromStream) {
+    Time myTime;
+    std::stringstream ss;
+    ss << Time(14, 32, 9);
+    ss >> myTime;
+    ASSERT_THAT(myTime, Eq(Time(14, 32, 9)));
+}
+
+
+
