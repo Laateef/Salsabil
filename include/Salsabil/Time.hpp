@@ -24,6 +24,8 @@
 
 #include <chrono>
 
+#include "internal/StringHelper.hpp"
+
 namespace Salsabil {
 
     /** 
@@ -377,7 +379,7 @@ namespace Salsabil {
 
             for (int pos = 0; pos < format.size(); ++pos) {
                 char currChar = format[pos];
-                const int charCount = countIdenticalCharsFrom(pos, format);
+                const int charCount = Utility::countIdenticalCharsFrom(pos, format);
                 pos += charCount - 1; // skip all identical characters except the last.
 
                 if (currChar == 'h') {
@@ -428,58 +430,34 @@ namespace Salsabil {
          * For further information about the <i>format</i> parameter, see toString(). 
          */
         static Time fromString(const std::string& timeString, const std::string& format) {
-            std::stringstream input;
-            input << timeString;
             int _hours = 0, _minutes = 0, _seconds = 0;
-            long _fractions = 0;
+            long _subseconds = 0;
 
-            for (int pos = 0; pos < format.size(); ++pos) {
-                char currChar = format[pos];
-                char nextChar = (pos + 1) < format.size() ? format[pos + 1] : '\0';
-                if (currChar == 'h') {
-                    if (nextChar == 'h') {
-                        ++pos; // Skip 'h' the next loop. for the sake of not looping over it again.
-                    }
-                    input >> _hours;
-                } else if (currChar == 'H') {
-                    if (nextChar == 'H') {
-                        ++pos; // Skip 'h' the next loop. for the sake of not looping over it again.
-                    }
-                    input >> _hours;
-                    _hours = (_hours > 12 ? _hours - 12 : _hours);
-                } else if (currChar == 'a') {
-                    std::string meridiem;
-                    input >> meridiem;
-                    if (meridiem == "pm") {
-                        _hours = (_hours > 12 ? _hours : _hours + 12);
+            for (int fmtPos = 0, timPos = 0; fmtPos < format.size() && timPos < timeString.size(); ++fmtPos) {
+                const int charCount = Utility::countIdenticalCharsFrom(fmtPos, format);
+                fmtPos += charCount - 1; // skip all identical characters except the last.
 
-                    }
-                } else if (currChar == 'A') {
-                    std::string meridiem;
-                    input >> meridiem;
-                    if (meridiem == "PM") {
+                if (format[fmtPos] == 'h' || format[fmtPos] == 'H') {
+                    _hours = Utility::readIntAndAdvancePos(timeString, timPos, 2);
+                } else if (format[fmtPos] == 'm') {
+                    _minutes = Utility::readIntAndAdvancePos(timeString, timPos, 2);
+                } else if (format[fmtPos] == 's') {
+                    _seconds = Utility::readIntAndAdvancePos(timeString, timPos, 2);
+                } else if (format[fmtPos] == 'f') {
+                    std::string subsecondString = timeString.substr(timPos, charCount);
+                    _subseconds = std::stoi(subsecondString.append(9 - subsecondString.size(), '0'));
+                    timPos += charCount;
+                } else if (format[fmtPos] == 'a' || format[fmtPos] == 'A') {
+                    if (timeString.substr(timPos, 2) == "pm" || timeString.substr(timPos, 2) == "PM") {
                         _hours = (_hours > 12 ? _hours : _hours + 12);
+                        timPos += 2;
                     }
-                } else if (currChar == 'm') {
-                    if (nextChar == 'm') {
-                        ++pos; // Skip 'm' the next loop. for the sake of not looping over it again.
-                    }
-                    input >> _minutes;
-                } else if (currChar == 's') {
-                    if (nextChar == 's') {
-                        ++pos; // Skip 's' the next loop. for the sake of not looping over it again.
-                    }
-                    input >> _seconds;
-                } else if (currChar == 'f') {
-                    input >> _fractions;
-                    _fractions = fractionsToNanoseconds(_fractions);
-                    pos += countIdenticalCharsFrom(pos, format) - 1; // Skip f..., have been read.
                 } else {
-                    input.seekg(input.tellg() + decltype(input)::pos_type(1));
+                    ++timPos;
                 }
             }
 
-            return Time(Hours(_hours) + Minutes(_minutes) + Seconds(_seconds) + Nanoseconds(_fractions));
+            return Time(Hours(_hours) + Minutes(_minutes) + Seconds(_seconds) + Nanoseconds(_subseconds));
         }
 
         /**  
@@ -568,23 +546,6 @@ namespace Salsabil {
         //@}
 
     private:
-
-        static int countIdenticalCharsFrom(std::size_t pos, const std::string& str) {
-            int idx = pos + 1;
-
-            while (idx < str.size() && str[idx] == str[pos])
-                ++idx;
-
-            return idx - pos;
-        }
-
-        static long fractionsToNanoseconds(long fraction) {
-            const int Precision = 9;
-            std::string fractionString = std::to_string(fraction);
-            std::string padddedFractionString = fractionString.append(Precision - fractionString.size(), '0');
-            return std::stol(padddedFractionString);
-        }
-
         Duration mTimeDuration;
     };
 

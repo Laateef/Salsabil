@@ -80,3 +80,23 @@ std::string Utility::toString(const char* value) {
 std::string Utility::toString(std::string value) {
     return value;
 }
+
+int Utility::countIdenticalCharsFrom(std::size_t pos, const std::string& str) {
+    int idx = pos + 1;
+
+    while (idx < str.size() && str[idx] == str[pos])
+        ++idx;
+
+    return idx - pos;
+}
+
+int Utility::readIntAndAdvancePos(const std::string& str, int& pos, int maxDigitCount) {
+    std::string intStr;
+
+    while (intStr.size() < maxDigitCount && pos < str.size() && std::isdigit(str[pos])) {
+        intStr += str[pos];
+        ++pos;
+    }
+
+    return std::stoi(intStr);
+}

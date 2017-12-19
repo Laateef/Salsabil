@@ -226,6 +226,7 @@ TEST(DateTest, FormatDate) {
     ASSERT_THAT(Date(2017, 12, 15).toString("dddd dd MMMM yyyy"), StrEq("Friday 15 December 2017"));
     ASSERT_THAT(Date(2017, 12, 16).toString("yyyy-MM-dd E"), StrEq("2017-12-16 CE"));
     ASSERT_THAT(Date(-2017, 12, 16).toString("#yyyy.MM.dd"), StrEq("-2017.12.16"));
+    ASSERT_THAT(Date(2017, 12, 19).toString("yyyyMMdd"), StrEq("20171219"));
 }
 
 TEST(DateTest, ParsesYearInDateString) {
@@ -266,6 +267,7 @@ TEST(DateTest, ReturnsDateFromString) {
     ASSERT_THAT(Date::fromString("Friday 15 December 2017", "dddd dd MMMM yyyy"), Eq(Date(2017, 12, 15)));
     ASSERT_THAT(Date::fromString("2017-12-16 CE", "yyyy-MM-dd E"), Eq(Date(2017, 12, 16)));
     ASSERT_THAT(Date::fromString("-2017.12.16", "#yyyy.MM.dd"), Eq(Date(-2017, 12, 16)));
+    ASSERT_THAT(Date::fromString("20171219", "yyyyMMdd"), Eq(Date(2017, 12, 19)));
 }
 
 TEST(DateTest, SerializesDeserializes) {

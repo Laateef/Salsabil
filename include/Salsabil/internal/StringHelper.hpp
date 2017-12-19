@@ -31,7 +31,7 @@ namespace Salsabil {
 
         // returns a delimiter-separated concatenation of the strings in stringList.
 
-//        std::string join(const std::vector<std::string>& stringList, std::string delimiter);
+        //        std::string join(const std::vector<std::string>& stringList, std::string delimiter);
 
         template<class Iter>
         std::string join(Iter first, Iter last, std::string delimiter) {
@@ -69,6 +69,10 @@ namespace Salsabil {
         std::string toString(const char* value);
 
         std::string toString(std::string value);
+
+        int countIdenticalCharsFrom(std::size_t pos, const std::string& str);
+
+        int readIntAndAdvancePos(const std::string& str, int& pos, int maxDigitCount = std::numeric_limits<int>::max());
     }
 }
 #endif // SALSABIL_STRINGUTILS_HPP

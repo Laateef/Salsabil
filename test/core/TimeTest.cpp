@@ -239,6 +239,10 @@ TEST(TimeTest, FormatsFractionsWhenNanosecondsAreZero) {
     ASSERT_THAT(t.toString("hh:mm:ss.fff fff fff"), StrEq("07:09:02.675 675 675"));
 }
 
+TEST(TimeTest, FormatTimeInCongestedFormat) {
+    ASSERT_THAT(Time(3, 45, 2).toString("hhmmss"), StrEq("034502"));
+}
+
 TEST(TimeTest, CreatesTimeFromFormattedString) {
     ASSERT_THAT(Time::fromString("9", "h"), Time(Time::Hours(9)));
     ASSERT_THAT(Time::fromString("01", "hh"), Time(Time::Hours(1)));
@@ -247,7 +251,6 @@ TEST(TimeTest, CreatesTimeFromFormattedString) {
     ASSERT_THAT(Time::fromString("01", "HH"), Time(Time::Hours(1)));
     ASSERT_THAT(Time::fromString("01 pm", "HH a"), Time(Time::Hours(13)));
     ASSERT_THAT(Time::fromString("01 PM", "HH A"), Time(Time::Hours(13)));
-    ASSERT_THAT(Time::fromString("1 PM", "HH A"), Time(Time::Hours(13)));
     ASSERT_THAT(Time::fromString("3", "m"), Time(Time::Minutes(3)));
     ASSERT_THAT(Time::fromString("03", "mm"), Time(Time::Minutes(3)));
     ASSERT_THAT(Time::fromString("37", "s"), Time(Time::Seconds(37)));
@@ -262,6 +265,7 @@ TEST(TimeTest, CreatesTimeFromFormattedString) {
     ASSERT_THAT(Time::fromString("12345678", "ffffffff"), Time(Time::Nanoseconds(123456780)));
     ASSERT_THAT(Time::fromString("123456789", "fffffffff"), Time(Time::Nanoseconds(123456789)));
     ASSERT_THAT(Time::fromString("14:32:09.123456789", "hh:mm:ss.fffffffff"), Time(14, 32, 9, Time::Nanoseconds(123456789)));
+    ASSERT_THAT(Time::fromString("143209", "hhmmss"), Time(14, 32, 9));
 }
 
 TEST(TimeTest, ReturnsTimeAsNanoseconds) {

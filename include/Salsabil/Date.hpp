@@ -23,8 +23,8 @@
 #define SALSABIL_DATE_HPP
 
 #include <chrono>
-#include <string>
-#include <algorithm>
+
+#include "internal/StringHelper.hpp"
 
 namespace Salsabil {
 
@@ -409,7 +409,7 @@ namespace Salsabil {
                 y = std::abs(y);
 
                 char currChar = format[pos];
-                const int charCount = countIdenticalCharsFrom(pos, format);
+                const int charCount = Utility::countIdenticalCharsFrom(pos, format);
                 pos += charCount - 1; // skip all identical characters except the last.
 
                 if (currChar == '#') {
@@ -463,11 +463,10 @@ namespace Salsabil {
             int y = 1, m = 1, d = 1;
 
             for (int fmtPos = 0, datPos = 0; fmtPos < format.size() && datPos < dateString.size(); ++fmtPos) {
-                char currChar = format[fmtPos];
-                const int charCount = countIdenticalCharsFrom(fmtPos, format);
+                const int charCount = Utility::countIdenticalCharsFrom(fmtPos, format);
                 fmtPos += charCount - 1; // skip all identical characters except the last.
 
-                if (currChar == '#') {
+                if (format[fmtPos] == '#') {
                     if (dateString[datPos] == '+') {
                         y = 1;
                         ++datPos;
@@ -475,11 +474,9 @@ namespace Salsabil {
                         y = -1;
                         ++datPos;
                     }
-                } else if (currChar == 'y') {
+                } else if (format[fmtPos] == 'y') {
                     if (charCount == 1) {
-                        std::string yStr = readIntFromString(dateString, datPos);
-                        y = y * std::stoi(yStr);
-                        datPos += yStr.size();
+                        y = y * Utility::readIntAndAdvancePos(dateString, datPos, 4);
                     } else if (charCount == 2) {
                         y = y * std::stoi(dateString.substr(datPos, charCount));
                         y += 2000;
@@ -488,7 +485,7 @@ namespace Salsabil {
                         y = y * std::stoi(dateString.substr(datPos, charCount));
                         datPos += charCount;
                     }
-                } else if (currChar == 'E') {
+                } else if (format[fmtPos] == 'E') {
                     if (dateString.substr(datPos, 2) == "CE") {
                         y = std::abs(y);
                         datPos += 2;
@@ -496,11 +493,9 @@ namespace Salsabil {
                         y = -std::abs(y);
                         datPos += 3;
                     }
-                } else if (currChar == 'M') {
+                } else if (format[fmtPos] == 'M') {
                     if (charCount == 1) {
-                        std::string mStr = readIntFromString(dateString, datPos);
-                        m = std::stoi(mStr);
-                        datPos += mStr.size();
+                        m = Utility::readIntAndAdvancePos(dateString, datPos, 4);
                     } else if (charCount == 2) {
                         m = std::stoi(dateString.substr(datPos, charCount));
                         datPos += charCount;
@@ -513,11 +508,9 @@ namespace Salsabil {
                         m = (std::find(monthNameArray + 12, monthNameArray + 23, dateString.substr(datPos, newPos - datPos)) - monthNameArray) - 11;
                         datPos = newPos;
                     }
-                } else if (currChar == 'd') {
+                } else if (format[fmtPos] == 'd') {
                     if (charCount == 1) {
-                        std::string dStr = readIntFromString(dateString, datPos);
-                        d = std::stoi(dStr);
-                        datPos += dStr.size();
+                        d = Utility::readIntAndAdvancePos(dateString, datPos, 2);
                     } else if (charCount == 2) {
                         d = std::stoi(dateString.substr(datPos, charCount));
                         datPos += charCount;
@@ -529,10 +522,9 @@ namespace Salsabil {
                     }
                 } else {
                     // not a pattern, skip it in the date string.
-                    datPos += 1;
+                    ++datPos;
                 }
             }
-            //                        m = (std::find(monthNameArray + ((charCount == 4) * 12), monthNameArray + ((charCount == 4) * 12) + 11, dateString.substr(datPos, newPos - datPos)) - monthNameArray) - ((charCount == 4) * 12) + 1;
 
             return Date(y, m, d);
         }
@@ -589,22 +581,6 @@ namespace Salsabil {
         }
 
     private:
-
-        static int countIdenticalCharsFrom(std::size_t pos, const std::string& str) {
-            int idx = pos + 1;
-
-            while (idx < str.size() && str[idx] == str[pos])
-                ++idx;
-
-            return idx - pos;
-        }
-
-        static std::string readIntFromString(const std::string& str, int pos) {
-            int newPos = pos;
-            while (newPos < str.size() && std::isdigit(str[newPos])) ++newPos;
-
-            return str.substr(pos, newPos - pos);
-        }
 
         Date getFirstWeekDate(int year) {
             Date d(year, 1, 1);
