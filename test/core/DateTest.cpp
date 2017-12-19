@@ -21,7 +21,6 @@
 
 #include "gmock/gmock.h"
 #include "Date.hpp"
-#include "date/date.h"
 
 using namespace ::testing;
 using namespace Salsabil;
@@ -69,45 +68,44 @@ TEST(DateTest, TestsComparisons) {
     ASSERT_TRUE(Date(2012, 3, 4) >= Date(2012, 3, 3));
 }
 
-TEST(DateTest, AddsSubtractsDuration) {
-    ASSERT_TRUE(Date(2012, 1, 1) + Date::Days(30) == Date(2012, 1, 31));
-    ASSERT_TRUE(Date(2012, 1, 31) - Date::Days(30) == Date(2012, 1, 1));
-}
-
 TEST(DateTest, AddsSubtractsDays) {
-    ASSERT_TRUE(Date(2045, 3, 27).addDays(5) == Date(2045, 4, 1));
-    ASSERT_TRUE(Date(2045, 4, 1).subtractDays(5) == Date(2045, 3, 27));
+    ASSERT_THAT(Date(2045, 3, 27).addDays(5), Eq(Date(2045, 4, 1)));
+    ASSERT_THAT(Date(2045, 4, 1).subtractDays(5), Eq(Date(2045, 3, 27)));
 }
 
 TEST(DateTest, AddsSubtractsMonths) {
     // when the sum of augend and addend is smaller than 12.
-    ASSERT_TRUE(Date(2012, 3, 27).addMonths(5) == Date(2012, 8, 27));
+    ASSERT_THAT(Date(2012, 3, 27).addMonths(5), Eq(Date(2012, 8, 27)));
 
     // when the sum of augend and addend is bigger than 12.
-    ASSERT_TRUE(Date(2012, 8, 27).addMonths(10) == Date(2013, 6, 27));
+    ASSERT_THAT(Date(2012, 8, 27).addMonths(10), Eq(Date(2013, 6, 27)));
 
     // when the result of addition is 12. due to the representation of month is 1...12 rather than 0...11.  
-    ASSERT_TRUE(Date(2012, 8, 27).addMonths(4) == Date(2012, 12, 27));
+    ASSERT_THAT(Date(2012, 8, 27).addMonths(4), Eq(Date(2012, 12, 27)));
 
     // when the minuend is bigger than the subtrahend.
-    ASSERT_TRUE(Date(2013, 6, 27).subtractMonths(5) == Date(2013, 1, 27));
+    ASSERT_THAT(Date(2013, 6, 27).subtractMonths(5), Eq(Date(2013, 1, 27)));
 
     // when the minuend is smaller than the subtrahend.
-    ASSERT_TRUE(Date(2013, 1, 27).subtractMonths(10) == Date(2012, 3, 27));
+    ASSERT_THAT(Date(2013, 1, 27).subtractMonths(10), Eq(Date(2012, 3, 27)));
 
     // when the result of subtraction is 12. due to the representation of month is 1...12 rather than 0...11.  
-    ASSERT_TRUE(Date(2013, 1, 27).subtractMonths(1) == Date(2012, 12, 27));
+    ASSERT_THAT(Date(2013, 1, 27).subtractMonths(1), Eq(Date(2012, 12, 27)));
 
+    // when the ending day/month combination does not exist in the resulting month/year, returns the latest valid date.
+    ASSERT_THAT(Date(2013, 1, 31).addMonths(1), Eq(Date(2013, 2, 28)));
+    ASSERT_THAT(Date(2013, 2, 28).addMonths(1), Eq(Date(2013, 3, 28)));
+    ASSERT_THAT(Date(2012, 3, 31).subtractMonths(1), Eq(Date(2012, 2, 29)));
 }
 
 TEST(DateTest, AddsSubtractsYears) {
-    ASSERT_TRUE(Date(1966, 11, 2).addYears(40) == Date(2006, 11, 2));
-    ASSERT_TRUE(Date(2006, 11, 2).subtractYears(40) == Date(1966, 11, 2));
+    ASSERT_THAT(Date(1966, 11, 2).addYears(40), Eq(Date(2006, 11, 2)));
+    ASSERT_THAT(Date(2006, 11, 2).subtractYears(40), Eq(Date(1966, 11, 2)));
 }
 
 TEST(DateTest, TestsWhetherTheYearIsLeap) {
     ASSERT_FALSE(Date::isLeapYear(2011));
-    ASSERT_TRUE(Date::isLeapYear(2012));
+    ASSERT_TRUE(Date(2012, 1, 1).isLeapYear());
 }
 
 TEST(DateTest, ReturnsDayOfWeek) {
@@ -128,6 +126,7 @@ TEST(DateTest, ReturnsDayOfYear) {
 }
 
 TEST(DateTest, ReturnsDaysInMonth) {
+    ASSERT_THAT(Date::daysInMonthOfYear(1970, 1), Eq(31));
     ASSERT_THAT(Date(1970, 1, 1).daysInMonth(), Eq(31));
     ASSERT_THAT(Date(1970, 2, 1).daysInMonth(), Eq(28));
     ASSERT_THAT(Date(2012, 2, 1).daysInMonth(), Eq(29));
@@ -148,7 +147,7 @@ TEST(DateTest, ReturnsDaysInYear) {
     ASSERT_THAT(Date(2012, 2, 2).daysInYear(), Eq(366));
 }
 
-TEST(DateTest, ReturnsDaysBetweenTwoDates) {
+TEST(DateTest, ReturnsNumberOfDaysBetweenTwoDates) {
     ASSERT_THAT(Date::daysBetween(Date(1970, 1, 1), Date(1971, 1, 1)), Eq(365));
     ASSERT_THAT(Date::daysBetween(Date(2012, 1, 1), Date(2016, 1, 1)), Eq(1461));
 }
@@ -189,29 +188,90 @@ TEST(DateTest, FromJulianDay) {
     ASSERT_THAT(Date::fromJulianDay(2458092), Eq(Date(2017, 12, 4)));
 }
 
-TEST(DateTest, AddsSubtractsYearsMMM) {
-    using namespace date;
-    date::year_month_day ymd(year(2017), month(12), day(2));
-    //            std::cout << weekday(sys_days(ymd)) << std::endl;
-
-    // 31556952 --- 1 year in seconds
-    //    ymd += years{46};
-    //
-    //    ASSERT_THAT(ymd.year().operator int(), Eq(2012));
-    //    ASSERT_THAT(ymd.month().operator unsigned(), Eq(2));
-    //    ASSERT_THAT(ymd.day().operator unsigned(), Eq(29));
-    //
-    //    ymd += months{12};
-    //    ASSERT_THAT(ymd.year().operator int(), Eq(2013));
-    //    ASSERT_THAT(ymd.month().operator unsigned(), Eq(2));
-    //    ASSERT_THAT(ymd.day().operator unsigned(), Eq(29));
-    //
-    //    ASSERT_FALSE(ymd.ok());
-
-    //    ymd -= years{40};
-    //    std::cout << std::chrono::seconds(ymd.operator sys_days().time_since_epoch()) << std::endl;
-    //    ASSERT_THAT(ymd.year().operator int(), Eq(1966));
-    //    ASSERT_THAT(ymd.month().operator unsigned(), Eq(11));
-    //    ASSERT_THAT(ymd.day().operator unsigned(), Eq(2));
+TEST(DateTest, FormatYear) {
+    ASSERT_THAT(Date(572, 4, 22).toString("y"), StrEq("572"));
+    ASSERT_THAT(Date(1999, 4, 13).toString("yy"), StrEq("99"));
+    ASSERT_THAT(Date(1901, 6, 11).toString("yy"), StrEq("01"));
+    ASSERT_THAT(Date(1999, 7, 4).toString("yyyy"), StrEq("1999"));
+    ASSERT_THAT(Date(-795, 7, 23).toString("yyyy"), StrEq("0795"));
+    ASSERT_THAT(Date(-1795, 7, 23).toString("#yyyy"), StrEq("-1795"));
+    ASSERT_THAT(Date(1795, 7, 23).toString("#yyyy"), StrEq("+1795"));
+    ASSERT_THAT(Date(-1795, 7, 23).toString("yyyy E"), StrEq("1795 BCE"));
+    ASSERT_THAT(Date(1795, 7, 23).toString("yyyy E"), StrEq("1795 CE"));
+    ASSERT_THAT(Date(1795, 7, 23).toString("yy . yy"), StrEq("95 . 95"));
 }
 
+TEST(DateTest, FormatMonth) {
+    ASSERT_THAT(Date(572, 4, 22).toString("M"), StrEq("4"));
+    ASSERT_THAT(Date(1999, 5, 13).toString("MM"), StrEq("05"));
+    ASSERT_THAT(Date(1999, 11, 13).toString("MM"), StrEq("11"));
+    ASSERT_THAT(Date(1901, 6, 11).toString("MMM"), StrEq("Jun"));
+    ASSERT_THAT(Date(1999, 7, 30).toString("MMMM"), StrEq("July"));
+}
+
+TEST(DateTest, FormatDay) {
+    ASSERT_THAT(Date(572, 4, 22).toString("d"), StrEq("22"));
+    ASSERT_THAT(Date(1999, 4, 3).toString("dd"), StrEq("03"));
+    ASSERT_THAT(Date(1901, 6, 11).toString("dd"), StrEq("11"));
+    ASSERT_THAT(Date(1999, 7, 4).toString("ddd"), StrEq("Sun"));
+    ASSERT_THAT(Date(2017, 12, 15).toString("dddd"), StrEq("Friday"));
+}
+
+TEST(DateTest, FormatDate) {
+    // examples for testing purposes.
+    ASSERT_THAT(Date(572, 4, 22).toString("y.M.d"), StrEq("572.4.22"));
+    ASSERT_THAT(Date(2017, 4, 3).toString("yy.MM.dd"), StrEq("17.04.03"));
+    ASSERT_THAT(Date(2007, 5, 11).toString("yy.MMM.dd"), StrEq("07.May.11"));
+    ASSERT_THAT(Date(2017, 12, 10).toString("ddd dd.MM.yyyy"), StrEq("Sun 10.12.2017"));
+    ASSERT_THAT(Date(2017, 12, 15).toString("dddd dd MMMM yyyy"), StrEq("Friday 15 December 2017"));
+    ASSERT_THAT(Date(2017, 12, 16).toString("yyyy-MM-dd E"), StrEq("2017-12-16 CE"));
+    ASSERT_THAT(Date(-2017, 12, 16).toString("#yyyy.MM.dd"), StrEq("-2017.12.16"));
+}
+
+TEST(DateTest, ParsesYearInDateString) {
+    ASSERT_THAT(Date::fromString("572", "y"), Eq(Date(572, 1, 1)));
+    ASSERT_THAT(Date::fromString("12", "yy"), Eq(Date(2012, 1, 1)));
+    ASSERT_THAT(Date::fromString("1999", "yyyy"), Eq(Date(1999, 1, 1)));
+    ASSERT_THAT(Date::fromString("-572", "#y"), Eq(Date(-572, 1, 1)));
+    ASSERT_THAT(Date::fromString("+572", "#y"), Eq(Date(572, 1, 1)));
+    ASSERT_THAT(Date::fromString("-1999", "#yyyy"), Eq(Date(-1999, 1, 1)));
+    ASSERT_THAT(Date::fromString("+1999", "#yyyy"), Eq(Date(1999, 1, 1)));
+    ASSERT_THAT(Date::fromString("572 CE", "y E"), Eq(Date(572, 1, 1)));
+    ASSERT_THAT(Date::fromString("572 BCE", "y E"), Eq(Date(-572, 1, 1)));
+    ASSERT_THAT(Date::fromString("1999 CE", "yyyy E"), Eq(Date(1999, 1, 1)));
+    ASSERT_THAT(Date::fromString("1999 BCE", "yyyy E"), Eq(Date(-1999, 1, 1)));
+}
+
+TEST(DateTest, ParsesMonthInDateString) {
+    ASSERT_THAT(Date::fromString("1", "M"), Eq(Date(1, 1, 1)));
+    ASSERT_THAT(Date::fromString("02", "MM"), Eq(Date(1, 2, 1)));
+    ASSERT_THAT(Date::fromString("Aug", "MMM"), Eq(Date(1, 8, 1)));
+    ASSERT_THAT(Date::fromString("September", "MMMM"), Eq(Date(1, 9, 1)));
+    ASSERT_THAT(Date::fromString("January, 2009", "MMMM, yyyy"), Eq(Date(2009, 1, 1)));
+    ASSERT_THAT(Date::fromString("December, 2011", "MMMM, yyyy"), Eq(Date(2011, 12, 1)));
+}
+
+TEST(DateTest, ParsesDayInDateString) {
+    ASSERT_THAT(Date::fromString("1", "d"), Eq(Date(1, 1, 1)));
+    ASSERT_THAT(Date::fromString("02", "dd"), Eq(Date(1, 1, 2)));
+    ASSERT_THAT(Date::fromString("Thu, 22.05.17", "ddd, dd.MM.yy"), Eq(Date(2017, 5, 22)));
+    ASSERT_THAT(Date::fromString("Thursday, 01.12.1989", "dddd, dd.MM.yyyy"), Eq(Date(1989, 12, 1)));
+}
+
+TEST(DateTest, ReturnsDateFromString) {
+    ASSERT_THAT(Date::fromString("572.4.22", "y.M.d"), Eq(Date(572, 4, 22)));
+    ASSERT_THAT(Date::fromString("17.04.03", "yy.MM.dd"), Eq(Date(2017, 4, 3)));
+    ASSERT_THAT(Date::fromString("07.May.11", "yy.MMM.dd"), Eq(Date(2007, 5, 11)));
+    ASSERT_THAT(Date::fromString("Sun 10.12.2017", "ddd dd.MM.yyyy"), Eq(Date(2017, 12, 10)));
+    ASSERT_THAT(Date::fromString("Friday 15 December 2017", "dddd dd MMMM yyyy"), Eq(Date(2017, 12, 15)));
+    ASSERT_THAT(Date::fromString("2017-12-16 CE", "yyyy-MM-dd E"), Eq(Date(2017, 12, 16)));
+    ASSERT_THAT(Date::fromString("-2017.12.16", "#yyyy.MM.dd"), Eq(Date(-2017, 12, 16)));
+}
+
+TEST(DateTest, SerializesDeserializes) {
+    Date d;
+    std::stringstream ss;
+    ss << Date(2014, 11, 9);
+    ss >> d;
+    ASSERT_THAT(d, Eq(Date(2014, 11, 9)));
+}

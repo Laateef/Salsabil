@@ -37,15 +37,15 @@ namespace Salsabil {
      * A Time object can be created by giving the number of hours, minutes, seconds, milliseconds, etc. explicitly. Also, it can be created from std::time_t, std::tm or std::chrono::system_clock::time_point object.
      * 
      * A default-constructed time object is initialized to the current time in system's clock. Note that the accuracy depends on the accuracy of the underlying operating system; not all systems provide 1-millisecond accuracy.
-     * The #hour(), #minute(), #second(), #millisecond(), #microsecond() and #nanosecond() functions provide access to the number of hours, minutes, seconds, milliseconds, microseconds and nanoseconds of the time, respectively. 
+     * The hour(), minute(), second(), millisecond(), microsecond() and nanosecond() functions provide access to the number of hours, minutes, seconds, milliseconds, microseconds and nanoseconds of the time, respectively. 
      * 
      * Time supports C++11 chrono library's way of manipulating time, i.e. time constructors and functions can takes duration parameters such as std::chrono::hours(1), std::chrono::minutes(1), etc. For convenience, Time defines aliases to these intervals which may be used instead of chrono's intervals. Time intervals are Hours, Minutes, Seconds, Milliseconds, Microseconds and Nanoseconds. which correspond to std:chrono::hours, std:chrono::minutes, std:chrono::seconds, std:chrono::milliseconds, std:chrono::microseconds and std:chrono::nanoseconds, respectively.
      * 
-     * The functions #toHours(), #toMinutes(), #toSeconds(), #toMilliseconds(), #toMicroseconds() and #toNanoseconds() return the whole time passed since midnight as a number of hours, minutes, seconds, milliseconds, microseconds or nanoseconds, respectively.
+     * The functions toHours(), toMinutes(), toSeconds(), toMilliseconds(), toMicroseconds() and toNanoseconds() return the whole time passed since midnight as a number of hours, minutes, seconds, milliseconds, microseconds or nanoseconds, respectively.
      * 
-     * The toString() function can be used to get a textual representation of the time formatted according to a given formatting string.
+     * The toString() function can be used to get a textual representation of the time formatted according to a given formatter string.
      * 
-     * Time provides the comparison operators to compare two Time objects. Time A is considered smaller than Time B if A is earlier than B, and so on.
+     * Time provides the comparison operators to compare two Time objects. Time A is considered earlier than Time B if A is smaller than B, and so on.
      * Time also provides functions to compute the difference between two times in hours, minutes, etc.
      * 
      */
@@ -55,9 +55,7 @@ namespace Salsabil {
                 <int, std::ratio_multiply<std::ratio<24>, std::chrono::hours::period>>;
 
     public:
-        /**  
-         * @name Aliases
-         */
+        /** @name Aliases */
         //@{
         using Hours = std::chrono::hours;
         using Minutes = std::chrono::minutes;
@@ -67,9 +65,7 @@ namespace Salsabil {
         using Nanoseconds = std::chrono::nanoseconds;
         //@}
 
-        /**  
-         * @name Constructors and Destructors
-         */
+        /** @name Constructors and Destructors */
         //@{
 
         /** @brief Constructs a Time object from the given <i>hours</i>, <i>minutes</i> and <i>seconds</i>. */
@@ -82,31 +78,34 @@ namespace Salsabil {
         : mTimeDuration(Hours(hours) + Minutes(minutes) + Seconds(seconds) + Milliseconds(milliseconds)) {
         }
 
-        /** @brief Constructs a Time object from the given <i>hours</i>, <i>minutes</i>, <i>seconds</i> and <i>subseconds</i>.
+        /**
+         * @brief Constructs a Time object from the given <i>hours</i>, <i>minutes</i>, <i>seconds</i> and <i>subseconds</i>.
          *  
-         *  The <i>subseconds</i> parameter can be any fine duration of Time such as Time::Microseconds(54), or any fine duration of chrono such as std::chrono::nanoseconds(435223543).
+         * The <i>subseconds</i> parameter can be any fine duration of Time such as Time::Microseconds(54), or any fine duration of chrono such as std::chrono::nanoseconds(435223543).
          */
         explicit Time(int hours, int minutes, int seconds, const Duration& subseconds)
         : mTimeDuration(Hours(hours) + Minutes(minutes) + Seconds(seconds) + subseconds) {
         }
 
-        /** @brief Constructs a Time object from the given <i>hours</i>, <i>minutes</i>, <i>seconds</i> and <i>subseconds</i>. 
+        /** 
+         * @brief Constructs a Time object from the given <i>hours</i>, <i>minutes</i>, <i>seconds</i> and <i>subseconds</i>. 
          * 
-         *  All parameters can be Time::Duration or std::chrono::duration intervals. For example:
+         * All parameters can be Time::Duration or std::chrono::duration intervals. For example:
          * {@code
-         * Time myTime(Time::Hours(2), Time::Minutes(55), Time::Seconds(10), Time::Nanoseconds(435223543));
-         * Time sameTime(std::chrono::hours(2), std::chrono::::minutes(55), std::chrono::::seconds(10), std::chrono::::nanoseconds(435223543));
+         *    Time myTime(Time::Hours(2), Time::Minutes(55), Time::Seconds(10), Time::Nanoseconds(435223543));
+         *    Time sameTime(std::chrono::hours(2), std::chrono::::minutes(55), std::chrono::::seconds(10), std::chrono::::nanoseconds(435223543));
          * }
          */
         explicit Time(Hours hours, Minutes minutes, Seconds seconds, const Duration& subseconds)
         : mTimeDuration(hours + minutes + seconds + subseconds) {
         }
 
-        /** @brief Constructs a Time object from the given <i>duration</i>. 
+        /** 
+         * @brief Constructs a Time object from the given <i>duration</i>. 
          * 
-         *  @param duration can be Time::Duration or std::chrono::duration. For example:
+         * @param duration can be Time::Duration or std::chrono::duration. For example:
          * {@code
-         *  Time myTime(Time::Hours(2) + Time::Minutes(55));
+         *    Time myTime(Time::Hours(2) + Time::Minutes(55));
          * }
          */
         explicit Time(const Duration& duration)
@@ -128,28 +127,30 @@ namespace Salsabil {
         : mTimeDuration(Seconds(scalarStdTime)) {
         }
 
-        /** @brief Copy-constructs a Time object from the given time object <i>time</i>. */
+        /** @brief Copy-constructs a Time object from the given <i>time</i> object. */
         Time(const Time& time) = default;
 
-        /** @brief Move-constructs a Time object from the given time object <i>time</i>. */
+        /** @brief Move-constructs a Time object from the given <i>time</i> object. */
         Time(Time&& time) = default;
 
-        /** @brief Default constructor. Constructs a Time object initialized to the current time obtained from the system clock. */
+        /** @brief Default constructor. Constructs a Time object and initializes it to the current time obtained from the system clock. */
         Time()
         : mTimeDuration(std::chrono::duration_cast<Nanoseconds>(std::chrono::system_clock::now().time_since_epoch() % Days(1))) {
         }
 
-        /** @brief Virtual destructor. */
+        /** @brief Default destructor. */
         virtual ~Time() {
         }
         //@}
 
-        /** @brief Returns whether this time object represents a valid time. A valid Time object doesn't have more than 23 hours.
+        /** 
+         * @brief Returns whether this time object represents a valid time. A valid Time object doesn't have more than 23 hours.
+         * 
          * {@code
-         * Time t(Time::Hours(24));
-         * t.isValid(); // return false
-         * t = Time(22, 1, 55);
-         * t.isValid(); // return true
+         *    Time t(Time::Hours(24));
+         *    t.isValid(); // return false
+         *    t = Time(22, 1, 55);
+         *    t.isValid(); // return true
          * }
          */
         bool isValid() const {
@@ -160,7 +161,7 @@ namespace Salsabil {
         }
 
         /**  
-         * @name Time Querying Functions
+         * @name Querying Functions
          * @brief These functions retrieve the different parts of time.
          */
         //@{
@@ -343,11 +344,12 @@ namespace Salsabil {
             return std::time_t(toSeconds());
         }
 
-        /** @brief Returns the time as a string formatted according to the formatting string <i>format</i>. 
+        /** 
+         * @brief Returns the time as a string formatted according to the formatting string <i>format</i>. 
          * 
-         * The formatting string may contain the following expressions:
+         * The formatting string may contain the following patterns:
          * <table>
-         * <tr><th>Expression<th>Meaning
+         * <tr><th>Pattern<th>Meaning
          * <tr><td>h<td>one-digit hour (0, 23)\n
          * <tr><td>hh<td>two-digit hour (00, 23)\n
          * <tr><td>H<td>one-digit hour (1, 12)\n
@@ -365,6 +367,8 @@ namespace Salsabil {
          * <tr><td>fffffff<td>seven-digit subsecond (0000000, 9999999)\n
          * <tr><td>ffffffff<td>eight-digit subsecond (00000000, 99999999)\n
          * <tr><td>fffffffff<td>nine-digit subsecond (000000000, 999999999)\n
+         * <tr><td>a<td>before/after noon indicator(i.e. am or pm)\n
+         * <tr><td>A<td>before/after noon indicator(i.e. AM or PM)\n
          * </table>
          * Any character in the formatting string not listed above will be inserted as is into the output string. 
          */
@@ -373,46 +377,38 @@ namespace Salsabil {
 
             for (int pos = 0; pos < format.size(); ++pos) {
                 char currChar = format[pos];
-                char nextChar = (pos + 1) < format.size() ? format[pos + 1] : '\0';
+                const int charCount = countIdenticalCharsFrom(pos, format);
+                pos += charCount - 1; // skip all identical characters except the last.
+
                 if (currChar == 'h') {
-                    if (nextChar == 'h') {
-                        ++pos; // Skip 'h' the next loop. for the sake of not looping over it again.
-                        if (hour() < 10) {
-                            output << '0';
-                        }
+                    if (charCount == 1) {
+                        output << hour();
+                    } else if (charCount == 2) {
+                        output << std::setfill('0') << std::setw(2) << hour();
                     }
-                    output << hour();
                 } else if (currChar == 'H') {
                     int hours12f = ((hour() == 0 || hour() == 12) ? 12 : hour() % 12);
-                    if (nextChar == 'H') {
-                        ++pos; // Skip 'H' the next loop. for the sake of not looping over it again.
-                        if (hours12f < 10) {
-                            output << '0';
-                        }
+                    if (charCount == 1) {
+                        output << hours12f;
+                    } else if (charCount == 2) {
+                        output << std::setfill('0') << std::setw(2) << hours12f;
                     }
-                    output << hours12f;
                 } else if (currChar == 'm') {
-                    if (nextChar == 'm') {
-                        ++pos; // Skip 'm' the next loop. for the sake of not looping over it again.
-                        if (minute() < 10) {
-                            output << '0';
-                        }
+                    if (charCount == 1) {
+                        output << minute();
+                    } else if (charCount == 2) {
+                        output << std::setfill('0') << std::setw(2) << minute();
                     }
-                    output << minute();
                 } else if (currChar == 's') {
-                    if (nextChar == 's') {
-                        ++pos; //Skip 's' the next loop. for the sake of not looping over it again.
-                        if (second() < 10) {
-                            output << '0';
-                        }
+                    if (charCount == 1) {
+                        output << second();
+                    } else if (charCount == 2) {
+                        output << std::setfill('0') << std::setw(2) << second();
                     }
-                    output << second();
                 } else if (currChar == 'f') {
-                    const int precision = std::count(format.begin() + pos, format.end(), 'f');
-                    std::string fraction = std::to_string(std::chrono::duration_cast<Nanoseconds>(mTimeDuration % Seconds(1)).count());
-                    std::string padddedFraction = fraction.insert(0, 9 - fraction.size(), '0');
-                    output << padddedFraction.substr(0, precision);
-                    pos += precision - 1; // Skip the f..., have been read.
+                    std::string subseconds = std::to_string(std::chrono::duration_cast<Nanoseconds>(mTimeDuration % Seconds(1)).count());
+                    std::string padddedSubsecondsString = subseconds.insert(0, 9 - subseconds.size(), '0');
+                    output << padddedSubsecondsString.substr(0, charCount);
                 } else if (currChar == 'A') {
                     output << (hour() >= 12 ? "PM" : "AM");
                 } else if (currChar == 'a') {
@@ -426,9 +422,10 @@ namespace Salsabil {
         }
         //@}
 
-        /** @brief Returns a Time object containing the time parsed from the string <i>timeString</i> according to the format <i>format</i>.
+        /** 
+         * @brief Returns a Time object that represents the time parsed from the string <i>timeString</i> according to the format <i>format</i>.
          * 
-         *  For further information about the <i>format</i> parameter, See #toString(). 
+         * For further information about the <i>format</i> parameter, see toString(). 
          */
         static Time fromString(const std::string& timeString, const std::string& format) {
             std::stringstream input;
@@ -476,7 +473,7 @@ namespace Salsabil {
                 } else if (currChar == 'f') {
                     input >> _fractions;
                     _fractions = fractionsToNanoseconds(_fractions);
-                    pos += std::count(format.begin() + pos, format.end(), 'f') - 1; // Skip the f..., have been read.
+                    pos += countIdenticalCharsFrom(pos, format) - 1; // Skip f..., have been read.
                 } else {
                     input.seekg(input.tellg() + decltype(input)::pos_type(1));
                 }
@@ -496,7 +493,7 @@ namespace Salsabil {
             return this->mTimeDuration < time.mTimeDuration;
         }
 
-        /** @brief Returns whether this time is earlier than <i>time</i> or equals to it. */
+        /** @brief Returns whether this time is earlier than <i>time</i> or equal to it. */
         bool operator<=(const Time& time) const {
             return this->mTimeDuration <= time.mTimeDuration;
         }
@@ -506,7 +503,7 @@ namespace Salsabil {
             return this->mTimeDuration > time.mTimeDuration;
         }
 
-        /** @brief Returns whether this time is later than <i>time</i> or equals to it. */
+        /** @brief Returns whether this time is later than <i>time</i> or equal to it. */
         bool operator>=(const Time& time) const {
             return this->mTimeDuration >= time.mTimeDuration;
         }
@@ -571,7 +568,15 @@ namespace Salsabil {
         //@}
 
     private:
-        Duration mTimeDuration;
+
+        static int countIdenticalCharsFrom(std::size_t pos, const std::string& str) {
+            int idx = pos + 1;
+
+            while (idx < str.size() && str[idx] == str[pos])
+                ++idx;
+
+            return idx - pos;
+        }
 
         static long fractionsToNanoseconds(long fraction) {
             const int Precision = 9;
@@ -579,10 +584,13 @@ namespace Salsabil {
             std::string padddedFractionString = fractionString.append(Precision - fractionString.size(), '0');
             return std::stol(padddedFractionString);
         }
+
+        Duration mTimeDuration;
     };
 
-    /**  
-     * @name Serialization/Deserialization Functions
+    /** 
+     * @relates Time
+     * @name Serialization/Deserialization Functions 
      */
     //@{
 

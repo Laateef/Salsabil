@@ -236,6 +236,7 @@ TEST(TimeTest, FormatsFractionsWhenNanosecondsAreZero) {
     ASSERT_THAT(t.toString("hh:mm:ss.fffffff"), StrEq("07:09:02.6758690"));
     ASSERT_THAT(t.toString("hh:mm:ss.ffffffff"), StrEq("07:09:02.67586900"));
     ASSERT_THAT(t.toString("hh:mm:ss.fffffffff"), StrEq("07:09:02.675869000"));
+    ASSERT_THAT(t.toString("hh:mm:ss.fff fff fff"), StrEq("07:09:02.675 675 675"));
 }
 
 TEST(TimeTest, CreatesTimeFromFormattedString) {
@@ -301,7 +302,7 @@ TEST(TimeTest, ReturnsScalarStdTimeRepresentation) {
     ASSERT_THAT(tTime, Eq(myTime.toSeconds()));
 }
 
-TEST(TimeTest, SerializesToDeserializesFromStream) {
+TEST(TimeTest, SerializesDeserializes) {
     Time myTime;
     std::stringstream ss;
     ss << Time(14, 32, 9);
