@@ -30,18 +30,19 @@ namespace Salsabil {
 
     /** 
      * @class Time
-     * @brief Time is an immutable time class representing a time without a time zone in the ISO-8601 calendar system, such as 09:55:02. 
+     * @brief Time is an immutable time class representing a time without a time zone in the ISO-8601 calendar system, such as "09:55:02". 
      * 
      * Time is represented to nanosecond precision. For example, the value "09:55:02.123456789" can be stored in a Time object.
-     * Time uses the 24-hour clock format; it describes the time as the number of hours, minutes, seconds, milliseconds, etc. since midnight.
-     * Time provides functions for comparing times, manipulating a time by adding or subtracting intervals and converting the whole time into minutes, seconds or any finer interval.
+     * Time uses the 24-hour clock format. It describes the time as the number of nanoseconds since midnight.
+     * Time provides functions for comparing times, manipulating a time by adding or subtracting intervals and converting the whole time into minutes, seconds or any finer duration.
      * 
      * A Time object can be created by giving the number of hours, minutes, seconds, milliseconds, etc. explicitly. Also, it can be created from std::time_t, std::tm or std::chrono::system_clock::time_point object.
      * 
-     * A default-constructed time object is initialized to the current time in system's clock. Note that the accuracy depends on the accuracy of the underlying operating system; not all systems provide 1-millisecond accuracy.
+     * A default-constructed time object is set to the current time in system's clock. Note that the accuracy depends on the accuracy of the underlying operating system; not all systems provide 1-millisecond accuracy.
      * The hour(), minute(), second(), millisecond(), microsecond() and nanosecond() functions provide access to the number of hours, minutes, seconds, milliseconds, microseconds and nanoseconds of the time, respectively. 
      * 
-     * Time supports C++11 chrono library's way of manipulating time, i.e. time constructors and functions can takes duration parameters such as std::chrono::hours(1), std::chrono::minutes(1), etc. For convenience, Time defines aliases to these intervals which may be used instead of chrono's intervals. Time intervals are Hours, Minutes, Seconds, Milliseconds, Microseconds and Nanoseconds. which correspond to std:chrono::hours, std:chrono::minutes, std:chrono::seconds, std:chrono::milliseconds, std:chrono::microseconds and std:chrono::nanoseconds, respectively.
+     * Time supports C++11 chrono library's way of manipulating time, i.e. time constructors and functions can takes duration parameters such as std::chrono::hours(1), std::chrono::minutes(1), etc. 
+     * For convenience, Time defines aliases to these intervals which may be used instead of chrono's intervals. Time intervals are Hours, Minutes, Seconds, Milliseconds, Microseconds and Nanoseconds, which correspond to std:chrono::hours, std:chrono::minutes, std:chrono::seconds, std:chrono::milliseconds, std:chrono::microseconds and std:chrono::nanoseconds, respectively.
      * 
      * The functions toHours(), toMinutes(), toSeconds(), toMilliseconds(), toMicroseconds() and toNanoseconds() return the whole time passed since midnight as a number of hours, minutes, seconds, milliseconds, microseconds or nanoseconds, respectively.
      * 
@@ -57,19 +58,24 @@ namespace Salsabil {
                 <int, std::ratio_multiply<std::ratio<24>, std::chrono::hours::period>>;
 
     public:
-        /** @name Aliases */
+        /** @name Durations */
         //@{
-        using Hours = std::chrono::hours;
-        using Minutes = std::chrono::minutes;
-        using Seconds = std::chrono::seconds;
-        using Milliseconds = std::chrono::milliseconds;
-        using Microseconds = std::chrono::microseconds;
+        /** @brief Nanosecond duration. */
         using Nanoseconds = std::chrono::nanoseconds;
+        /** @brief Microsecond duration. */
+        using Microseconds = std::chrono::microseconds;
+        /** @brief Millisecond duration. */
+        using Milliseconds = std::chrono::milliseconds;
+        /** @brief Second duration. */
+        using Seconds = std::chrono::seconds;
+        /** @brief Minute duration. */
+        using Minutes = std::chrono::minutes;
+        /** @brief Hour duration. */
+        using Hours = std::chrono::hours;
         //@}
 
         /** @name Constructors and Destructors */
         //@{
-
         /** @brief Constructs a Time object from the given <i>hours</i>, <i>minutes</i> and <i>seconds</i>. */
         explicit Time(int hours, int minutes, int seconds);
 
@@ -86,7 +92,7 @@ namespace Salsabil {
         /** 
          * @brief Constructs a Time object from the given <i>hours</i>, <i>minutes</i>, <i>seconds</i> and <i>subseconds</i>. 
          * 
-         * All parameters can be Time::Duration or std::chrono::duration intervals. For example:
+         * All parameters can be Time::Duration or std::chrono::duration. For example:
          * {@code
          *    Time myTime(Time::Hours(2), Time::Minutes(55), Time::Seconds(10), Time::Nanoseconds(435223543));
          *    Time sameTime(std::chrono::hours(2), std::chrono::::minutes(55), std::chrono::::seconds(10), std::chrono::::nanoseconds(435223543));
@@ -95,7 +101,7 @@ namespace Salsabil {
         explicit Time(Hours hours, Minutes minutes, Seconds seconds, const Duration& subseconds);
 
         /** 
-         * @brief Constructs a Time object from the given <i>duration</i>. 
+         * @brief Constructs a Time object from <i>duration</i> elapsed since midnight. 
          * 
          * @param duration can be Time::Duration or std::chrono::duration. For example:
          * {@code
@@ -104,7 +110,7 @@ namespace Salsabil {
          */
         explicit Time(const Duration& duration);
 
-        /** @brief Constructs a Time object from the standard library chrono time point <i>timePoint</i>. */
+        /** @brief Constructs a Time object from the standard library's chrono time point <i>timePoint</i>. */
         explicit Time(const std::chrono::system_clock::time_point& timePoint);
 
         /** @brief Constructs a Time object from a standard library <b>std::tm</b> object <i>brokenStdTime</i>. */
@@ -113,13 +119,13 @@ namespace Salsabil {
         /** @brief Constructs a Time object from a standard library <b>std::time_t</b> object <i>scalarStdTime</i>. */
         explicit Time(std::time_t scalarStdTime);
 
-        /** @brief Copy-constructs a Time object from the given <i>time</i> object. */
-        Time(const Time& time) = default;
+        /** @brief Copy-constructs a Time object from <i>other</i>. */
+        Time(const Time& other) = default;
 
-        /** @brief Move-constructs a Time object from the given <i>time</i> object. */
-        Time(Time&& time) = default;
+        /** @brief Move-constructs a Time object from <i>other</i>. */
+        Time(Time&& other) = default;
 
-        /** @brief Default constructor. Constructs a Time object and initializes it to the current time obtained from the system clock. */
+        /** @brief Default constructor. Constructs a Time object that is set to midnight. */
         Time();
 
         /** @brief Default destructor. */
@@ -128,10 +134,22 @@ namespace Salsabil {
         //@}
 
         /** 
-         * @brief Returns whether this time object represents a valid time. A valid Time object doesn't have more than 23 hours.
+         * @brief Returns a Time object set to the current time obtained from the system clock. 
          * 
+         * <b>Note</b> that the returned time is not the current local time, rather it is the current system time; the current time in Coordinated Universal Time (UTC). 
+         */
+        static Time currentTime();
+
+        /** 
+         * @brief Returns whether this time object represents a valid time. 
+         * 
+         * A valid time is a fraction of a day; the time to be valid must be between 00:00:00 and 23:59:59. Thus, negative times or times containing 24 hours or more are considered invalid.
          * {@code
-         *    Time t(Time::Hours(24));
+         *    Time t; // set to midnight
+         *    t.isValid(); // return true
+         *    t = Time(Time::Hours(-1));
+         *    t.isValid(); // return false
+         *    t = Time(Time::Hours(24));
          *    t.isValid(); // return false
          *    t = Time(22, 1, 55);
          *    t.isValid(); // return true
@@ -139,12 +157,8 @@ namespace Salsabil {
          */
         bool isValid() const;
 
-        /**  
-         * @name Querying Functions
-         * @brief These functions retrieve the different parts of time.
-         */
+        /** @name Querying Functions */
         //@{
-
         /** @brief Returns the hour of day (0, 23). */
         int hour() const;
 
@@ -166,54 +180,54 @@ namespace Salsabil {
 
         /**  
          * @name Addition/Subtraction Functions and Operators
-         * @brief These functions return a new Time object with some time interval added/subtracted.
+         * @brief These functions return a new Time object with some time duration added/subtracted.
          */
         //@{
 
-        /** @brief Returns a new copy of this Time object with the time duration <i>duration</i> added to it. */
+        /** @brief Returns the result of adding <i>duration</i> to this time as a new Time object. */
         Time addDuration(const Duration& duration) const;
 
-        /** @brief Returns a new copy of this Time object with the time duration <i>duration</i> subtracted from it. */
+        /** @brief Returns the result of subtracting <i>duration</i> from this time as a new Time object. */
         Time subtractDuration(const Duration& duration) const;
 
-        /** @brief Returns a new copy of this Time object with the hours <i>hours</i> added to it. */
+        /** @brief Returns the result of adding <i>hours</i> to this time as a new Time object. */
         Time addHours(int hours) const;
 
-        /** @brief Returns a new copy of this Time object with the hours <i>hours</i> subtracted from it. */
+        /** @brief Returns the result of subtracting <i>hours</i> from this time as a new Time object. */
         Time subtractHours(int hours) const;
 
-        /** @brief Returns a new copy of this Time object with the minutes <i>minutes</i> added to it. */
+        /** @brief Returns the result of adding <i>minutes</i> to this time as a new Time object. */
         Time addMinutes(int minutes) const;
 
-        /** @brief Returns a new copy of this Time object with the minutes <i>minutes</i> subtracted from it. */
+        /** @brief Returns the result of subtracting <i>minutes</i> from this time as a new Time object. */
         Time subtractMinutes(int minutes) const;
 
-        /** @brief Returns a new copy of this Time object with the seconds <i>seconds</i> added to it. */
+        /** @brief Returns the result of adding <i>seconds</i> to this time as a new Time object. */
         Time addSeconds(int seconds) const;
 
-        /** @brief Returns a new copy of this Time object with the seconds <i>seconds</i> subtracted from it. */
+        /** @brief Returns the result of subtracting <i>seconds</i> from this time as a new Time object. */
         Time subtractSeconds(int seconds) const;
 
-        /** @brief Returns a new copy of this Time object with the milliseconds <i>milliseconds</i> added to it. */
+        /** @brief Returns the result of adding <i>milliseconds</i> to this time as a new Time object. */
         Time addMilliseconds(int milliseconds) const;
 
-        /** @brief Returns a new copy of this Time object with the milliseconds <i>milliseconds</i> subtracted from it. */
+        /** @brief Returns the result of subtracting <i>milliseconds</i> from this time as a new Time object. */
         Time subtractMilliseconds(int milliseconds) const;
 
-        /** @brief Returns a new copy of this Time object with the microseconds <i>microseconds</i> added to it. */
+        /** @brief Returns the result of adding <i>microseconds</i> to this time as a new Time object. */
         Time addMicroseconds(int microseconds) const;
 
-        /** @brief Returns a new copy of this Time object with the microseconds <i>microseconds</i> subtracted from it. */
+        /** @brief Returns the result of subtracting <i>microseconds</i> from this time as a new Time object. */
         Time subtractMicroseconds(int microseconds) const;
 
-        /** @brief Returns a new copy of this Time object with the nanoseconds <i>nanoseconds</i> added to it. */
+        /** @brief Returns the result of adding <i>nanoseconds</i> to this time as a new Time object. */
         Time addNanoseconds(int nanoseconds) const;
 
-        /** @brief Returns a new copy of this Time object with the nanoseconds <i>nanoseconds</i> subtracted from it. */
+        /** @brief Returns the result of subtracting <i>nanoseconds</i> from this time as a new Time object. */
         Time subtractNanoseconds(int nanoseconds) const;
 
-        /** @brief Returns the result of subtracting <i>time</i> from this time as Time::Nanoseconds. */
-        Nanoseconds operator-(const Time& time) const;
+        /** @brief Returns the result of subtracting <i>other</i> from this time as a Time::Nanoseconds duration. */
+        Nanoseconds operator-(const Time& other) const;
 
         /** @brief Returns the result of subtracting <i>duration</i> from this time as a new Time object. */
         Time operator-(const Duration& duration) const;
@@ -228,7 +242,7 @@ namespace Salsabil {
          */
         //@{
 
-        /** @brief Returns the elapsed hours since midnight. The returned value may exceed 23. */
+        /** @brief Returns the elapsed hours since midnight. If this time is invalid, the returned may exceed 23. See isValid(). */
         int toHours() const;
 
         /** @brief Returns the elapsed minutes since midnight. */
@@ -246,8 +260,8 @@ namespace Salsabil {
         /** @brief Returns the elapsed nanoseconds since midnight. */
         long long toNanoseconds() const;
 
-        /** @brief Returns a std::chrono::system_clock::time_point representation of this time. */
-        std::chrono::system_clock::time_point toTimePoint() const;
+        /** @brief Returns a std::chrono::nanoseconds duration that represents this time. */
+        Nanoseconds toStdDuration() const;
 
         /** @brief Returns a std::tm representation of this time. */
         std::tm toBrokenStdTime() const;
@@ -256,7 +270,7 @@ namespace Salsabil {
         std::time_t toScalarStdTime() const;
 
         /** 
-         * @brief Returns the time as a string formatted according to the formatting string <i>format</i>. 
+         * @brief Returns the time as a string formatted according to the formatter string <i>format</i>. 
          * 
          * The formatting string may contain the following patterns:
          * <table>
@@ -281,17 +295,17 @@ namespace Salsabil {
          * <tr><td>a<td>before/after noon indicator(i.e. am or pm)\n
          * <tr><td>A<td>before/after noon indicator(i.e. AM or PM)\n
          * </table>
-         * Any character in the formatting string not listed above will be inserted as is into the output string. 
+         * Any character in the formatter string not listed above will be inserted as is into the output string. 
          */
         std::string toString(const std::string& format) const;
         //@}
 
         /** 
-         * @brief Returns a Time object that represents the time parsed from the string <i>timeString</i> according to the format <i>format</i>.
+         * @brief Returns a Time object from the string <i>time</i> according to the formatter <i>format</i>.
          * 
          * For further information about the <i>format</i> parameter, see toString(). 
          */
-        static Time fromString(const std::string& timeString, const std::string& format);
+        static Time fromString(const std::string& time, const std::string& format);
 
         /**  
          * @name Comparison Operators
@@ -299,23 +313,23 @@ namespace Salsabil {
          */
         //@{
 
-        /** @brief Returns whether this time is earlier than <i>time</i>. */
-        bool operator<(const Time& time) const;
+        /** @brief Returns whether this time is earlier than <i>other</i>. */
+        bool operator<(const Time& other) const;
 
-        /** @brief Returns whether this time is earlier than <i>time</i> or equal to it. */
-        bool operator<=(const Time& time) const;
+        /** @brief Returns whether this time is earlier than <i>other</i> or equal to it. */
+        bool operator<=(const Time& other) const;
 
-        /** @brief Returns whether this time is later than <i>time</i>. */
-        bool operator>(const Time& time) const;
+        /** @brief Returns whether this time is later than <i>other</i>. */
+        bool operator>(const Time& other) const;
 
-        /** @brief Returns whether this time is later than <i>time</i> or equal to it. */
-        bool operator>=(const Time& time) const;
+        /** @brief Returns whether this time is later than <i>other</i> or equal to it. */
+        bool operator>=(const Time& other) const;
 
-        /** @brief Returns whether this time is equal to <i>time</i>. */
-        bool operator==(const Time& time) const;
+        /** @brief Returns whether this time is equal to <i>other</i>. */
+        bool operator==(const Time& other) const;
 
-        /** @brief Returns whether this time is different from <i>time</i>. */
-        bool operator!=(const Time& time) const;
+        /** @brief Returns whether this time is different from <i>other</i>. */
+        bool operator!=(const Time& other) const;
         //@}
 
         /**  
@@ -323,34 +337,34 @@ namespace Salsabil {
          */
         //@{
         /** @brief Copy assignment operator. */
-        Time& operator=(const Time& time) = default;
+        Time& operator=(const Time& other) = default;
 
         /** @brief Move assignment operator. */
-        Time& operator=(Time&& time) = default;
+        Time& operator=(Time&& other) = default;
         //@}
 
         /**  
          * @name Calculating Difference Between Times
-         * @brief These functions return the duration between time <i>from</i> and time <i>to</i>. If <i>to</i> is earlier than (smaller than) <i>from</i>, then the difference is negative.
+         * @brief These functions return the duration between two times <i>from</i> and <i>to</i>. If <i>from</i> is earlier than (smaller than) <i>to</i>, then the difference is negative.
          */
         //@{
 
-        /** @brief Returns the number of hours between time <i>from</i> and time <i>to</i>. */
+        /** @brief Returns the number of hours between <i>from</i> and <i>to</i>. */
         static int hoursBetween(const Time& from, const Time& to);
 
-        /** @brief Returns the number of minutes between time <i>from</i> and time <i>to</i>. */
+        /** @brief Returns the number of minutes between <i>from</i> and <i>to</i>. */
         static int minutesBetween(const Time& from, const Time& to);
 
-        /** @brief Returns the number of seconds between time <i>from</i> and time <i>to</i>. */
+        /** @brief Returns the number of seconds between <i>from</i> and <i>to</i>. */
         static int secondsBetween(const Time& from, const Time& to);
 
-        /** @brief Returns the number of milliseconds between time <i>from</i> and time <i>to</i>. */
+        /** @brief Returns the number of milliseconds between <i>from</i> and <i>to</i>. */
         static int millisecondsBetween(const Time& from, const Time& to);
 
-        /** @brief Returns the number of microseconds between time <i>from</i> and time <i>to</i>. */
+        /** @brief Returns the number of microseconds between <i>from</i> and <i>to</i>. */
         static int microsecondsBetween(const Time& from, const Time& to);
 
-        /** @brief Returns the number of nanoseconds between time <i>from</i> and time <i>to</i>. */
+        /** @brief Returns the number of nanoseconds between <i>from</i> and <i>to</i>. */
         static int nanosecondsBetween(const Time& from, const Time& to);
         //@}
 

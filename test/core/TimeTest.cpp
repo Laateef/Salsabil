@@ -25,8 +25,18 @@
 using namespace ::testing;
 using namespace Salsabil;
 
-TEST(TimeTest, InitializesToCurrentTimeIfDefaultConstructed) {
+TEST(TimeTest, IsMidnightIfDefaultConstructed) {
     Time myTime;
+    ASSERT_THAT(myTime.hour(), Eq(0));
+    ASSERT_THAT(myTime.minute(), Eq(0));
+    ASSERT_THAT(myTime.second(), Eq(0));
+    ASSERT_THAT(myTime.millisecond(), Eq(0));
+    ASSERT_THAT(myTime.microsecond(), Eq(0));
+    ASSERT_THAT(myTime.nanosecond(), Eq(0));
+}
+
+TEST(TimeTest, ReturnsCurrentTime) {
+    Time myTime = Time::currentTime();
     std::time_t tTime = std::time(nullptr);
     std::tm* tmTime = std::gmtime(&tTime);
 
@@ -57,7 +67,8 @@ TEST(TimeTest, InitializesToGivenTimeWithFractions) {
     ASSERT_THAT(myTime.nanosecond(), Eq(781945521));
 }
 
-TEST(TimeTest, isValidReturnsFalseIfHoursExceded24) {
+TEST(TimeTest, IsValidOnlyIfWithinDayDurationNoLessNoMore) {
+    ASSERT_FALSE(Time(Time::Hours(-1)).isValid());
     ASSERT_TRUE(Time(Time::Hours(23)).isValid());
     ASSERT_FALSE(Time(Time::Hours(24)).isValid());
     ASSERT_FALSE(Time(Time::Hours(25)).isValid());
@@ -119,12 +130,12 @@ TEST(TimeTest, TestsAdditionSubtractionOperators) {
 }
 
 TEST(TimeTest, TestsDifferenceBetweenTwoTimes) {
-    ASSERT_THAT(Time::hoursBetween(Time(11, 23, 25), Time(10, 23, 29)), Eq(1));
-    ASSERT_THAT(Time::minutesBetween(Time(11, 23, 11), Time(11, 53, 11)), Eq(-30));
-    ASSERT_THAT(Time::secondsBetween(Time(9, 23, 55), Time(9, 23, 35)), Eq(20));
-    ASSERT_THAT(Time::millisecondsBetween(Time(7, 23, 11, 850), Time(7, 23, 12, 900)), Eq(-1050));
-    ASSERT_THAT(Time::microsecondsBetween(Time(13, 23, 20, Time::Microseconds(789500)), Time(13, 23, 20, Time::Microseconds(789400))), Eq(100));
-    ASSERT_THAT(Time::nanosecondsBetween(Time(18, 56, 5, Time::Nanoseconds(789500235)), Time(18, 56, 5, Time::Nanoseconds(789500135))), Eq(100));
+    ASSERT_THAT(Time::hoursBetween(Time(10, 23, 25), Time(11, 23, 29)), Eq(1));
+    ASSERT_THAT(Time::minutesBetween(Time(11, 23, 11), Time(11, 53, 11)), Eq(30));
+    ASSERT_THAT(Time::secondsBetween(Time(9, 23, 55), Time(9, 23, 35)), Eq(-20));
+    ASSERT_THAT(Time::millisecondsBetween(Time(7, 23, 11, 850), Time(7, 23, 12, 900)), Eq(1050));
+    ASSERT_THAT(Time::microsecondsBetween(Time(13, 23, 20, Time::Microseconds(789500)), Time(13, 23, 20, Time::Microseconds(789400))), Eq(-100));
+    ASSERT_THAT(Time::nanosecondsBetween(Time(18, 56, 5, Time::Nanoseconds(789500235)), Time(18, 56, 5, Time::Nanoseconds(789500135))), Eq(-100));
 }
 
 TEST(TimeTest, Format12Hours) {
@@ -148,6 +159,10 @@ TEST(TimeTest, FormatMeridiemLabelCapitalLetters) {
     ASSERT_THAT(Time(13, 45, 2).toString("HH:mm:ss A"), StrEq("01:45:02 PM"));
     ASSERT_THAT(Time(Time::Hours(0)).toString("HH:mm:ss A"), StrEq("12:00:00 AM"));
     ASSERT_THAT(Time(Time::Hours(12)).toString("HH:mm:ss A"), StrEq("12:00:00 PM"));
+}
+
+TEST(TimeTest, ReserveNonPatternExpressions) {
+    ASSERT_THAT(Time(21, 52, 41).toString("hhmmss ieee"), StrEq("215241 ieee"));
 }
 
 TEST(TimeTest, FormatPM) {
@@ -266,6 +281,7 @@ TEST(TimeTest, CreatesTimeFromFormattedString) {
     ASSERT_THAT(Time::fromString("123456789", "fffffffff"), Time(Time::Nanoseconds(123456789)));
     ASSERT_THAT(Time::fromString("14:32:09.123456789", "hh:mm:ss.fffffffff"), Time(14, 32, 9, Time::Nanoseconds(123456789)));
     ASSERT_THAT(Time::fromString("143209", "hhmmss"), Time(14, 32, 9));
+    ASSERT_THAT(Time::fromString("ieee 143209", "ieee hhmmss"), Time(14, 32, 9));
 }
 
 TEST(TimeTest, ReturnsTimeAsNanoseconds) {

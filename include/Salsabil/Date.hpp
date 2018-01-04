@@ -30,35 +30,41 @@ namespace Salsabil {
 
     /**
      * @class Date
-     * @brief Date is an immutable class representing a date without a time-zone in the ISO-8601 calendar system, such as 2017-12-15.
+     * @brief Date is an immutable class representing a date without a time-zone in the ISO-8601 calendar system, such as "2017-12-15".
      * 
      * The ISO-8601 calendar system is the modern civil calendar system used today in most of the world. It is equivalent to the proleptic Gregorian calendar system. 
-     * Date describes the date as the number of days since year 1 CE. 
+     * Date describes the date as a year, a month and a day. There is no year 0, dates with year 0 are considered invalid. 
+     * Negative years indicate years before the common era(BCE). So, year -1 represents year 1 BCE, year -2 represents year 2 BCE, and son on.
      * 
-     * A default-constructed Date objects is initialized to the current date from the system clock. 
-     * Date objects can be created by giving the number of years, months and days, explicitly. Also, it can be created from the number of days since year 1 CE.
+     * Default-constructed Date objects are invalid(calling isValid() on them returns false) and are set to "0000-00-00". 
+     * Date objects can be created by giving the number of years, months and days, explicitly. Also, it can be created from the number of days since the epoch "1970-01-01".
      * 
      * The year, month and day of the date can be accessed though the functions year(), month() and day(), respectively.
      * Other date fields, such as day-of-year, day-of-week and week-of-year, can also be accessed through dayOfYear(), dayOfWeek() and weekOfYear(), respectively.
      * 
      * Date provides functions for manipulating dates. Years, months, and days can be added to a date (through addYears(), addMonths(), and addDays(), respectively) or subtracted from it (through subtractYears(), subtractMonths(), and subtractDays(), respectively).
      * It also provides functions for comparing dates. Date A is considered earlier than Date B if A is smaller than B, and so on.
-     * the function daysBetween() returns how many days between two dates.
+     * The functions daysBetween() and weeksBetween() returns how many days and weeks between two dates, respectively.
      * 
      * The toString() function can be used to get a textual representation of the date formatted according to a given formatter string.
      */
 
     class Date {
     public:
-        /** @name Aliases */
+        /** @name Durations */
         //@{
+        /** @brief Day duration. */
         using Days = std::chrono::duration
                 <long, std::ratio_multiply<std::ratio<24>, std::chrono::hours::period>>;
+        /** @brief Week duration. */
+        using Weeks = std::chrono::duration
+                <long, std::ratio_multiply<std::ratio<7>, Days::period>>;
         //@}
 
         /** @name Enumerations */
         //@{
 
+        /** @brief Weekday enumeration. */
         enum class Weekday {
             Monday = 1,
             Tuesday = 2,
@@ -69,6 +75,7 @@ namespace Salsabil {
             Sunday = 7
         };
 
+        /** @brief Month enumeration. */
         enum class Month {
             January = 1,
             February = 2,
@@ -91,16 +98,16 @@ namespace Salsabil {
         /** @brief Constructs a Date object from the given <i>year</i>, <i>month</i> and <i>day</i>. */
         explicit Date(int year, int month, int day);
 
-        /** @brief Constructs a Date object from the given number of days <i>days</i>. */
+        /** @brief Constructs a Date object from <i>days</i> elapsed since the epoch. */
         explicit Date(const Days& days);
 
-        /** @brief Copy-constructs a Date object from the given <i>date</i> object. */
-        Date(const Date& date) = default;
+        /** @brief Copy-constructs a Date object from <i>other</i>. */
+        Date(const Date& other) = default;
 
-        /** @brief Move-constructs a Date object from the given <i>date</i> object. */
-        Date(Date&& date) = default;
+        /** @brief Move-constructs a Date object from <i>other</i>. */
+        Date(Date&& other) = default;
 
-        /** @brief Default constructor. Constructs a Date object and initializes it to the current date obtained from the system clock. */
+        /** @brief Default constructor. Constructs an invalid Date object with every field is set to zero. */
         Date();
 
         /** @brief Default destructor. */
@@ -108,65 +115,48 @@ namespace Salsabil {
         }
         //@}
 
-        /** @name Manipulation Functions */
-        //@{
-
-        /** @brief Returns a new copy of this Date object with the days <i>days</i> added to it. */
-        Date addDays(int days) const;
-
-        /** @brief Returns a new copy of this Date object with the days <i>days</i> subtracted from it. */
-        Date subtractDays(int days) const;
+        /** 
+         * @brief Returns a Date object set to the current date obtained from the system clock.
+         * 
+         * <b>Note</b> that the returned date is not the current local date, rather it is the current system date; the current date in Coordinated Universal %Time (UTC). 
+         */
+        static Date currentDate();
 
         /** 
-         * @brief Returns a new copy of this Date object with the months <i>months</i> added to it. 
-         *          
-         * When the ending day/month combination does not exist in the resulting month/year, it returns the latest valid date. For example:
+         * @brief Returns whether this date object represents a valid date. 
+         * 
+         * A valid date contains a non-zero year, a valid month (between 1 and 12) and a valid day of month (between 1 and 31).
          * {@code
-         *    Date d = Date(2013, 1, 31).addMonths(1); //d = Date(2013, 2, 28)
+         *    Date d; // same as Date(0, 0, 0)
+         *    d.isValid(); // returns false
+         *    d = Date(1999, -1, 1);
+         *    d.isValid(); // returns false
+         *    d = Date(1999, 1, 0);
+         *    d.isValid(); // returns false
+         *    d = Date(1970, 1, 1);
+         *    d.isValid(); // returns true
          * }
          */
-        Date addMonths(int months) const;
-
-        /** 
-         * @brief Returns a new copy of this Date object with the months <i>months</i> subtracted from it. 
-         *
-         * When the ending day/month combination does not exist in the resulting month/year, it returns the latest valid date. For example:
-         * {@code
-         *    Date d = Date(2012, 3, 31).subtractMonths(1); //d = Date(2012, 2, 29)
-         * }
-         */
-        Date subtractMonths(int months) const;
-
-        /** @brief Returns a new copy of this Date object with the years <i>years</i> added to it. */
-        Date addYears(int years) const;
-
-        /** @brief Returns a new copy of this Date object with the years <i>years</i> subtracted from it. */
-        Date subtractYears(int years) const;
-        //@}
+        bool isValid() const;
 
         /** @name Querying Functions */
         //@{
-
-        /** 
-         * @brief Set the year, month and day of this date in the parameters year, month and day, respectively. 
-         *
-         * Calling this function is faster than calling the three equivalents year(), month(), and day(). 
-         */
+        /** @brief Set the year, month and day of this date in the parameters year, month and day, respectively. */
         void getYearMonthDay(int* year, int* month, int* day) const;
 
-        /** @brief Returns the year of this date as a number. Negative numbers indicate years before 1 CE, for example, year -125 is 125 BCE. */
+        /** @brief Returns the year of this date as a number. The is no year 0. Negative numbers indicate years before 1 BCE, for example, year -1 is year 1 BCE, and so on. */
         int year() const;
 
         /** @brief Returns the month of this date as a number between 1 and 12, which corresponds to the enumeration #Month. */
         int month() const;
 
-        /** @brief Returns the day of the month of this date as a number between 1 and 31. */
+        /** @brief Returns the day of month of this date as a number between 1 and 31. */
         int day() const;
 
         /** @brief Returns the weekday of this date as a number between 1 and 7, which corresponds to the enumeration #Weekday. */
         int dayOfWeek() const;
 
-        /** @brief Returns the day of the year of this date as a number between 1 and 365 or 366 on leap years. */
+        /** @brief Returns the day of year of this date as a number between 1 and 365 (1 to 366 on leap years). */
         int dayOfYear() const;
 
         /** @brief Returns the number of days in the month of this date. It ranges between 28 and 31. */
@@ -183,10 +173,10 @@ namespace Salsabil {
         bool isLeapYear() const;
 
         /** 
-         * @brief Returns the week of the year of this date, which ranges between 1 and 53, and stores the year in weekYear unless it is not specified (will be defaulted to nullptr).
+         * @brief Returns the week of the year of this date, which ranges between 1 and 53, and stores the year in weekYear unless it is not specified (defaulted to nullptr).
          * 
          * According to ISO-8601, weeks start on Monday and the first Thursday of a year is always in week 1 of that year. Most years have 52 weeks, but some have 53.
-         * yearWeek is not always the same as year(). For example, the date of '1 January 2000' falls in the week 52 of the year 1999, the date of '31 December 2002' falls in the week 1 of the year 2003, and the date of '1 January 2010' falls in the week 53 of the year 2009.
+         * yearWeek is not always the same as year(). For example, the date of "1 January 2000" falls in the week 52 of the year 1999, the date of "31 December 2002" falls in the week 1 of the year 2003, and the date of "1 January 2010" falls in the week 53 of the year 2009.
          */
         int weekOfYear(int* weekYear = nullptr) const;
 
@@ -232,48 +222,95 @@ namespace Salsabil {
         std::string monthName(bool useShortName = false) const;
         //@}
 
+        /** @name Manipulation Functions */
+        //@{
+
+        /** @brief Returns the result of adding <i>days</i> to this date as a new Date object. */
+        Date addDays(int days) const;
+
+        /** @brief Returns the result of subtracting <i>days</i> from this date as a new Date object. */
+        Date subtractDays(int days) const;
+
+        /** 
+         * @brief Returns the result of adding <i>months</i> to this date as a new Date object.  
+         *          
+         * When the ending day/month combination does not exist in the resulting month/year, it returns the latest valid date. For example:
+         * {@code
+         *    Date d = Date(2013, 1, 31).addMonths(1); //d = Date(2013, 2, 28)
+         * }
+         */
+        Date addMonths(int months) const;
+
+        /** 
+         * @brief Returns the result of subtracting <i>months</i> from this date as a new Date object. 
+         *
+         * When the ending day/month combination does not exist in the resulting month/year, it returns the latest valid date. For example:
+         * {@code
+         *    Date d = Date(2012, 3, 31).subtractMonths(1); //d = Date(2012, 2, 29)
+         * }
+         */
+        Date subtractMonths(int months) const;
+
+        /** @brief Returns the result of adding <i>years</i> to this date as a new Date object. */
+        Date addYears(int years) const;
+
+        /** @brief Returns the result of subtracting <i>years</i> from this date as a new Date object. */
+        Date subtractYears(int years) const;
+        //@}
+
         /** @name Comparison Operators */
         //@{
 
-        /** @brief Returns whether this date is earlier than the date of <i>other</i>. */
+        /** @brief Returns whether this date is earlier than <i>other</i>. */
         bool operator<(const Date& other) const;
 
-        /** @brief Returns whether this date is earlier than the date of <i>other</i> or equal to it. */
+        /** @brief Returns whether this date is earlier than <i>other</i> or equal to it. */
         bool operator<=(const Date& other) const;
 
-        /** @brief Returns whether this date is later than the date of <i>other</i>. */
+        /** @brief Returns whether this date is later than <i>other</i>. */
         bool operator>(const Date& other) const;
 
-        /** @brief Returns whether this date is later than the date of <i>other</i> or equal to it. */
+        /** @brief Returns whether this date is later than <i>other</i> or equal to it. */
         bool operator>=(const Date& other) const;
 
-        /** @brief Returns whether this date is equal to the date of <i>other</i>. */
+        /** @brief Returns whether this date is equal to <i>other</i>. */
         bool operator==(const Date& other) const;
 
-        /** @brief Returns whether this date is different from the date of <i>other</i>. */
+        /** @brief Returns whether this date is different from <i>other</i>. */
         bool operator!=(const Date& other) const;
         //@}
 
         /** @name Assignment Operators */
         //@{
         /** @brief Copy assignment operator. */
-        Date& operator=(const Date& date) = default;
+        Date& operator=(const Date& other) = default;
 
         /** @brief Move assignment operator. */
-        Date& operator=(Date&& date) = default;
+        Date& operator=(Date&& other) = default;
         //@}
 
         /** @name Conversion Functions */
         //@{
 
-        /** @brief Returns the number of elapsed days since 1 CE. */
-        long toDays() const;
+        /** @brief Returns the number of elapsed days since the epoch "1970-01-01". */
+        long toDaysSinceEpoch() const;
 
-        /** @brief Returns the corresponding Julian Day Number (JDN) of this date. JDN is the consecutive numbering of days since the beginning of the Julian Period (1 January 4713 BCE).  */
+        /** @brief Returns a std::chrono::duration since the epoch "1970-01-01". */
+        Days toStdDurationSinceEpoch() const;
+
+        /** 
+         * @brief Returns the corresponding Julian Day Number (JDN) of this date. 
+         * 
+         * JDN is the consecutive numbering of days since the beginning of the Julian Period on 1 January 4713 BCE in the proleptic Julian calendar, which occurs on 24 November 4714 BCE in the proleptic Gregorian Calender.
+         * 
+         * Note that The date to be converted is considered Gregorian. Also, the current Gregorian rules are extended backwards and forwards. 
+         * 
+         * There is no year 0. The first year before the common era (i.e. year 1 BCE) is year -1, year -2 is year 2 BCE, and so on.  
+         */
         long toJulianDay() const;
 
         /** 
-         * @brief Returns the date as a string formatted according to the formatter string <i>format</i>. 
+         * @brief Returns this date as a string, formatted according to the formatter string <i>format</i>. 
          * 
          * The formatter string may contain the following patterns:
          * <table>
@@ -293,6 +330,7 @@ namespace Salsabil {
          * <tr><td>dddd<td>the day of week as long name (e.g. "Friday")
          * </table>
          * Any character in the formatter string not listed above will be inserted as is into the output string. 
+         * If this date is invalid, an empty string will be returned.
          * 
          * See also dayOfWeekName() and monthName()
          */
@@ -300,17 +338,23 @@ namespace Salsabil {
         //@}
 
         /** 
-         * @brief Returns a Date object that represents the date parsed from the string <i>dateString</i> according to the format <i>format</i>.
+         * @brief Returns a Date object from the string <i>date</i> according to the format <i>format</i>.
          * 
          * For further information about the <i>format</i> parameter, see toString(). 
          */
-        static Date fromString(const std::string& dateString, const std::string& format);
+        static Date fromString(const std::string& date, const std::string& format);
 
-        /** @brief Returns a Date object corresponding to the Julian day <i>julianDay</i>. */
+        /** @brief Returns a Date object corresponding to the Julian day <i>julianDay</i>. See toJulianDay() */
         static Date fromJulianDay(long julianDay);
 
+        /**  
+         * @name Calculating Difference Between Dates
+         * @brief These functions return the duration between two dates <i>from</i> and <i>to</i>. If <i>to</i> is earlier than (smaller than) <i>from</i>, then the difference is negative.
+         */
+        //@{
+
         /** 
-         * @brief Returns the number of the days between the dates <i>from</i> and <i>to</i>, excluding the last day. 
+         * @brief Returns the number of days between <i>from</i> and <i>to</i>. 
          *
          * For example:
          * {@code
@@ -320,18 +364,31 @@ namespace Salsabil {
         static int daysBetween(const Date& from, const Date& to);
 
         /** 
-         * @brief Returns whether the year <i>year</i> is a leap year.
+         * @brief Returns the number of weeks between <i>from</i> and <i>to</i>. 
+         *
+         * For example:
+         * {@code
+         *    int num = Date::weeksBetween(Date(1970, 1, 1), Date(1970, 1, 8));  // num = 1
+         * } 
+         */
+        static int weeksBetween(const Date& from, const Date& to);
+        //@}
+
+        /** 
+         * @brief Returns whether <i>year</i> is a leap year.
          * 
          * According to the ISO proleptic calendar system rules, a year is a leap year if it is divisible by four without remainder. However, years divisible by 100, are not leap years, with the exception of years divisible by 400 which are.
          * For example, 1904 is a leap year it is divisible by 4. 1900 was not a leap year as it is divisible by 100, however 2000 was a leap year as it is divisible by 400.
          */
         static bool isLeapYear(int year);
 
-        /** @brief Returns the number of days in the month <i>month</i> of year <i>year</i>. It ranges between 28 and 31. */
+        /** @brief Returns the number of days in <i>month</i> of <i>year</i>. It ranges between 28 and 31. */
         static int daysInMonthOfYear(int year, int month);
 
     private:
-        Days mDateDuration;
+        int mYear;
+        int mMonth;
+        int mDay;
     };
 
     /** 

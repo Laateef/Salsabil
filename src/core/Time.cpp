@@ -59,14 +59,18 @@ Time::Time(std::time_t scalarStdTime)
 }
 
 Time::Time()
-: mTimeDuration(std::chrono::duration_cast<Nanoseconds>(std::chrono::system_clock::now().time_since_epoch() % Days(1))) {
+: mTimeDuration(Nanoseconds::zero()) {
 }
 
 bool Time::isValid() const {
-    if (toHours() >= 24)
+    if (toNanoseconds() < 0 || toHours() >= 24)
         return false;
 
     return true;
+}
+
+Time Time::currentTime() {
+    return Time(std::chrono::duration_cast<Nanoseconds>(std::chrono::system_clock::now().time_since_epoch() % Days(1)));
 }
 
 int Time::hour() const {
@@ -149,8 +153,8 @@ Time Time::subtractNanoseconds(int nanoseconds) const {
     return Time(mTimeDuration - Nanoseconds(nanoseconds));
 }
 
-Time::Nanoseconds Time::operator-(const Time& time) const {
-    return Nanoseconds(this->mTimeDuration - time.mTimeDuration);
+Time::Nanoseconds Time::operator-(const Time& other) const {
+    return Nanoseconds(this->mTimeDuration - other.mTimeDuration);
 }
 
 Time Time::operator-(const Duration& duration) const {
@@ -185,8 +189,8 @@ long long Time::toNanoseconds() const {
     return std::chrono::duration_cast<Nanoseconds>(mTimeDuration).count();
 }
 
-std::chrono::system_clock::time_point Time::toTimePoint() const {
-    return std::chrono::system_clock::time_point(mTimeDuration);
+Time::Nanoseconds Time::toStdDuration() const {
+    return mTimeDuration;
 }
 
 std::tm Time::toBrokenStdTime() const {
@@ -206,38 +210,42 @@ std::string Time::toString(const std::string& format) const {
 
     for (int pos = 0; pos < format.size(); ++pos) {
         char currChar = format[pos];
-        const int charCount = Utility::countIdenticalCharsFrom(pos, format);
-        pos += charCount - 1; // skip all identical characters except the last.
+        const int patternCharCount = Utility::countIdenticalCharsFrom(pos, format);
 
         if (currChar == 'h') {
-            if (charCount == 1) {
+            if (patternCharCount == 1) {
                 output << hour();
-            } else if (charCount == 2) {
+            } else if (patternCharCount == 2) {
                 output << std::setfill('0') << std::setw(2) << hour();
             }
+            pos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (currChar == 'H') {
             int hours12f = ((hour() == 0 || hour() == 12) ? 12 : hour() % 12);
-            if (charCount == 1) {
+            if (patternCharCount == 1) {
                 output << hours12f;
-            } else if (charCount == 2) {
+            } else if (patternCharCount == 2) {
                 output << std::setfill('0') << std::setw(2) << hours12f;
             }
+            pos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (currChar == 'm') {
-            if (charCount == 1) {
+            if (patternCharCount == 1) {
                 output << minute();
-            } else if (charCount == 2) {
+            } else if (patternCharCount == 2) {
                 output << std::setfill('0') << std::setw(2) << minute();
             }
+            pos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (currChar == 's') {
-            if (charCount == 1) {
+            if (patternCharCount == 1) {
                 output << second();
-            } else if (charCount == 2) {
+            } else if (patternCharCount == 2) {
                 output << std::setfill('0') << std::setw(2) << second();
             }
+            pos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (currChar == 'f') {
             std::string subseconds = std::to_string(std::chrono::duration_cast<Nanoseconds>(mTimeDuration % Seconds(1)).count());
             std::string padddedSubsecondsString = subseconds.insert(0, 9 - subseconds.size(), '0');
-            output << padddedSubsecondsString.substr(0, charCount);
+            output << padddedSubsecondsString.substr(0, patternCharCount);
+            pos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (currChar == 'A') {
             output << (hour() >= 12 ? "PM" : "AM");
         } else if (currChar == 'a') {
@@ -250,27 +258,30 @@ std::string Time::toString(const std::string& format) const {
     return output.str();
 }
 
-Time Time::fromString(const std::string& timeString, const std::string& format) {
-    int _hours = 0, _minutes = 0, _seconds = 0;
-    long _subseconds = 0;
+Time Time::fromString(const std::string& time, const std::string& format) {
+    int h = 0, m = 0, s = 0;
+    long sub = 0;
 
-    for (int fmtPos = 0, timPos = 0; fmtPos < format.size() && timPos < timeString.size(); ++fmtPos) {
+    for (int fmtPos = 0, timPos = 0; fmtPos < format.size() && timPos < time.size(); ++fmtPos) {
         const int patternCharCount = Utility::countIdenticalCharsFrom(fmtPos, format);
-        fmtPos += patternCharCount - 1; // skip all identical characters except the last.
 
         if (format[fmtPos] == 'h' || format[fmtPos] == 'H') {
-            _hours = Utility::readIntAndAdvancePos(timeString, timPos, 2);
+            h = Utility::readIntAndAdvancePos(time, timPos, 2);
+            fmtPos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'm') {
-            _minutes = Utility::readIntAndAdvancePos(timeString, timPos, 2);
+            m = Utility::readIntAndAdvancePos(time, timPos, 2);
+            fmtPos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 's') {
-            _seconds = Utility::readIntAndAdvancePos(timeString, timPos, 2);
+            s = Utility::readIntAndAdvancePos(time, timPos, 2);
+            fmtPos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'f') {
-            std::string subsecondString = timeString.substr(timPos, patternCharCount);
-            _subseconds = std::stoi(subsecondString.append(9 - subsecondString.size(), '0'));
+            std::string subsecondString = time.substr(timPos, patternCharCount);
+            sub = std::stoi(subsecondString.append(9 - subsecondString.size(), '0'));
             timPos += patternCharCount;
+            fmtPos += patternCharCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'a' || format[fmtPos] == 'A') {
-            if (timeString.substr(timPos, 2) == "pm" || timeString.substr(timPos, 2) == "PM") {
-                _hours = (_hours > 12 ? _hours : _hours + 12);
+            if (time.substr(timPos, 2) == "pm" || time.substr(timPos, 2) == "PM") {
+                h = (h > 12 ? h : h + 12);
                 timPos += 2;
             }
         } else {
@@ -278,55 +289,55 @@ Time Time::fromString(const std::string& timeString, const std::string& format) 
         }
     }
 
-    return Time(Hours(_hours) + Minutes(_minutes) + Seconds(_seconds) + Nanoseconds(_subseconds));
+    return Time(Hours(h) + Minutes(m) + Seconds(s) + Nanoseconds(sub));
 }
 
-bool Time::operator<(const Time& time) const {
-    return this->mTimeDuration < time.mTimeDuration;
+bool Time::operator<(const Time& other) const {
+    return this->mTimeDuration < other.mTimeDuration;
 }
 
-bool Time::operator<=(const Time& time) const {
-    return this->mTimeDuration <= time.mTimeDuration;
+bool Time::operator<=(const Time& other) const {
+    return this->mTimeDuration <= other.mTimeDuration;
 }
 
-bool Time::operator>(const Time& time) const {
-    return this->mTimeDuration > time.mTimeDuration;
+bool Time::operator>(const Time& other) const {
+    return this->mTimeDuration > other.mTimeDuration;
 }
 
-bool Time::operator>=(const Time& time) const {
-    return this->mTimeDuration >= time.mTimeDuration;
+bool Time::operator>=(const Time& other) const {
+    return this->mTimeDuration >= other.mTimeDuration;
 }
 
-bool Time::operator==(const Time& time) const {
-    return this->mTimeDuration == time.mTimeDuration;
+bool Time::operator==(const Time& other) const {
+    return this->mTimeDuration == other.mTimeDuration;
 }
 
-bool Time::operator!=(const Time& time) const {
-    return this->mTimeDuration != time.mTimeDuration;
+bool Time::operator!=(const Time& other) const {
+    return this->mTimeDuration != other.mTimeDuration;
 }
 
 int Time::hoursBetween(const Time& from, const Time& to) {
-    return from.toHours() - to.toHours();
+    return to.toHours() - from.toHours();
 }
 
 int Time::minutesBetween(const Time& from, const Time& to) {
-    return from.toMinutes() - to.toMinutes();
+    return to.toMinutes() - from.toMinutes();
 }
 
 int Time::secondsBetween(const Time& from, const Time& to) {
-    return from.toSeconds() - to.toSeconds();
+    return to.toSeconds() - from.toSeconds();
 }
 
 int Time::millisecondsBetween(const Time& from, const Time& to) {
-    return from.toMilliseconds() - to.toMilliseconds();
+    return to.toMilliseconds() - from.toMilliseconds();
 }
 
 int Time::microsecondsBetween(const Time& from, const Time& to) {
-    return from.toMicroseconds() - to.toMicroseconds();
+    return to.toMicroseconds() - from.toMicroseconds();
 }
 
 int Time::nanosecondsBetween(const Time& from, const Time& to) {
-    return from.toNanoseconds() - to.toNanoseconds();
+    return to.toNanoseconds() - from.toNanoseconds();
 }
 
 std::ostream& Salsabil::operator<<(std::ostream& os, const Time& t) {
@@ -341,4 +352,5 @@ std::istream& Salsabil::operator>>(std::istream& is, Time& t) {
     std::string str(result, TimeFormatWidth);
 
     t = Time::fromString(str, "hh:mm:ss");
+    return is;
 }

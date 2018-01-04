@@ -18,4 +18,4 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-add_library(core_lib Exception.cpp SqlDriverFactory.cpp SqlStatementBuilder.cpp SqlInsertClause.cpp SqlWhereClause.cpp SqlFromClause.cpp SqlSelectClause.cpp Time.cpp Date.cpp StringHelper.cpp)
+add_library(core_lib Exception.cpp SqlDriverFactory.cpp SqlStatementBuilder.cpp SqlInsertClause.cpp SqlWhereClause.cpp SqlFromClause.cpp SqlSelectClause.cpp DateTime.cpp Date.cpp Time.cpp StringHelper.cpp)
