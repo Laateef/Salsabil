@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -20,56 +20,11 @@
  */
 
 #include "Date.hpp"
+#include "Definitions.hpp"
 #include <sstream>
 #include <iomanip>
 
 using namespace Salsabil;
-
-const std::string weekdayNameArray[] = {
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-    "Sun",
-
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday"
-};
-
-const std::string monthNameArray[] = {
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-};
 
 Date::Days ymdToDays(int year, int month, int day) {
     // Math from http://howardhinnant.github.io/date_algorithms.html
@@ -105,14 +60,62 @@ void daysToYmd(Date::Days dys, int* year, int* month, int* day) {
         *day = d;
 }
 
-Date::Date(int year, int month, int day) : mYear(year), mMonth(month), mDay(day) {
+Date::Date() : mYear(0), mMonth(0), mDay(0) {
+}
+
+Date::Date(const Date& other) : mYear(other.mYear), mMonth(other.mMonth), mDay(other.mDay) {
+}
+
+Date::Date(Date&& other) : mYear(std::move(other.mYear)), mMonth(std::move(other.mMonth)), mDay(std::move(other.mDay)) {
 }
 
 Date::Date(const Days& days) {
     daysToYmd(days, &mYear, &mMonth, &mDay);
 }
 
-Date::Date() : mYear(0), mMonth(0), mDay(0) {
+Date::Date(int year, int month, int day) : mYear(year), mMonth(month), mDay(day) {
+}
+
+Date& Date::operator=(const Date& other) {
+    if (*this != other) {
+        mYear = other.mYear;
+        mMonth = other.mMonth;
+        mDay = other.mDay;
+    }
+    return *this;
+}
+
+Date& Date::operator=(Date&& other) {
+    if (*this != other) {
+        mYear = std::move(other.mYear);
+        mMonth = std::move(other.mMonth);
+        mDay = std::move(other.mDay);
+    }
+    return *this;
+}
+
+bool Date::operator<(const Date& other) const {
+    return this->year() < other.year() || (this->year() == other.year() && this->month() < other.month()) || (this->year() == other.year() && this->month() == other.month() && this->day() < other.day());
+}
+
+bool Date::operator<=(const Date& other) const {
+    return this->operator<(other) || this->operator==(other);
+}
+
+bool Date::operator>(const Date& other) const {
+    return this->year() > other.year() || (this->year() == other.year() && this->month() > other.month()) || (this->year() == other.year() && this->month() == other.month() && this->day() > other.day());
+}
+
+bool Date::operator>=(const Date& other) const {
+    return this->operator>(other) || this->operator==(other);
+}
+
+bool Date::operator==(const Date& other) const {
+    return this->year() == other.year() && this->month() == other.month() && this->day() == other.day();
+}
+
+bool Date::operator!=(const Date& other) const {
+    return this->year() != other.year() || this->month() != other.month() || this->day() != other.day();
 }
 
 bool Date::isValid() const {
@@ -166,10 +169,6 @@ Date Date::subtractYears(int years) const {
     return Date(newYear > 0 ? newYear : newYear - 1, mMonth, mDay);
 }
 
-Date Date::currentDate() {
-    return Date(std::chrono::duration_cast<Days>(std::chrono::system_clock::now().time_since_epoch()));
-}
-
 void Date::getYearMonthDay(int* year, int* month, int* day) const {
     if (year)
         *year = mYear;
@@ -179,16 +178,16 @@ void Date::getYearMonthDay(int* year, int* month, int* day) const {
         *day = mDay;
 }
 
-int Date::year() const {
-    return mYear;
+int Date::day() const {
+    return mDay;
 }
 
 int Date::month() const {
     return mMonth;
 }
 
-int Date::day() const {
-    return mDay;
+int Date::year() const {
+    return mYear;
 }
 
 int Date::dayOfWeek() const {
@@ -245,35 +244,11 @@ int Date::weekOfYear(int* weekYear) const {
 }
 
 std::string Date::dayOfWeekName(bool useShortName) const {
-    return weekdayNameArray[useShortName ? dayOfWeek() - 1 : dayOfWeek() + 6];
+    return Internal::weekdayNameArray[useShortName ? dayOfWeek() - 1 : dayOfWeek() + 6];
 }
 
 std::string Date::monthName(bool useShortName) const {
-    return monthNameArray[useShortName ? month() - 1 : month() + 11];
-}
-
-bool Date::operator<(const Date& other) const {
-    return this->year() < other.year() || (this->year() == other.year() && this->month() < other.month()) || (this->year() == other.year() && this->month() == other.month() && this->day() < other.day());
-}
-
-bool Date::operator<=(const Date& other) const {
-    return this->operator<(other) || this->operator==(other);
-}
-
-bool Date::operator>(const Date& other) const {
-    return this->year() > other.year() || (this->year() == other.year() && this->month() > other.month()) || (this->year() == other.year() && this->month() == other.month() && this->day() > other.day());
-}
-
-bool Date::operator>=(const Date& other) const {
-    return this->operator>(other) || this->operator==(other);
-}
-
-bool Date::operator==(const Date& other) const {
-    return this->year() == other.year() && this->month() == other.month() && this->day() == other.day();
-}
-
-bool Date::operator!=(const Date& other) const {
-    return this->year() != other.year() || this->month() != other.month() || this->day() != other.day();
+    return Internal::monthNameArray[useShortName ? month() - 1 : month() + 11];
 }
 
 long Date::toDaysSinceEpoch() const {
@@ -346,61 +321,69 @@ std::string Date::toString(const std::string& format) const {
     return output.str();
 }
 
+Date Date::current() {
+    return Date(std::chrono::duration_cast<Days>(std::chrono::system_clock::now().time_since_epoch()));
+}
+
+Date Date::epoch() {
+    return Date(Days(0));
+}
+
 Date Date::fromString(const std::string& dateString, const std::string& format) {
-    int y = 1, m = 1, d = 1;
+    int _year = 1, _month = 1, _day = 1;
 
     for (int fmtPos = 0, datPos = 0; fmtPos < format.size() && datPos < dateString.size(); ++fmtPos) {
         const int charCount = Utility::countIdenticalCharsFrom(fmtPos, format);
 
         if (format[fmtPos] == '#') {
             if (dateString[datPos] == '+') {
-                y = 1;
+                _year = 1;
                 ++datPos;
             } else if (dateString[datPos] == '-') {
-                y = -1;
+                _year = -1;
                 ++datPos;
             }
         } else if (format[fmtPos] == 'y') {
             if (charCount == 1) {
-                y = y * Utility::readIntAndAdvancePos(dateString, datPos, 4);
+                _year = _year * Utility::readIntAndAdvancePos(dateString, datPos, 4);
             } else if (charCount == 2) {
-                y = y * std::stoi(dateString.substr(datPos, charCount));
-                y += 2000;
+                _year = _year * std::stoi(dateString.substr(datPos, charCount));
+                _year += 2000;
                 datPos += charCount;
             } else if (charCount == 4) {
-                y = y * std::stoi(dateString.substr(datPos, charCount));
+                _year = _year * std::stoi(dateString.substr(datPos, charCount));
                 datPos += charCount;
             }
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'E') {
             if (dateString.substr(datPos, 2) == "CE") {
-                y = std::abs(y);
+                _year = std::abs(_year);
                 datPos += 2;
             } else if (dateString.substr(datPos, 3) == "BCE") {
-                y = -std::abs(y);
+                _year = -std::abs(_year);
                 datPos += 3;
             }
         } else if (format[fmtPos] == 'M') {
             if (charCount == 1) {
-                m = Utility::readIntAndAdvancePos(dateString, datPos, 4);
+                _month = Utility::readIntAndAdvancePos(dateString, datPos, 4);
             } else if (charCount == 2) {
-                m = std::stoi(dateString.substr(datPos, charCount));
+                _month = std::stoi(dateString.substr(datPos, charCount));
                 datPos += charCount;
             } else if (charCount == 3) {
-                m = (std::find(monthNameArray, monthNameArray + 11, dateString.substr(datPos, charCount)) - monthNameArray) + 1;
+                _month = (std::find(Internal::monthNameArray, Internal::monthNameArray + 11, dateString.substr(datPos, charCount)) - Internal::monthNameArray) + 1;
                 datPos += charCount;
             } else if (charCount == 4) {
                 int newPos = datPos;
                 while (newPos < dateString.size() && std::isalpha(dateString[newPos])) ++newPos;
-                m = (std::find(monthNameArray + 12, monthNameArray + 23, dateString.substr(datPos, newPos - datPos)) - monthNameArray) - 11;
+                _month = (std::find(Internal::monthNameArray + 12, Internal::monthNameArray + 23, dateString.substr(datPos, newPos - datPos)) - Internal::monthNameArray) - 11;
                 datPos = newPos;
             }
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'd') {
             if (charCount == 1) {
-                d = Utility::readIntAndAdvancePos(dateString, datPos, 2);
+                _day = Utility::readIntAndAdvancePos(dateString, datPos, 2);
             } else if (charCount == 2) {
-                d = std::stoi(dateString.substr(datPos, charCount));
+                _day = std::stoi(dateString.substr(datPos, charCount));
                 datPos += charCount;
             } else if (charCount == 3) {
                 // lets the format string and the date string be in sync.
@@ -415,18 +398,18 @@ Date Date::fromString(const std::string& dateString, const std::string& format) 
         }
     }
 
-    return Date(y, m, d);
+    return Date(_year, _month, _day);
 }
 
 Date Date::fromJulianDay(long julianDay) {
     return Date(Days(julianDay - 2440588));
 }
 
-int Date::daysBetween(const Date& from, const Date& to) {
+long Date::daysBetween(const Date& from, const Date& to) {
     return to.toDaysSinceEpoch() - from.toDaysSinceEpoch();
 }
 
-int Date::weeksBetween(const Date& from, const Date& to) {
+long Date::weeksBetween(const Date& from, const Date& to) {
     return daysBetween(from, to) / 7;
 }
 
@@ -467,8 +450,7 @@ std::istream& Salsabil::operator>>(std::istream& is, Date& d) {
     const int DateFormatWidth = 10;
     char result[DateFormatWidth];
     is.read(result, DateFormatWidth);
-    std::string str(result, DateFormatWidth);
-
-    d = Date::fromString(str, "yyyy-MM-dd");
+    d = Date::fromString(std::string(result, DateFormatWidth), "yyyy-MM-dd");
+    
     return is;
 }

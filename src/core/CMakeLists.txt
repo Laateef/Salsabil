@@ -1,5 +1,5 @@
 
-# Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+# Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
 # E-mail: laateef@outlook.com
 # Github: https://github.com/Laateef/Salsabil
 #
@@ -18,4 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-add_library(core_lib Exception.cpp SqlDriverFactory.cpp SqlStatementBuilder.cpp SqlInsertClause.cpp SqlWhereClause.cpp SqlFromClause.cpp SqlSelectClause.cpp DateTime.cpp Date.cpp Time.cpp StringHelper.cpp)
+add_library(core_lib Exception.cpp SqlDriverFactory.cpp SqlStatementBuilder.cpp SqlInsertClause.cpp SqlWhereClause.cpp SqlFromClause.cpp SqlSelectClause.cpp DateTime.cpp TimeZone.cpp Date.cpp Time.cpp Definitions.cpp StringHelper.cpp)
+
+target_link_libraries(core_lib tz)

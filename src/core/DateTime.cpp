@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -20,120 +20,48 @@
  */
 
 #include "DateTime.hpp"
+#include "Definitions.hpp"
 #include "date/include/date/tz.h"
 #include <iostream>
 
 using namespace Salsabil;
 
-const std::string weekdayNameArray[] = {
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-    "Sun",
-
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday"
-};
-
-const std::string monthNameArray[] = {
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-};
-
-DateTime::DateTime() : mDate(0, 0, 0), mTime(Nanoseconds::zero()) {
+DateTime::DateTime() : mDate(), mTime() {
 }
 
-DateTime::DateTime(const Date& date, const Time& time) : mDate(date), mTime(time) {
+DateTime::DateTime(const DateTime& other) : mDate(other.mDate), mTime(other.mTime) {
+}
+
+DateTime::DateTime(DateTime&& other) : mDate(std::move(other.mDate)), mTime(std::move(other.mTime)) {
+}
+
+DateTime::DateTime(const Duration& duration) : mDate(std::chrono::duration_cast<Days>(duration)), mTime(duration % Days(1)) {
+}
+
+DateTime::DateTime(const std::chrono::system_clock::time_point& timePoint)
+: DateTime(timePoint.time_since_epoch()) {
 }
 
 DateTime::DateTime(const Date& date) : mDate(date), mTime(Nanoseconds::zero()) {
 }
 
-DateTime DateTime::currentDateTime() {
-    return DateTime(Date::currentDate(), Time::currentTime());
+DateTime::DateTime(const Date& date, const Time& time) : mDate(date), mTime(time) {
 }
 
-bool DateTime::isValid() const {
-    return mDate.isValid() && mTime.isValid();
+DateTime& DateTime::operator=(const DateTime& other) {
+    if (*this != other) {
+        mDate = other.mDate;
+        mTime = other.mTime;
+    }
+    return *this;
 }
 
-Date DateTime::date() const {
-    return mDate;
-}
-
-Time DateTime::time() const {
-    return mTime;
-}
-
-void DateTime::getYearMonthDay(int* year, int* month, int* day) const {
-    return mDate.getYearMonthDay(year, month, day);
-}
-
-int DateTime::year() const {
-    return mDate.year();
-}
-
-int DateTime::month() const {
-    return mDate.month();
-}
-
-int DateTime::day() const {
-    return mDate.day();
-}
-
-int DateTime::hour() const {
-    return mTime.hour();
-}
-
-int DateTime::minute() const {
-    return mTime.minute();
-}
-
-int DateTime::second() const {
-    return mTime.second();
-}
-
-int DateTime::millisecond() const {
-    return mTime.millisecond();
-}
-
-long DateTime::microsecond() const {
-    return mTime.microsecond();
-}
-
-long DateTime::nanosecond() const {
-    return mTime.nanosecond();
+DateTime& DateTime::operator=(DateTime&& other) {
+    if (*this != other) {
+        mDate = std::move(other.mDate);
+        mTime = std::move(other.mTime);
+    }
+    return *this;
 }
 
 bool DateTime::operator<(const DateTime& other) const {
@@ -158,6 +86,70 @@ bool DateTime::operator==(const DateTime& other) const {
 
 bool DateTime::operator!=(const DateTime& other) const {
     return this->mDate != other.mDate || this->mTime != other.mTime;
+}
+
+DateTime::Nanoseconds DateTime::operator-(const DateTime& other) const {
+    return this->toStdDurationSinceEpoch() - other.toStdDurationSinceEpoch();
+}
+
+DateTime DateTime::operator-(const Duration& duration) const {
+    return subtractDuration(duration);
+}
+
+DateTime DateTime::operator+(const Duration& duration) const {
+    return addDuration(duration);
+}
+
+Date DateTime::date() const {
+    return mDate;
+}
+
+Time DateTime::time() const {
+    return mTime;
+}
+
+bool DateTime::isValid() const {
+    return mDate.isValid() && mTime.isValid();
+}
+
+long DateTime::nanosecond() const {
+    return mTime.nanosecond();
+}
+
+long DateTime::microsecond() const {
+    return mTime.microsecond();
+}
+
+int DateTime::millisecond() const {
+    return mTime.millisecond();
+}
+
+int DateTime::second() const {
+    return mTime.second();
+}
+
+int DateTime::minute() const {
+    return mTime.minute();
+}
+
+int DateTime::hour() const {
+    return mTime.hour();
+}
+
+int DateTime::day() const {
+    return mDate.day();
+}
+
+int DateTime::month() const {
+    return mDate.month();
+}
+
+int DateTime::year() const {
+    return mDate.year();
+}
+
+void DateTime::getYearMonthDay(int* year, int* month, int* day) const {
+    return mDate.getYearMonthDay(year, month, day);
 }
 
 int DateTime::dayOfWeek() const {
@@ -192,6 +184,54 @@ std::string DateTime::monthName(bool useShortName) const {
     return mDate.monthName(useShortName);
 }
 
+DateTime DateTime::addNanoseconds(int nanoseconds) const {
+    return addDuration(Nanoseconds(nanoseconds));
+}
+
+DateTime DateTime::subtractNanoseconds(int nanoseconds) const {
+    return subtractDuration(Nanoseconds(nanoseconds));
+}
+
+DateTime DateTime::addMicroseconds(int microseconds) const {
+    return addDuration(Microseconds(microseconds));
+}
+
+DateTime DateTime::subtractMicroseconds(int microseconds) const {
+    return subtractDuration(Microseconds(microseconds));
+}
+
+DateTime DateTime::addMilliseconds(int milliseconds) const {
+    return addDuration(Milliseconds(milliseconds));
+}
+
+DateTime DateTime::subtractMilliseconds(int milliseconds) const {
+    return subtractDuration(Milliseconds(milliseconds));
+}
+
+DateTime DateTime::addSeconds(int seconds) const {
+    return addDuration(Seconds(seconds));
+}
+
+DateTime DateTime::subtractSeconds(int seconds) const {
+    return subtractDuration(Seconds(seconds));
+}
+
+DateTime DateTime::addMinutes(int minutes) const {
+    return addDuration(Minutes(minutes));
+}
+
+DateTime DateTime::subtractMinutes(int minutes) const {
+    return subtractDuration(Minutes(minutes));
+}
+
+DateTime DateTime::addHours(int hours) const {
+    return addDuration(Hours(hours));
+}
+
+DateTime DateTime::subtractHours(int hours) const {
+    return subtractDuration(Hours(hours));
+}
+
 DateTime DateTime::addDays(int days) const {
     return DateTime(mDate.addDays(days), mTime);
 }
@@ -217,107 +257,55 @@ DateTime DateTime::subtractYears(int years) const {
 }
 
 DateTime DateTime::addDuration(const Duration& duration) const {
-    const Duration totalDuration = Nanoseconds(mTime.toNanoseconds()) + duration;
+    if (duration.count() < 0)
+        return subtractDuration(-duration);
+
+    const Duration totalDuration = Nanoseconds(mTime.toNanosecondsSinceMidnight()) + duration;
     return DateTime(mDate.addDays(std::chrono::duration_cast<Days>(totalDuration).count()), Time(totalDuration % Days(1)));
 }
 
 DateTime DateTime::subtractDuration(const Duration& duration) const {
-    return DateTime(mDate.subtractDays(std::abs(std::chrono::duration_cast<Days>(Nanoseconds(mTime.toNanoseconds()) - duration - Days(1)).count())), Time((Days(1) + Nanoseconds(mTime.toNanoseconds()) - (duration % Days(1))) % Days(1)));
-}
+    if (duration.count() < 0)
+        return addDuration(-duration);
 
-DateTime DateTime::addHours(int hours) const {
-    return addDuration(Hours(hours));
-}
-
-DateTime DateTime::subtractHours(int hours) const {
-    return subtractDuration(Hours(hours));
-}
-
-DateTime DateTime::addMinutes(int minutes) const {
-    return addDuration(Minutes(minutes));
-}
-
-DateTime DateTime::subtractMinutes(int minutes) const {
-    return subtractDuration(Minutes(minutes));
-}
-
-DateTime DateTime::addSeconds(int seconds) const {
-    return addDuration(Seconds(seconds));
-}
-
-DateTime DateTime::subtractSeconds(int seconds) const {
-    return subtractDuration(Seconds(seconds));
-}
-
-DateTime DateTime::addMilliseconds(int milliseconds) const {
-    return addDuration(Milliseconds(milliseconds));
-}
-
-DateTime DateTime::subtractMilliseconds(int milliseconds) const {
-    return subtractDuration(Milliseconds(milliseconds));
-}
-
-DateTime DateTime::addMicroseconds(int microseconds) const {
-    return addDuration(Microseconds(microseconds));
-}
-
-DateTime DateTime::subtractMicroseconds(int microseconds) const {
-    return subtractDuration(Microseconds(microseconds));
-}
-
-DateTime DateTime::addNanoseconds(int nanoseconds) const {
-    return addDuration(Nanoseconds(nanoseconds));
-}
-
-DateTime DateTime::subtractNanoseconds(int nanoseconds) const {
-    return subtractDuration(Nanoseconds(nanoseconds));
-}
-
-DateTime::Nanoseconds DateTime::operator-(const DateTime& datetime) const {
-    return this->toStdDurationSinceEpoch() - datetime.toStdDurationSinceEpoch();
-}
-
-DateTime DateTime::operator-(const Duration& duration) const {
-    return subtractDuration(duration);
-}
-
-DateTime DateTime::operator+(const Duration& duration) const {
-    return addDuration(duration);
+    return DateTime(mDate.subtractDays(std::abs(std::chrono::duration_cast<Days>(Nanoseconds(mTime.toNanosecondsSinceMidnight()) - duration - Days(1)).count())), Time((Days(1) + Nanoseconds(mTime.toNanosecondsSinceMidnight()) - (duration % Days(1))) % Days(1)));
 }
 
 double DateTime::toJulianDay() const {
-    return mDate.toDaysSinceEpoch() + 2440587.5 + static_cast<double> (mTime.toNanoseconds()) / Nanoseconds(Days(1)).count();
+    return mDate.toDaysSinceEpoch() + 2440587.5 + static_cast<double> (mTime.toNanosecondsSinceMidnight()) / Nanoseconds(Days(1)).count();
+}
+
+long long DateTime::toNanosecondsSinceEpoch() const {
+    return (std::chrono::duration_cast<Nanoseconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDurationSinceMidnight())).count();
+}
+
+long long DateTime::toMicrosecondsSinceEpoch() const {
+    return (std::chrono::duration_cast<Microseconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDurationSinceMidnight())).count();
+}
+
+long long DateTime::toMillisecondsSinceEpoch() const {
+    return (std::chrono::duration_cast<Milliseconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDurationSinceMidnight())).count();
+}
+
+long long DateTime::toSecondsSinceEpoch() const {
+    return (std::chrono::duration_cast<Seconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDurationSinceMidnight())).count();
+}
+
+long DateTime::toMinutesSinceEpoch() const {
+    return (std::chrono::duration_cast<Minutes>(mDate.toStdDurationSinceEpoch() + mTime.toStdDurationSinceMidnight())).count();
+}
+
+long DateTime::toHoursSinceEpoch() const {
+    return (std::chrono::duration_cast<Hours>(mDate.toStdDurationSinceEpoch() + mTime.toStdDurationSinceMidnight())).count();
 }
 
 long DateTime::toDaysSinceEpoch() const {
     return mDate.toDaysSinceEpoch();
 }
 
-long DateTime::toHoursSinceEpoch() const {
-    return (std::chrono::duration_cast<Hours>(mDate.toStdDurationSinceEpoch() + mTime.toStdDuration())).count();
-}
-
-long DateTime::toMinutesSinceEpoch() const {
-    return (std::chrono::duration_cast<Minutes>(mDate.toStdDurationSinceEpoch() + mTime.toStdDuration())).count();
-}
-
-long long DateTime::toSecondsSinceEpoch() const {
-    return (std::chrono::duration_cast<Seconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDuration())).count();
-}
-
-long long DateTime::toMillisecondsSinceEpoch() const {
-
-    return (std::chrono::duration_cast<Milliseconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDuration())).count();
-}
-
-long long DateTime::toMicrosecondsSinceEpoch() const {
-
-    return (std::chrono::duration_cast<Microseconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDuration())).count();
-}
-
 DateTime::Microseconds DateTime::toStdDurationSinceEpoch() const {
 
-    return std::chrono::duration_cast<Microseconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDuration());
+    return std::chrono::duration_cast<Microseconds>(mDate.toStdDurationSinceEpoch() + mTime.toStdDurationSinceMidnight());
 }
 
 std::chrono::system_clock::time_point DateTime::toStdTimePoint() const {
@@ -351,64 +339,71 @@ std::string DateTime::toString(const std::string& format) const {
     return mDate.toString(mTime.toString(format));
 }
 
-DateTime DateTime::fromString(const std::string& datetimeString, const std::string& format) {
-    int y = 1, m = 1, d = 1;
-    int _hours = 0, _minutes = 0, _seconds = 0;
-    long _subseconds = 0;
+DateTime DateTime::current() {
+    return DateTime(Date::current(), Time::current());
+}
 
+DateTime DateTime::epoch() {
+    return DateTime(Date::epoch(), Time::midnight());
+}
+
+DateTime DateTime::fromString(const std::string& datetimeString, const std::string& format) {
+    int _year = 1, _month = 1, _day = 1;
+    int _hour = 0, _minute = 0, _second = 0;
+    long _subsecond = 0;
 
     for (int fmtPos = 0, dtsPos = 0; fmtPos < format.size() && dtsPos < datetimeString.size(); ++fmtPos) {
         const int charCount = Utility::countIdenticalCharsFrom(fmtPos, format);
 
         if (format[fmtPos] == '#') {
             if (datetimeString[dtsPos] == '+') {
-                y = 1;
+                _year = 1;
                 ++dtsPos;
             } else if (datetimeString[dtsPos] == '-') {
-                y = -1;
+                _year = -1;
                 ++dtsPos;
             }
         } else if (format[fmtPos] == 'y') {
             if (charCount == 1) {
-                y = y * Utility::readIntAndAdvancePos(datetimeString, dtsPos, 4);
+                _year = _year * Utility::readIntAndAdvancePos(datetimeString, dtsPos, 4);
             } else if (charCount == 2) {
-                y = y * std::stoi(datetimeString.substr(dtsPos, charCount));
-                y += 2000;
+                _year = _year * std::stoi(datetimeString.substr(dtsPos, charCount));
+                _year += 2000;
                 dtsPos += charCount;
             } else if (charCount == 4) {
-                y = y * std::stoi(datetimeString.substr(dtsPos, charCount));
+                _year = _year * std::stoi(datetimeString.substr(dtsPos, charCount));
                 dtsPos += charCount;
             }
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'E') {
             if (datetimeString.substr(dtsPos, 2) == "CE") {
-                y = std::abs(y);
+                _year = std::abs(_year);
                 dtsPos += 2;
             } else if (datetimeString.substr(dtsPos, 3) == "BCE") {
-                y = -std::abs(y);
+                _year = -std::abs(_year);
                 dtsPos += 3;
             }
         } else if (format[fmtPos] == 'M') {
             if (charCount == 1) {
-                m = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 4);
+                _month = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 4);
             } else if (charCount == 2) {
-                m = std::stoi(datetimeString.substr(dtsPos, charCount));
+                _month = std::stoi(datetimeString.substr(dtsPos, charCount));
                 dtsPos += charCount;
             } else if (charCount == 3) {
-                m = (std::find(monthNameArray, monthNameArray + 11, datetimeString.substr(dtsPos, charCount)) - monthNameArray) + 1;
+                _month = (std::find(Internal::monthNameArray, Internal::monthNameArray + 11, datetimeString.substr(dtsPos, charCount)) - Internal::monthNameArray) + 1;
                 dtsPos += charCount;
             } else if (charCount == 4) {
                 int newPos = dtsPos;
                 while (newPos < datetimeString.size() && std::isalpha(datetimeString[newPos])) ++newPos;
-                m = (std::find(monthNameArray + 12, monthNameArray + 23, datetimeString.substr(dtsPos, newPos - dtsPos)) - monthNameArray) - 11;
+                _month = (std::find(Internal::monthNameArray + 12, Internal::monthNameArray + 23, datetimeString.substr(dtsPos, newPos - dtsPos)) - Internal::monthNameArray) - 11;
                 dtsPos = newPos;
             }
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'd') {
             if (charCount == 1) {
-                d = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
+                _day = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
             } else if (charCount == 2) {
-                d = std::stoi(datetimeString.substr(dtsPos, charCount));
+                _day = std::stoi(datetimeString.substr(dtsPos, charCount));
                 dtsPos += charCount;
             } else if (charCount == 3) {
                 // lets the format string and the date string be in sync.
@@ -418,22 +413,22 @@ DateTime DateTime::fromString(const std::string& datetimeString, const std::stri
             }
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'h' || format[fmtPos] == 'H') {
-            _hours = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
+            _hour = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'm') {
-            _minutes = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
+            _minute = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 's') {
-            _seconds = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
+            _second = Utility::readIntAndAdvancePos(datetimeString, dtsPos, 2);
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'f') {
             std::string subsecondString = datetimeString.substr(dtsPos, charCount);
-            _subseconds = std::stoi(subsecondString.append(9 - subsecondString.size(), '0'));
+            _subsecond = std::stoi(subsecondString.append(9 - subsecondString.size(), '0'));
             dtsPos += charCount;
             fmtPos += charCount - 1; // skip all identical characters except the last.
         } else if (format[fmtPos] == 'a' || format[fmtPos] == 'A') {
             if (datetimeString.substr(dtsPos, 2) == "pm" || datetimeString.substr(dtsPos, 2) == "PM") {
-                _hours = (_hours > 12 ? _hours : _hours + 12);
+                _hour = (_hour > 12 ? _hour : _hour + 12);
                 dtsPos += 2;
             }
         } else {
@@ -442,7 +437,7 @@ DateTime DateTime::fromString(const std::string& datetimeString, const std::stri
         }
     }
 
-    return DateTime(Date(y, m, d), Time(_hours, _minutes, _seconds, Nanoseconds(_subseconds)));
+    return DateTime(Date(_year, _month, _day), Time(_hour, _minute, _second, Nanoseconds(_subsecond)));
 }
 
 DateTime DateTime::fromJulianDay(double julianDay) {
@@ -453,48 +448,40 @@ DateTime DateTime::fromJulianDay(double julianDay) {
     return DateTime(Date(Days(integer - 2440587))).subtractHours(12).addDuration(Milliseconds(millisecondCount));
 }
 
-long long DateTime::daysBetween(const DateTime& from, const DateTime & to) {
-
-    return std::abs(std::chrono::duration_cast<Days>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
-}
-
-long long DateTime::hoursBetween(const DateTime& from, const DateTime & to) {
-
-    return std::abs(std::chrono::duration_cast<Hours>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
-}
-
-long long DateTime::minutesBetween(const DateTime& from, const DateTime & to) {
-
-    return std::abs(std::chrono::duration_cast<Minutes>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
-}
-
-long long DateTime::secondsBetween(const DateTime& from, const DateTime & to) {
-
-    return std::abs(std::chrono::duration_cast<Seconds>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
-}
-
-long long DateTime::millisecondsBetween(const DateTime& from, const DateTime & to) {
-
-    return std::abs(std::chrono::duration_cast<Milliseconds>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
+long long DateTime::nanosecondsBetween(const DateTime& from, const DateTime & to) {
+    return std::abs(std::chrono::duration_cast<Nanoseconds>((from.mDate.toStdDurationSinceEpoch() + from.mTime.toStdDurationSinceMidnight()) - (to.mDate.toStdDurationSinceEpoch() + to.mTime.toStdDurationSinceMidnight())).count());
 }
 
 long long DateTime::microsecondsBetween(const DateTime& from, const DateTime & to) {
-
     return std::abs(std::chrono::duration_cast<Microseconds>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
 }
 
-bool DateTime::isLeapYear(int year) {
-
-    return Date::isLeapYear(year);
+long long DateTime::millisecondsBetween(const DateTime& from, const DateTime & to) {
+    return std::abs(std::chrono::duration_cast<Milliseconds>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
 }
 
-int DateTime::daysInMonthOfYear(int year, int month) {
+long long DateTime::secondsBetween(const DateTime& from, const DateTime & to) {
+    return std::abs(std::chrono::duration_cast<Seconds>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
+}
 
-    return Date::daysInMonthOfYear(year, month);
+long DateTime::minutesBetween(const DateTime& from, const DateTime & to) {
+    return std::abs(std::chrono::duration_cast<Minutes>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
+}
+
+long DateTime::hoursBetween(const DateTime& from, const DateTime & to) {
+    return std::abs(std::chrono::duration_cast<Hours>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
+}
+
+long DateTime::daysBetween(const DateTime& from, const DateTime & to) {
+    return std::abs(std::chrono::duration_cast<Days>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
+}
+
+long DateTime::weeksBetween(const DateTime& from, const DateTime & to) {
+    return std::abs(std::chrono::duration_cast<Weeks>(from.toStdDurationSinceEpoch() - to.toStdDurationSinceEpoch()).count());
 }
 
 std::ostream & Salsabil::operator<<(std::ostream& os, const DateTime & dt) {
-    os << dt.date().toString("yyyy-MM-dd") << 'T' << dt.time().toString("hh:mm:ss.fff");
+    os << dt.toString("yyyy-MM-ddThh:mm:ss.fff");
 
     return os;
 }
@@ -503,8 +490,7 @@ std::istream & Salsabil::operator>>(std::istream& is, DateTime & dt) {
     const int DateTimeFormatWidth = 23;
     char result[DateTimeFormatWidth];
     is.read(result, DateTimeFormatWidth);
-    std::string str(result, DateTimeFormatWidth);
+    dt = DateTime::fromString(std::string(result, DateTimeFormatWidth), "yyyy-MM-ddThh:mm:ss.fff");
 
-    dt = DateTime(Date::fromString(str.substr(0, 10), "yyyy-MM-dd"), Time::fromString(str.substr(11, 12), "hh:mm:ss.fff"));
     return is;
 }

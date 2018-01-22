@@ -78,12 +78,16 @@ TEST(DateTest, ReturnsYearMonthDay) {
 }
 
 TEST(DateTest, RreturnsCurrentDate) {
-    Date myDate = Date::currentDate();
+    Date myDate = Date::current();
     std::time_t tTime = std::time(nullptr);
     std::tm* tmTime = std::gmtime(&tTime);
     ASSERT_THAT(myDate.year(), Eq(tmTime->tm_year + 1900));
     ASSERT_THAT(myDate.month(), Eq(tmTime->tm_mon + 1));
     ASSERT_THAT(myDate.day(), Eq(tmTime->tm_mday));
+}
+
+TEST(DateTest, RreturnsEpoch) {
+    ASSERT_THAT(Date::epoch(), Eq(Date(1970, 1, 1)));
 }
 
 TEST(DateTest, ConstructsFromYearMonthDay) {

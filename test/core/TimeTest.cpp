@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -25,8 +25,9 @@
 using namespace ::testing;
 using namespace Salsabil;
 
-TEST(TimeTest, IsMidnightIfDefaultConstructed) {
+TEST(TimeTest, IsInvalidIfDefaultConstructed) {
     Time myTime;
+    ASSERT_FALSE(myTime.isValid());
     ASSERT_THAT(myTime.hour(), Eq(0));
     ASSERT_THAT(myTime.minute(), Eq(0));
     ASSERT_THAT(myTime.second(), Eq(0));
@@ -36,7 +37,7 @@ TEST(TimeTest, IsMidnightIfDefaultConstructed) {
 }
 
 TEST(TimeTest, ReturnsCurrentTime) {
-    Time myTime = Time::currentTime();
+    Time myTime = Time::current();
     std::time_t tTime = std::time(nullptr);
     std::tm* tmTime = std::gmtime(&tTime);
 
@@ -45,6 +46,16 @@ TEST(TimeTest, ReturnsCurrentTime) {
     ASSERT_THAT(myTime.second(), Eq(tmTime->tm_sec));
 
     ASSERT_TRUE(myTime.isValid());
+}
+
+TEST(TimeTest, ReturnsMidnight) {
+    Time myTime = Time::midnight();
+    ASSERT_THAT(myTime.hour(), Eq(0));
+    ASSERT_THAT(myTime.minute(), Eq(0));
+    ASSERT_THAT(myTime.second(), Eq(0));
+    ASSERT_THAT(myTime.millisecond(), Eq(0));
+    ASSERT_THAT(myTime.microsecond(), Eq(0));
+    ASSERT_THAT(myTime.nanosecond(), Eq(0));
 }
 
 TEST(TimeTest, InitializesToGivenTime) {
@@ -285,27 +296,27 @@ TEST(TimeTest, CreatesTimeFromFormattedString) {
 }
 
 TEST(TimeTest, ReturnsTimeAsNanoseconds) {
-    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toNanoseconds(), Eq(86193978432162));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toNanosecondsSinceMidnight(), Eq(86193978432162));
 }
 
 TEST(TimeTest, ReturnsTimeAsMicroseconds) {
-    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMicroseconds(), Eq(86193978432));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMicrosecondsSinceMidnight(), Eq(86193978432));
 }
 
 TEST(TimeTest, ReturnsTimeAsMilliseconds) {
-    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMilliseconds(), Eq(86193978));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMillisecondsSinceMidnight(), Eq(86193978));
 }
 
 TEST(TimeTest, ReturnsTimeAsSeconds) {
-    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toSeconds(), Eq(86193));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toSecondsSinceMidnight(), Eq(86193));
 }
 
 TEST(TimeTest, ReturnsTimeAsMinutes) {
-    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMinutes(), Eq(1436));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toMinutesSinceMidnight(), Eq(1436));
 }
 
 TEST(TimeTest, ReturnsTimeAsHours) {
-    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toHours(), Eq(23));
+    ASSERT_THAT(Time(23, 56, 33, Time::Nanoseconds(978432162)).toHoursSinceMidnight(), Eq(23));
 }
 
 TEST(TimeTest, ReturnsBrokenStdTimeRepresentation) {
@@ -319,7 +330,7 @@ TEST(TimeTest, ReturnsBrokenStdTimeRepresentation) {
 TEST(TimeTest, ReturnsScalarStdTimeRepresentation) {
     Time myTime(14, 32, 9);
     std::time_t tTime = myTime.toScalarStdTime();
-    ASSERT_THAT(tTime, Eq(myTime.toSeconds()));
+    ASSERT_THAT(tTime, Eq(myTime.toSecondsSinceMidnight()));
 }
 
 TEST(TimeTest, SerializesDeserializes) {

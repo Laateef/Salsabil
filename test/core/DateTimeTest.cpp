@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -40,7 +40,7 @@ TEST(DateTimeTest, IsInvalidIfDefaultConstructed) {
 }
 
 TEST(DateTimeTest, ReturnsCurrentDateTime) {
-    DateTime dt = DateTime::currentDateTime();
+    DateTime dt = DateTime::current();
     std::time_t tTime = std::time(nullptr);
     std::tm* tmTime = std::gmtime(&tTime);
 
@@ -54,6 +54,10 @@ TEST(DateTimeTest, ReturnsCurrentDateTime) {
     //    ASSERT_THAT(dt.millisecond(), Eq(0));
     //    ASSERT_THAT(dt.microsecond(), Eq(0));
     //    ASSERT_THAT(dt.nanosecond(), Eq(0));
+}
+
+TEST(DateTimeTest, ReturnsEpoch) {
+    ASSERT_THAT(DateTime::epoch(), Eq(DateTime(Date(1970, 1, 1), Time(0, 0, 0))));
 }
 
 TEST(DateTimeTest, ConstructsFromDateAndTime) {
@@ -88,6 +92,8 @@ TEST(DateTimeTest, AddsDuration) {
     ASSERT_THAT(DateTime(Date(2045, 3, 27), Time(16, 2, 3, 4)).addDuration(DateTime::Hours(10)), Eq(DateTime(Date(2045, 3, 28), Time(2, 2, 3, 4))));
     // Adding date durations which only affect the date part.
     ASSERT_THAT(DateTime(Date(2045, 3, 27), Time(1, 2, 3, 4)).addDuration(DateTime::Days(3)), Eq(DateTime(Date(2045, 3, 30), Time(1, 2, 3, 4))));
+    // Adding a negative duration
+    ASSERT_THAT(DateTime(Date(2045, 3, 27), Time(1, 2, 3, 4)).addDuration(-DateTime::Days(3)), Eq(DateTime(Date(2045, 3, 24), Time(1, 2, 3, 4))));
 }
 
 TEST(DateTimeTest, SubtractsDuration) {
@@ -98,6 +104,8 @@ TEST(DateTimeTest, SubtractsDuration) {
     ASSERT_THAT(DateTime(Date(2045, 3, 27), Time(6, 2, 3, 4)).subtractDuration(DateTime::Hours(10)), Eq(DateTime(Date(2045, 3, 26), Time(20, 2, 3, 4))));
     // Subtracting date durations which only affect the date part.
     ASSERT_THAT(DateTime(Date(2045, 3, 27), Time(1, 2, 3, 4)).subtractDuration(DateTime::Days(3)), Eq(DateTime(Date(2045, 3, 24), Time(1, 2, 3, 4))));
+    // Subtracting a negative duration
+    ASSERT_THAT(DateTime(Date(2045, 3, 27), Time(1, 2, 3, 4)).subtractDuration(-DateTime::Days(3)), Eq(DateTime(Date(2045, 3, 30), Time(1, 2, 3, 4))));
 }
 
 TEST(DateTimeTest, TestsAdditionSubtractionOperators) {
@@ -107,8 +115,8 @@ TEST(DateTimeTest, TestsAdditionSubtractionOperators) {
 }
 
 TEST(DateTimeTest, FormatDateTime) {
-    ASSERT_THAT(DateTime(Date(1999, 5, 18), Time(23, 55, 57, Time::Nanoseconds(123456789))).toString("d/M/yyyy, hh:mm:ss.fffffffff"), StrEq("18/5/1999, 23:55:57.123456789"));
     ASSERT_THAT(DateTime().toString("d/M/yyyy, hh:mm:ss.fffffffff"), StrEq(""));
+    ASSERT_THAT(DateTime(Date(1999, 5, 18), Time(23, 55, 57, Time::Nanoseconds(123456789))).toString("d/M/yyyy, hh:mm:ss.fffffffff"), StrEq("18/5/1999, 23:55:57.123456789"));
 }
 
 TEST(DateTimeTest, ConstructsFromString) {
@@ -128,18 +136,19 @@ TEST(DateTimeTest, FromJulainDay) {
 }
 
 TEST(DateTimeTest, DifferenceBetweenTwoDates) {
-    ASSERT_THAT(DateTime::daysBetween(DateTime(Date(1970, 1, 1), Time(23, 2, 36)), DateTime(Date(1971, 1, 1), Time(23, 2, 36))), Eq(365));
-    ASSERT_THAT(DateTime::hoursBetween(DateTime(Date(1998, 1, 1), Time(23, 45, 36)), DateTime(Date(1998, 1, 2), Time(12, 2, 36))), Eq(12));
-    ASSERT_THAT(DateTime::minutesBetween(DateTime(Date(2000, 1, 2), Time(23, 45, 36)), DateTime(Date(2000, 1, 2), Time(12, 2, 36))), Eq(703));
-    ASSERT_THAT(DateTime::secondsBetween(DateTime(Date(2002, 1, 1), Time(15, 45, 36)), DateTime(Date(2002, 1, 2), Time(15, 2, 37))), Eq(83821));
-    ASSERT_THAT(DateTime::millisecondsBetween(DateTime(Date(2017, 1, 15), Time(12, 45, 36, 123)), DateTime(Date(2017, 1, 15), Time(12, 45, 37))), Eq(877));
+    ASSERT_THAT(DateTime::nanosecondsBetween(DateTime(Date(2017, 1, 15), Time(12, 45, 36, DateTime::Nanoseconds(123001013))), DateTime(Date(2017, 1, 15), Time(12, 45, 37))), Eq(876998987));
     ASSERT_THAT(DateTime::microsecondsBetween(DateTime(Date(2017, 1, 15), Time(12, 45, 36, DateTime::Microseconds(123001))), DateTime(Date(2017, 1, 15), Time(12, 45, 37))), Eq(876999));
+    ASSERT_THAT(DateTime::millisecondsBetween(DateTime(Date(2017, 1, 15), Time(12, 45, 36, 123)), DateTime(Date(2017, 1, 15), Time(12, 45, 37))), Eq(877));
+    ASSERT_THAT(DateTime::secondsBetween(DateTime(Date(2002, 1, 1), Time(15, 45, 36)), DateTime(Date(2002, 1, 2), Time(15, 2, 37))), Eq(83821));
+    ASSERT_THAT(DateTime::minutesBetween(DateTime(Date(2000, 1, 2), Time(23, 45, 36)), DateTime(Date(2000, 1, 2), Time(12, 2, 36))), Eq(703));
+    ASSERT_THAT(DateTime::hoursBetween(DateTime(Date(1998, 1, 1), Time(23, 45, 36)), DateTime(Date(1998, 1, 2), Time(12, 2, 36))), Eq(12));
+    ASSERT_THAT(DateTime::daysBetween(DateTime(Date(1970, 1, 1), Time(23, 2, 36)), DateTime(Date(1971, 1, 1), Time(23, 2, 36))), Eq(365));
 }
 
 TEST(DateTimeTest, SerializesDeserializes) {
     DateTime dt;
     std::stringstream ss;
-    ss << DateTime(Date(2014, 11, 9), Time(2, 44, 21, 165));
+    ss << DateTime(Date(2014, 11, 9), Time(2, 44, 21, 987));
     ss >> dt;
-    ASSERT_THAT(dt, Eq(DateTime(Date(2014, 11, 9), Time(2, 44, 21, 165))));
+    ASSERT_THAT(dt, Eq(DateTime(Date(2014, 11, 9), Time(2, 44, 21, 987))));
 }
