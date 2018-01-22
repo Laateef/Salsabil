@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-add_executable(core_test SqlDriverFactoryTest.cpp SqlStatementBuilderTest.cpp StringHelperTest.cpp TimeZoneTest.cpp DateTimeTest.cpp DateTest.cpp TimeTest.cpp)
+add_executable(core_test SqlDriverFactoryTest.cpp SqlStatementBuilderTest.cpp StringHelperTest.cpp LocalDateTimeTest.cpp TimeZoneTest.cpp DateTimeTest.cpp DateTest.cpp TimeTest.cpp)
 
 target_link_libraries(core_test core_lib gmock_main)
 
