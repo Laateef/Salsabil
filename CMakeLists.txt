@@ -20,9 +20,9 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 
-include_directories(${CMAKE_SOURCE_DIR} include/Salsabil src lib)
+include_directories(${CMAKE_SOURCE_DIR} include/Salsabil src lib test)
 
 project(Salsabil)
 

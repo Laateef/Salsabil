@@ -32,6 +32,7 @@ namespace Salsabil {
         friend class SqlFromClause;
 
     public:
+
         template <typename T> SqlWhereClause& equalTo(T rightOperand) {
             append(" = " + Utility::toString(rightOperand));
             return *this;
@@ -39,6 +40,16 @@ namespace Salsabil {
 
         template <typename T> SqlWhereClause& notEqualTo(T rightOperand) {
             append(" <> " + Utility::toString(rightOperand));
+            return *this;
+        }
+
+        SqlWhereClause& equalToString(const std::string& rightOperand) {
+            append(" = " + Utility::toSqlString(rightOperand));
+            return *this;
+        }
+
+        SqlWhereClause& notEqualToString(const std::string& rightOperand) {
+            append(" <> " + Utility::toSqlString(rightOperand));
             return *this;
         }
 

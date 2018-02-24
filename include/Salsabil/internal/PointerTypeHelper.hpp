@@ -67,8 +67,6 @@ namespace Salsabil {
         struct Traits<R(C::*)> : public Traits<R(C&)> {
             using AttributeType = R;
         };
-
-
     }
 }
 

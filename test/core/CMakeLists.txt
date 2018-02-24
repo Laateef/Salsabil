@@ -20,6 +20,6 @@
 
 add_executable(core_test SqlDriverFactoryTest.cpp SqlStatementBuilderTest.cpp StringHelperTest.cpp LocalDateTimeTest.cpp TimeZoneTest.cpp DateTimeTest.cpp DateTest.cpp TimeTest.cpp)
 
-target_link_libraries(core_test core_lib gmock_main)
+target_link_libraries(core_test doctest_with_main core_lib)
 
 add_test(core_test core_test)

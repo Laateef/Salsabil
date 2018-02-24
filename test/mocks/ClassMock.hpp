@@ -22,27 +22,36 @@
 #ifndef SALSABIL_CLASSMOCK_HPP
 #define SALSABIL_CLASSMOCK_HPP
 
-#include <stdint.h>
-
-#include "gmock/gmock.h"
-
-using namespace ::testing;
+#include <string>
 
 class ClassMock {
 public:
-    MOCK_CONST_METHOD0(getId, int(void));
-    MOCK_CONST_METHOD0(getName, std::string(void));
-    MOCK_METHOD1(setId, void(int));
-    MOCK_METHOD1(setName, void(const std::string&));
 
     ClassMock() {
-        ON_CALL(*this, setId(_)).WillByDefault(Invoke([&, this](int id) {
-            ON_CALL(*this, getId()).WillByDefault(Return(id));
-        }));
+    }
 
-        ON_CALL(*this, setName(_)).WillByDefault(Invoke([&, this](const std::string & name) {
-            ON_CALL(*this, getName()).WillByDefault(Return(name));
-        }));
+    int getId() const {
+        return id;
+    }
+
+    void setId(int id) {
+        this->id = id;
+    }
+
+    std::string getName() const {
+        return name;
+    }
+
+    void setName(const std::string& name) {
+        this->name = name;
+    }
+
+    float getWeight() const {
+        return weight;
+    }
+
+    void setWeight(float weight) {
+        this->weight = weight;
     }
 
     int id;

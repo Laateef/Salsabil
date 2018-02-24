@@ -35,14 +35,14 @@ namespace Salsabil {
 
         template <typename Type>
         SqlInsertClause& VALUES(Type value) {
-            mValueList.push_back(Utility::toString(value));
+            mValueList.push_back(Utility::toSqlString(value));
             append(" VALUES (" + Utility::join(mValueList.begin(), mValueList.end(), ", ") + ")");
             return *this;
         }
 
         template<typename Type, typename... Args>
         SqlInsertClause& VALUES(Type value, Args... args) {
-            mValueList.push_back(Utility::toString(value));
+            mValueList.push_back(Utility::toSqlString(value));
             return VALUES(args...);
         }
 

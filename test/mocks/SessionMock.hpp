@@ -19,22 +19,54 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "doctest.h"
-#include "test/mocks/SqlDriverMock.hpp"
-#include "Exception.hpp"
-#include "SqlDriverFactory.hpp"
+#ifndef SALSABIL_SESSIONMOCK_HPP
+#define SALSABIL_SESSIONMOCK_HPP
 
-using namespace Salsabil;
+#include "UserMock.hpp"
 
-TEST_CASE("SqlDriverFactory") {
+class SessionMock {
+public:
 
-    SUBCASE("ThrowsWhenTryingToRegisterExistentDriver") {
-        SqlDriverFactory::registerDriver<SqlDriverMock>("MockDriver");
-
-        CHECK_THROWS_AS(SqlDriverFactory::registerDriver<SqlDriverMock>("MockDriver"), Exception);
+    SessionMock() {
     }
 
-    SUBCASE("ThrowsWhenTryingToGetNonExistentDriver") {
-        CHECK_THROWS_AS(SqlDriverFactory::getDriver("aDriver"), Exception);
+    int getId() const {
+        return id;
     }
-}
+
+    void setId(int id) {
+        this->id = id;
+    }
+
+    std::string getTime() const {
+        return time;
+    }
+
+    void setTime(const std::string& time) {
+        this->time = time;
+    }
+
+    UserMock getStackUser() const {
+        return sUser;
+    }
+
+    void setStackUser(const UserMock& user) {
+        this->sUser = user;
+    }
+
+    UserMock* getUser() const {
+        return user;
+    }
+
+    void setUser(UserMock* user) {
+        this->user = user;
+    }
+
+private:
+    int id;
+    std::string time;
+    UserMock* user;
+    UserMock sUser;
+
+};
+#endif // SALSABIL_SESSIONMOCK_HPP

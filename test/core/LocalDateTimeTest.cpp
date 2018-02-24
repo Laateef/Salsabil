@@ -19,127 +19,130 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gmock/gmock.h"
+#include "doctest.h"
 #include "LocalDateTime.hpp"
+#include <sstream>
 
-using namespace ::testing;
 using namespace Salsabil;
 
-TEST(LocalDateTimeTest, IsInvalidIfDefaultConstructed) {
-    LocalDateTime ldt;
+TEST_CASE("LocalDateTimeTest") {
 
-    ASSERT_FALSE(ldt.isValid());
-    ASSERT_FALSE(ldt.timeZone().isValid());
-    ASSERT_FALSE(ldt.dateTime().isValid());
-    ASSERT_FALSE(ldt.date().isValid());
-    ASSERT_FALSE(ldt.time().isValid());
+    SUBCASE("IsInvalidIfDefaultConstructed") {
+        LocalDateTime ldt;
 
-    ASSERT_THAT(ldt.year(), Eq(0));
-    ASSERT_THAT(ldt.month(), Eq(0));
-    ASSERT_THAT(ldt.day(), Eq(0));
-    ASSERT_THAT(ldt.hour(), Eq(0));
-    ASSERT_THAT(ldt.minute(), Eq(0));
-    ASSERT_THAT(ldt.second(), Eq(0));
-    ASSERT_THAT(ldt.millisecond(), Eq(0));
-    ASSERT_THAT(ldt.microsecond(), Eq(0));
-    ASSERT_THAT(ldt.nanosecond(), Eq(0));
-}
+        CHECK_FALSE(ldt.isValid());
+        CHECK_FALSE(ldt.timeZone().isValid());
+        CHECK_FALSE(ldt.dateTime().isValid());
+        CHECK_FALSE(ldt.date().isValid());
+        CHECK_FALSE(ldt.time().isValid());
 
-TEST(LocalDateTimeTest, ReturnsDateTimePart) {
-    ASSERT_THAT(LocalDateTime(DateTime(Date(1998, 3, 1), Time(23, 4, 19)), TimeZone("Etc/GMT+3")).dateTime(), Eq(DateTime(Date(1998, 3, 1), Time(23, 4, 19))));
-}
+        CHECK(ldt.year() == 0);
+        CHECK(ldt.month() == 0);
+        CHECK(ldt.day() == 0);
+        CHECK(ldt.hour() == 0);
+        CHECK(ldt.minute() == 0);
+        CHECK(ldt.second() == 0);
+        CHECK(ldt.millisecond() == 0);
+        CHECK(ldt.microsecond() == 0);
+        CHECK(ldt.nanosecond() == 0);
+    }
 
-TEST(LocalDateTimeTest, ReturnsTimeZonePart) {
-    ASSERT_THAT(LocalDateTime(DateTime(Date(1998, 3, 1), Time(22, 4, 19)), TimeZone("Etc/GMT+3")).timeZone(), Eq(TimeZone("Etc/GMT+3")));
-}
+    SUBCASE("ReturnsDateTimePart") {
+        CHECK(LocalDateTime(DateTime(Date(1998, 3, 1), Time(23, 4, 19)), TimeZone("Etc/GMT+3")).dateTime() == DateTime(Date(1998, 3, 1), Time(23, 4, 19)));
+    }
 
-TEST(LocalDateTimeTest, TestsComparisons) {
-    DateTime dt1(Date(2012, 3, 27), Time(8, 55, 21));
-    DateTime dt2(Date(2012, 3, 27), Time(11, 55, 21));
+    SUBCASE("ReturnsTimeZonePart") {
+        CHECK(LocalDateTime(DateTime(Date(1998, 3, 1), Time(22, 4, 19)), TimeZone("Etc/GMT+3")).timeZone() == TimeZone("Etc/GMT+3"));
+    }
 
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT-9")) < LocalDateTime(dt2, TimeZone("Etc/GMT-9")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT-6")) < LocalDateTime(dt1, TimeZone("Etc/GMT-3")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT-6")) < LocalDateTime(dt2, TimeZone("Etc/GMT-3")));
+    SUBCASE("TestsComparisons") {
+        DateTime dt1(Date(2012, 3, 27), Time(8, 55, 21));
+        DateTime dt2(Date(2012, 3, 27), Time(11, 55, 21));
 
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT+9")) <= LocalDateTime(dt2, TimeZone("Etc/GMT+9")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT+6")) <= LocalDateTime(dt1, TimeZone("Etc/GMT+3")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT+6")) <= LocalDateTime(dt2, TimeZone("Etc/GMT+3")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT-1")) <= LocalDateTime(dt1, TimeZone("Etc/GMT-1")));
-    ASSERT_TRUE(LocalDateTime(dt2, TimeZone("Etc/GMT-1")) <= LocalDateTime(dt1, TimeZone("Etc/GMT-4")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT-9")) < LocalDateTime(dt2, TimeZone("Etc/GMT-9")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT-6")) < LocalDateTime(dt1, TimeZone("Etc/GMT-3")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT-6")) < LocalDateTime(dt2, TimeZone("Etc/GMT-3")));
 
-    ASSERT_TRUE(LocalDateTime(dt2, TimeZone("Etc/GMT+9")) > LocalDateTime(dt1, TimeZone("Etc/GMT+9")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT+6")) > LocalDateTime(dt1, TimeZone("Etc/GMT+3")));
-    ASSERT_TRUE(LocalDateTime(dt2, TimeZone("Etc/GMT-3")) > LocalDateTime(dt1, TimeZone("Etc/GMT-6")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT+9")) <= LocalDateTime(dt2, TimeZone("Etc/GMT+9")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT+6")) <= LocalDateTime(dt1, TimeZone("Etc/GMT+3")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT+6")) <= LocalDateTime(dt2, TimeZone("Etc/GMT+3")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT-1")) <= LocalDateTime(dt1, TimeZone("Etc/GMT-1")));
+        CHECK(LocalDateTime(dt2, TimeZone("Etc/GMT-1")) <= LocalDateTime(dt1, TimeZone("Etc/GMT-4")));
 
-    ASSERT_TRUE(LocalDateTime(dt2, TimeZone("Etc/GMT+9")) >= LocalDateTime(dt1, TimeZone("Etc/GMT+9")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT+3")) >= LocalDateTime(dt1, TimeZone("Etc/GMT+6")));
-    ASSERT_TRUE(LocalDateTime(dt2, TimeZone("Etc/GMT+3")) >= LocalDateTime(dt1, TimeZone("Etc/GMT+6")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT-1")) >= LocalDateTime(dt1, TimeZone("Etc/GMT-1")));
-    ASSERT_TRUE(LocalDateTime(dt2, TimeZone("Etc/GMT-2")) >= LocalDateTime(dt1, TimeZone("Etc/GMT-6")));
+        CHECK(LocalDateTime(dt2, TimeZone("Etc/GMT+9")) > LocalDateTime(dt1, TimeZone("Etc/GMT+9")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT+6")) > LocalDateTime(dt1, TimeZone("Etc/GMT+3")));
+        CHECK(LocalDateTime(dt2, TimeZone("Etc/GMT-3")) > LocalDateTime(dt1, TimeZone("Etc/GMT-6")));
 
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT-5")) == LocalDateTime(dt1, TimeZone("Etc/GMT-5")));
-    ASSERT_TRUE(LocalDateTime(dt2, TimeZone("Etc/GMT+2")) == LocalDateTime(dt1, TimeZone("Etc/GMT+5")));
+        CHECK(LocalDateTime(dt2, TimeZone("Etc/GMT+9")) >= LocalDateTime(dt1, TimeZone("Etc/GMT+9")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT+3")) >= LocalDateTime(dt1, TimeZone("Etc/GMT+6")));
+        CHECK(LocalDateTime(dt2, TimeZone("Etc/GMT+3")) >= LocalDateTime(dt1, TimeZone("Etc/GMT+6")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT-1")) >= LocalDateTime(dt1, TimeZone("Etc/GMT-1")));
+        CHECK(LocalDateTime(dt2, TimeZone("Etc/GMT-2")) >= LocalDateTime(dt1, TimeZone("Etc/GMT-6")));
 
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT+9")) != LocalDateTime(dt1, TimeZone("Etc/GMT-9")));
-    ASSERT_TRUE(LocalDateTime(dt1, TimeZone("Etc/GMT+2")) != LocalDateTime(dt2, TimeZone("Etc/GMT+2")));
-}
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT-5")) == LocalDateTime(dt1, TimeZone("Etc/GMT-5")));
+        CHECK(LocalDateTime(dt2, TimeZone("Etc/GMT+2")) == LocalDateTime(dt1, TimeZone("Etc/GMT+5")));
 
-TEST(LocalDateTimeTest, ReturnsUtcLocalDateTime) {
-    ASSERT_THAT(LocalDateTime(DateTime(Date(2018, 1, 13), Time(19, 8, 20)), TimeZone("Europe/Istanbul")).toUtc(), Eq(LocalDateTime(DateTime(Date(2018, 1, 13), Time(16, 8, 20)), TimeZone("Etc/UTC"))));
-    ASSERT_THAT(LocalDateTime(DateTime(Date(1998, 3, 1), Time(3, 4, 19)), TimeZone("Etc/GMT+3")).toUtc(), Eq(LocalDateTime(DateTime(Date(1998, 3, 1), Time(6, 4, 19)), TimeZone("Etc/UTC"))));
-}
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT+9")) != LocalDateTime(dt1, TimeZone("Etc/GMT-9")));
+        CHECK(LocalDateTime(dt1, TimeZone("Etc/GMT+2")) != LocalDateTime(dt2, TimeZone("Etc/GMT+2")));
+    }
 
-TEST(LocalDateTimeTest, ReturnsCurrentLocalDateTime) {
-    LocalDateTime ldt = LocalDateTime::current();
-    std::time_t tTime = std::time(nullptr);
-    std::tm* tmTime = std::localtime(&tTime);
+    SUBCASE("ReturnsUtcLocalDateTime") {
+        CHECK(LocalDateTime(DateTime(Date(2018, 1, 13), Time(19, 8, 20)), TimeZone("Europe/Istanbul")).toUtc() == LocalDateTime(DateTime(Date(2018, 1, 13), Time(16, 8, 20)), TimeZone("Etc/UTC")));
+        CHECK(LocalDateTime(DateTime(Date(1998, 3, 1), Time(3, 4, 19)), TimeZone("Etc/GMT+3")).toUtc() == LocalDateTime(DateTime(Date(1998, 3, 1), Time(6, 4, 19)), TimeZone("Etc/UTC")));
+    }
 
-    ASSERT_THAT(ldt.year(), Eq(tmTime->tm_year + 1900));
-    ASSERT_THAT(ldt.month(), Eq(tmTime->tm_mon + 1));
-    ASSERT_THAT(ldt.day(), Eq(tmTime->tm_mday));
-    ASSERT_THAT(ldt.hour(), Eq(tmTime->tm_hour));
-    ASSERT_THAT(ldt.minute(), Eq(tmTime->tm_min));
-    ASSERT_THAT(ldt.second(), Eq(tmTime->tm_sec));
-    // can not be tested
-    //    ASSERT_THAT(ldt.millisecond(), Eq(0));
-    //    ASSERT_THAT(ldt.microsecond(), Eq(0));
-    //    ASSERT_THAT(ldt.nanosecond(), Eq(0));
-}
+    SUBCASE("ReturnsCurrentLocalDateTime") {
+        LocalDateTime ldt = LocalDateTime::current();
+        std::time_t tTime = std::time(nullptr);
+        std::tm* tmTime = std::localtime(&tTime);
 
-TEST(LocalDateTimeTest, ReturnsOffsetFromUtc) {
-    ASSERT_THAT(LocalDateTime(DateTime(Date(1998, 3, 1), Time(23, 4, 19)), TimeZone("Etc/GMT+3")).offsetFromUtc(), Eq(LocalDateTime::Hours(-3)));
-    ASSERT_THAT(LocalDateTime(DateTime(Date(1998, 3, 1), Time(23, 4, 19)), TimeZone("Etc/GMT-3")).offsetFromUtc(), Eq(LocalDateTime::Hours(3)));
-}
+        CHECK(ldt.year() == (tmTime->tm_year + 1900));
+        CHECK(ldt.month() == (tmTime->tm_mon + 1));
+        CHECK(ldt.day() == tmTime->tm_mday);
+        CHECK(ldt.hour() == tmTime->tm_hour);
+        CHECK(ldt.minute() == tmTime->tm_min);
+        CHECK(ldt.second() == tmTime->tm_sec);
+        // can not be tested
+        //    CHECK(ldt.millisecond() == 0);
+        //    CHECK(ldt.microsecond() == 0);
+        //    CHECK(ldt.nanosecond() == 0);
+    }
 
-TEST(LocalDateTimeTest, RerutnsLocalDateTimeInAnotherZone) {
-    ASSERT_THAT(LocalDateTime(DateTime(Date(2018, 1, 13), Time(9, 6, 21)), TimeZone("Etc/GMT+2")).toTimeZone(TimeZone("Etc/GMT+4")), Eq(LocalDateTime(DateTime(Date(2018, 1, 13), Time(7, 6, 21)), TimeZone("Etc/GMT+4"))));
-    ASSERT_THAT(LocalDateTime(DateTime(Date(2018, 1, 13), Time(9, 6, 21)), TimeZone("Etc/GMT-2")).toTimeZone(TimeZone("Etc/GMT-4")), Eq(LocalDateTime(DateTime(Date(2018, 1, 13), Time(11, 6, 21)), TimeZone("Etc/GMT-4"))));
-}
+    SUBCASE("ReturnsOffsetFromUtc") {
+        CHECK(LocalDateTime(DateTime(Date(1998, 3, 1), Time(23, 4, 19)), TimeZone("Etc/GMT+3")).offsetFromUtc() == LocalDateTime::Hours(-3));
+        CHECK(LocalDateTime(DateTime(Date(1998, 3, 1), Time(23, 4, 19)), TimeZone("Etc/GMT-3")).offsetFromUtc() == LocalDateTime::Hours(3));
+    }
 
-TEST(LocalDateTimeTest, FormatLocalDateTime) {
-    ASSERT_THAT(LocalDateTime().toString("d/M/yyyy, hh:mm:ss.fffffffff zz"), StrEq(""));
-    ASSERT_THAT(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("z"), StrEq("+0300"));
-    ASSERT_THAT(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("zz"), StrEq("+03:00"));
-    ASSERT_THAT(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("zzz"), StrEq("+03"));
-    ASSERT_THAT(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("zzzz"), StrEq("Europe/Istanbul"));
-}
+    SUBCASE("RerutnsLocalDateTimeInAnotherZone") {
+        CHECK(LocalDateTime(DateTime(Date(2018, 1, 13), Time(9, 6, 21)), TimeZone("Etc/GMT+2")).toTimeZone(TimeZone("Etc/GMT+4")) == LocalDateTime(DateTime(Date(2018, 1, 13), Time(7, 6, 21)), TimeZone("Etc/GMT+4")));
+        CHECK(LocalDateTime(DateTime(Date(2018, 1, 13), Time(9, 6, 21)), TimeZone("Etc/GMT-2")).toTimeZone(TimeZone("Etc/GMT-4")) == LocalDateTime(DateTime(Date(2018, 1, 13), Time(11, 6, 21)), TimeZone("Etc/GMT-4")));
+    }
 
-TEST(LocalDateTimeTest, ReturnsLocalDateTimeFromString) {
-    ASSERT_THAT(LocalDateTime::fromString("21/1/2018, 14:18:34.762[Europe/Istanbul]", "d/M/yyyy, hh:mm:ss.fff[zzzz]"), Eq(LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("Europe/Istanbul"))));
-    ASSERT_THAT(LocalDateTime::fromString("21/1/2018, 14:18:34.762[America/Argentina/Buenos_Aires]", "d/M/yyyy, hh:mm:ss.fff[zzzz]"), Eq(LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("America/Argentina/Buenos_Aires"))));
-    ASSERT_THAT(LocalDateTime::fromString("21/1/2018, 14:18:34.762[America/Blanc-Sablon]", "d/M/yyyy, hh:mm:ss.fff[zzzz]"), Eq(LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("America/Blanc-Sablon"))));
-    ASSERT_THAT(LocalDateTime::fromString("21/1/2018, 14:18:34.762[Etc/GMT+1]", "d/M/yyyy, hh:mm:ss.fff[zzzz]"), Eq(LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("Etc/GMT+1"))));
+    SUBCASE("FormatLocalDateTime") {
+        CHECK(LocalDateTime().toString("d/M/yyyy, hh:mm:ss.fffffffff zz") == "");
+        CHECK(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("z") == "+0300");
+        CHECK(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("zz") == "+03:00");
+        CHECK(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("zzz") == "+03");
+        CHECK(LocalDateTime(DateTime(Date(2018, 1, 14), Time(14, 37, 40)), TimeZone("Europe/Istanbul")).toString("zzzz") == "Europe/Istanbul");
+    }
 
-    // ambiguous time zones cannot be parsed.
-    ASSERT_THAT(LocalDateTime::fromString("21/1/2018, 14:18:34.762 CEST", "d/M/yyyy, hh:mm:ss.fff zzz"), Eq(LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone())));
-    ASSERT_THAT(LocalDateTime::fromString("21/1/2018, 14:18:34.762UTC-10:00", "d/M/yyyy, hh:mm:ss.fffUTCzz"), Eq(LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone())));
-    ASSERT_THAT(LocalDateTime::fromString("21/1/2018, 14:18:34.762+0300", "d/M/yyyy, hh:mm:ss.fff z"), Eq(LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone())));
-}
+    SUBCASE("ReturnsLocalDateTimeFromString") {
+        CHECK(LocalDateTime::fromString("21/1/2018, 14:18:34.762[Europe/Istanbul]", "d/M/yyyy, hh:mm:ss.fff[zzzz]") == LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("Europe/Istanbul")));
+        CHECK(LocalDateTime::fromString("21/1/2018, 14:18:34.762[America/Argentina/Buenos_Aires]", "d/M/yyyy, hh:mm:ss.fff[zzzz]") == LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("America/Argentina/Buenos_Aires")));
+        CHECK(LocalDateTime::fromString("21/1/2018, 14:18:34.762[America/Blanc-Sablon]", "d/M/yyyy, hh:mm:ss.fff[zzzz]") == LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("America/Blanc-Sablon")));
+        CHECK(LocalDateTime::fromString("21/1/2018, 14:18:34.762[Etc/GMT+1]", "d/M/yyyy, hh:mm:ss.fff[zzzz]") == LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone("Etc/GMT+1")));
 
-TEST(LocalDateTimeTest, SerializesDeserializes) {
-    LocalDateTime ldt;
-    std::stringstream ss;
-    ss << LocalDateTime(DateTime(Date(2014, 11, 9), Time(2, 44, 21)), TimeZone("Europe/Istanbul"));
-    ss >> ldt;
-    ASSERT_THAT(ldt, Eq(LocalDateTime(DateTime(Date(2014, 11, 9), Time(2, 44, 21)), TimeZone("Europe/Istanbul"))));
+        // ambiguous time zones cannot be parsed.
+        CHECK(LocalDateTime::fromString("21/1/2018, 14:18:34.762 CEST", "d/M/yyyy, hh:mm:ss.fff zzz") == LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone()));
+        CHECK(LocalDateTime::fromString("21/1/2018, 14:18:34.762UTC-10:00", "d/M/yyyy, hh:mm:ss.fffUTCzz") == LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone()));
+        CHECK(LocalDateTime::fromString("21/1/2018, 14:18:34.762+0300", "d/M/yyyy, hh:mm:ss.fff z") == LocalDateTime(DateTime(Date(2018, 1, 21), Time(14, 18, 34, 762)), TimeZone()));
+    }
+
+    SUBCASE("SerializesDeserializes") {
+        LocalDateTime ldt;
+        std::stringstream ss;
+        ss << LocalDateTime(DateTime(Date(2014, 11, 9), Time(2, 44, 21)), TimeZone("Europe/Istanbul"));
+        ss >> ldt;
+        CHECK(ldt == LocalDateTime(DateTime(Date(2014, 11, 9), Time(2, 44, 21)), TimeZone("Europe/Istanbul")));
+    }
 }

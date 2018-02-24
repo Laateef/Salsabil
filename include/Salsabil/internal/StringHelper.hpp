@@ -26,6 +26,17 @@
 #include <vector>
 #include <algorithm>
 
+#include <iostream>
+
+#ifndef NDEBUG
+#define M_Assert(Expr, Msg) \
+    __M_Assert(#Expr, Expr, __FILE__, __LINE__, Msg)
+#else
+#define M_Assert(Expr, Msg) ;
+#endif
+
+void __M_Assert(const char* expr_str, bool expr, const char* file, int line, const char* msg);
+
 namespace Salsabil {
     namespace Utility {
 
@@ -66,9 +77,24 @@ namespace Salsabil {
 
         std::string toString(long double value);
 
-        std::string toString(const char* value);
+        //        std::string toString(const char* value);
 
         std::string toString(std::string value);
+
+        template<typename T>
+        std::string toSqlString(T value) {
+            return toString(value);
+        }
+
+        template<typename T = std::string>
+        std::string toSqlString(const std::string& value) {
+            return "\'" + value + "\'";
+        }
+
+        template<typename T = const char*>
+        std::string toSqlString(const char* value) {
+            return "\'" + std::string(value) + "\'";
+        }
 
         int countIdenticalCharsFrom(std::size_t pos, const std::string& str);
 

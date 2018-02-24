@@ -19,22 +19,25 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "doctest.h"
-#include "test/mocks/SqlDriverMock.hpp"
-#include "Exception.hpp"
-#include "SqlDriverFactory.hpp"
+#ifndef SALSABIL_LOGGING_HPP
+#define SALSABIL_LOGGING_HPP
 
-using namespace Salsabil;
+#include <iostream>
 
-TEST_CASE("SqlDriverFactory") {
+#define SALSABIL_ENABLE_LOG_DEBUG 1
+#define SALSABIL_ENABLE_LOG_INFO  1
 
-    SUBCASE("ThrowsWhenTryingToRegisterExistentDriver") {
-        SqlDriverFactory::registerDriver<SqlDriverMock>("MockDriver");
+#if SALSABIL_ENABLE_LOG_DEBUG
+#define SALSABIL_LOG_DEBUG(ARG) std::cout << "[debug] " << ARG << std::endl;
+#else
+#define SALSABIL_LOG_DEBUG(ARG)
+#endif
 
-        CHECK_THROWS_AS(SqlDriverFactory::registerDriver<SqlDriverMock>("MockDriver"), Exception);
-    }
+#if SALSABIL_ENABLE_LOG_INFO
+#define SALSABIL_LOG_INFO(ARG) std::cout << "[info] " << ARG << std::endl;
+#else
+#define SALSABIL_LOG_INFO(ARG)
+#endif
 
-    SUBCASE("ThrowsWhenTryingToGetNonExistentDriver") {
-        CHECK_THROWS_AS(SqlDriverFactory::getDriver("aDriver"), Exception);
-    }
-}
+#endif // SALSABIL_LOGGING_HPP
+

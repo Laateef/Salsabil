@@ -34,17 +34,17 @@ namespace Salsabil {
 
     public:
 
-        explicit SqlField(const std::string& name, int column, bool isPrimary) : mName(name), mColumn(column), mIsPrimary(isPrimary) {
+        SqlField(const std::string& name, int column, bool isPrimary) : mName(name), mColumn(column), mIsPrimary(isPrimary) {
         }
 
         virtual ~SqlField() {
         }
 
         /* Reads the data at the corresponding column from <i>driver</i> and inject it in <i>instance</i> using its setter method. */
-        virtual void readFromDriver(const SqlDriver* driver, ClassType* instance) = 0;
+        virtual void readFromDriver(ClassType* instance, int column) = 0;
 
         /* Gets the data from <i>instance</i> via its getter method and writes it to <i>driver</i> at the corresponding column. */
-        virtual void writeToDriver(const ClassType* instance, SqlDriver* driver) = 0;
+        virtual void writeToDriver(const ClassType* instance, int column) = 0;
 
         void setName(std::string name) {
             mName = name;

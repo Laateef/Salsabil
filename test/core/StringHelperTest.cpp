@@ -19,32 +19,34 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gmock/gmock.h"
+#include "doctest.h"
 #include "internal/StringHelper.hpp"
 
-using namespace ::testing;
 using namespace Salsabil;
 
-TEST(JoinVectorOfStringIntoStringFunction, returnsEmptyStringForEmptyVector) {
-    std::vector<std::string> vs;
+TEST_CASE("JoinVectorOfStringIntoStringFunction") {
 
-    ASSERT_THAT(Utility::join(vs.begin(), vs.end(), " "), Eq(""));
-}
+    SUBCASE("ReturnsEmptyStringForEmptyVector") {
+        std::vector<std::string> vs;
 
-TEST(JoinVectorOfStringIntoStringFunction, returnsTheSameStringForOneStringVector) {
-    std::vector<std::string> vs;
+        CHECK(Utility::join(vs.begin(), vs.end(), " ") == "");
+    }
 
-    vs.push_back("A String");
+    SUBCASE("eturnsTheSameStringForOneStringVector") {
+        std::vector<std::string> vs;
 
-    ASSERT_THAT(Utility::join(vs.begin(), vs.end(), " "), Eq("A String"));
-}
+        vs.push_back("A String");
 
-TEST(JoinVectorOfStringIntoStringFunction, returnsDelimiterConcatenatedStringForMultipleStringVector) {
-    std::vector<std::string> vs;
+        CHECK(Utility::join(vs.begin(), vs.end(), " ") == "A String");
+    }
 
-    vs.push_back("A String");
-    vs.push_back("Another String");
-    vs.push_back("One More String");
+    SUBCASE("ReturnsDelimiterConcatenatedStringForMultipleStringVector") {
+        std::vector<std::string> vs;
 
-    ASSERT_THAT(Utility::join(vs.begin(), vs.end(), "-"), Eq("A String-Another String-One More String"));
+        vs.push_back("A String");
+        vs.push_back("Another String");
+        vs.push_back("One More String");
+
+        CHECK(Utility::join(vs.begin(), vs.end(), "-") == "A String-Another String-One More String");
+    }
 }

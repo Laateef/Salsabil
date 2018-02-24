@@ -251,7 +251,6 @@ void SqliteDriver::finalize() {
 SqliteDriver::~SqliteDriver() {
     if (isOpen()) {
         try {
-            finalize();
             close();
         } catch (Exception& exp) {
             std::cerr << exp.what() << std::endl;

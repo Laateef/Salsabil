@@ -19,180 +19,135 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gmock/gmock.h"
+#include "doctest.h"
 #include "SqliteDriver.hpp"
 #include "Exception.hpp"
+#include <cstring>
+#include <algorithm>
 
-using namespace ::testing;
 using namespace Salsabil;
 
-TEST(SqliteDriver, ThrowsIfDatabaseNotFoundWhileOpening) {
-    SqliteDriver ssd;
+TEST_CASE("SqliteDriver") {
+    SqliteDriver drv;
 
-    ASSERT_THROW(ssd.open("some_strange_database"), Exception);
-}
+    SUBCASE("ThrowsIfDatabaseNotFoundWhileOpening") {
+        REQUIRE_THROWS_AS(drv.open("some_strange_database"), Exception);
+    }
 
-TEST(SqliteDriver, ClosesDatabaseAutomaticallyWhenDestroyed) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    EXPECT_TRUE(ssd.isOpen());
+    drv.open(":memory:");
 
-    ssd.~SqliteDriver();
+    SUBCASE("ClosesDatabaseAutomaticallyWhenDestroyed") {
+        REQUIRE(drv.isOpen());
 
-    ASSERT_FALSE(ssd.isOpen());
-}
+        drv.~SqliteDriver();
 
-TEST(SqliteDriver, ThrowsIfStatementCannotBePrepared) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
+        REQUIRE_FALSE(drv.isOpen());
+    }
 
-    ASSERT_THROW(ssd.prepare("CREATE TABLE (id INT PRIMARY KEY, name TEXT)"), Exception);
-}
+    SUBCASE("ThrowsIfStatementCannotBePrepared") {
+        REQUIRE_THROWS_AS(drv.prepare("CREATE TABLE (id INT PRIMARY KEY, name TEXT)"), Exception);
+    }
 
-TEST(SqliteDriver, ThrowsIfStatementCannotBeExecuted) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY NOT NULL, name TEXT)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(NULL, 'abc')");
+    SUBCASE("ThrowsIfStatementCannotBeExecuted") {
+        drv.prepare("CREATE TABLE tbl(id INT PRIMARY KEY NOT NULL, name TEXT)");
+        drv.execute();
+        drv.prepare("INSERT INTO tbl VALUES(NULL, 'abc')");
 
-    ASSERT_THROW(ssd.execute(), Exception);
-}
+        REQUIRE_THROWS_AS(drv.execute(), Exception);
+    }
 
-TEST(SqliteDriver, ThrowsIfAskedToFetchRowForNonQuerySqlStatements) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
-    ssd.execute();
+    SUBCASE("ThrowsIfAskedToFetchRowForNonQuerySqlStatements") {
+        drv.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
+        drv.execute();
 
-    ASSERT_FALSE(ssd.nextRow());
-}
+        REQUIRE_FALSE(drv.nextRow());
+    }
 
-TEST(SqliteDriver, ThrowsIfAskedToFetchRowAfterFetchingAllRowsForQuerySqlStatements) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(1, 'abc')");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(2, 'cde')");
-    ssd.execute();
-    ssd.prepare("SELECT * FROM tbl");
-    ssd.execute();
-    
-    ASSERT_TRUE(ssd.nextRow());
-    ASSERT_TRUE(ssd.nextRow());
-    ASSERT_FALSE(ssd.nextRow());
-}
+    SUBCASE("ThrowsIfAskedToFetchRowAfterFetchingAllRowsForQuerySqlStatements") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
+        drv.execute("INSERT INTO tbl VALUES(1, 'abc')");
+        drv.execute("INSERT INTO tbl VALUES(2, 'cde')");
+        drv.execute("SELECT * FROM tbl");
 
-TEST(SqliteDriver, FetchNextReturnsFalseIfQueryResultSetHasNoRows) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
-    ssd.execute();
-    ssd.prepare("SELECT * FROM tbl");
-    ssd.execute();
+        REQUIRE(drv.nextRow());
+        REQUIRE(drv.nextRow());
+        REQUIRE_FALSE(drv.nextRow());
+    }
 
-    ASSERT_FALSE(ssd.nextRow());
-}
+    SUBCASE("FetchNextReturnsFalseIfQueryResultSetHasNoRows") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT)");
+        drv.execute("SELECT * FROM tbl");
 
-TEST(SqliteDriver, TestsNullResult) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT, balance REAL, picture BLOB)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(1, NULL, NULL, NULL)");
-    ssd.execute();
-    ssd.prepare("SELECT * FROM tbl");
-    ssd.execute();
+        REQUIRE_FALSE(drv.nextRow());
+    }
 
-    ASSERT_FALSE(ssd.isNull(0));
-    ASSERT_TRUE(ssd.isNull(1));
-    ASSERT_TRUE(ssd.isNull(2));
-    ASSERT_TRUE(ssd.isNull(3));
-}
+    SUBCASE("TestsNullResult") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, name TEXT, balance REAL, picture BLOB)");
+        drv.execute("INSERT INTO tbl VALUES(1, NULL, NULL, NULL)");
+        drv.execute("SELECT * FROM tbl");
 
-TEST(SqliteDriver, FetchIntegralResult) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, num1 INT, num2 INT, num3 INT)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(32767, -32767, 9223372036854775807, -9223372036854775807)");
-    ssd.execute();
-    ssd.prepare("SELECT * FROM tbl");
-    ssd.execute();
+        REQUIRE_FALSE(drv.isNull(0));
+        REQUIRE(drv.isNull(1));
+        REQUIRE(drv.isNull(2));
+        REQUIRE(drv.isNull(3));
+    }
 
-    ASSERT_THAT(ssd.getInt(0), Eq(32767));
-    ASSERT_THAT(ssd.getInt(1), Eq(-32767));
-    ASSERT_THAT(ssd.getInt64(2), Eq(9223372036854775807LL));
-    ASSERT_THAT(ssd.getInt64(3), Eq(-9223372036854775807LL));
-}
+    SUBCASE("FetchIntegralResult") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, num1 INT, num2 INT, num3 INT)");
+        drv.execute("INSERT INTO tbl VALUES(32767, -32767, 9223372036854775807, -9223372036854775807)");
+        drv.execute("SELECT * FROM tbl");
 
-TEST(SqliteDriver, FetchFloatingPointResult) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, num1 REAL, num2 REAL)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(1, -1.175494351, 3.402823466)");
-    ssd.execute();
-    ssd.prepare("SELECT * FROM tbl");
-    ssd.execute();
+        REQUIRE(drv.getInt(0) == 32767);
+        REQUIRE(drv.getInt(1) == -32767);
+        REQUIRE(drv.getInt64(2) == 9223372036854775807LL);
+        REQUIRE(drv.getInt64(3) == -9223372036854775807LL);
+    }
 
-    ASSERT_THAT(ssd.getDouble(2), DoubleEq(3.402823466));
-}
+    SUBCASE("FetchFloatingPointResult") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, num1 REAL, num2 REAL)");
+        drv.execute("INSERT INTO tbl VALUES(1, -1.175494351, 3.402823466)");
+        drv.execute("SELECT * FROM tbl");
 
-TEST(SqliteDriver, FetchLiteralResult) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, str1 TEXT, str2 TEXT)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(1, 'Hi, everyone!', 'Here is another string!')");
-    ssd.execute();
-    ssd.prepare("SELECT * FROM tbl");
-    ssd.execute();
+        REQUIRE(drv.getDouble(2) == 3.402823466);
+    }
 
-    ASSERT_THAT(ssd.getCString(1), StrEq("Hi, everyone!"));
-    ASSERT_THAT(ssd.getStdString(2), StrEq("Here is another string!"));
-}
+    SUBCASE("FetchLiteralResult") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, str1 TEXT, str2 TEXT)");
+        drv.execute("INSERT INTO tbl VALUES(1, 'Hi, everyone!', 'Here is another string!')");
+        drv.execute("SELECT * FROM tbl");
 
-TEST(SqliteDriver, FetchBlobResult) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, b1 BLOB, b2 BLOB)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(1, NULL, X'53514C697465')");
-    ssd.execute();
-    ssd.prepare("SELECT * FROM tbl");
-    ssd.execute();
+        REQUIRE(strcmp(drv.getCString(1), "Hi, everyone!") == 0);
+        REQUIRE(drv.getStdString(2) == "Here is another string!");
+    }
 
-    ASSERT_THAT(ssd.getSize(2), Eq(6u));
-    const char expect[] = {0x53, 0x51, 0x4C, 0x69, 0x74, 0x65};
-    ASSERT_THAT(memcmp(ssd.getBlob(2), expect, sizeof (expect)), Eq(0));
-}
+    SUBCASE("FetchBlobResult") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, b1 BLOB, b2 BLOB)");
+        drv.execute("INSERT INTO tbl VALUES(1, NULL, X'53514C697465')");
+        drv.execute("SELECT * FROM tbl");
 
-TEST(SqliteDriver, ThrowsIfValueIsBoundToOutOfRangeIndexedParameterInPreparedStatement) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tbl(id INT PRIMARY KEY, num1 INT, num2 INT)");
-    ssd.execute();
-    ssd.prepare("INSERT INTO tbl VALUES(1, ?, ?)");
+        REQUIRE(drv.getSize(2) == 6u);
+        const char expect[] = {0x53, 0x51, 0x4C, 0x69, 0x74, 0x65};
+        REQUIRE(memcmp(drv.getBlob(2), expect, sizeof (expect)) == 0);
+    }
 
-    ASSERT_THROW(ssd.bindNull(3), Exception);
-    ASSERT_THROW(ssd.bindInt(4, 32767), Exception);
-    ASSERT_THROW(ssd.bindInt64(5, 9223372036854775807LL), Exception);
-    ASSERT_THROW(ssd.bindDouble(6, 3.402823466), Exception);
-    ASSERT_THROW(ssd.bindCString(7, "some_thing"), Exception);
-    ASSERT_THROW(ssd.bindStdString(8, std::string("some_thing")), Exception);
-    ASSERT_THROW(ssd.bindBlob(9, nullptr, 0), Exception);
-}
+    SUBCASE("ThrowsIfValueIsBoundToOutOfRangeIndexedParameterInPreparedStatement") {
+        drv.execute("CREATE TABLE tbl(id INT PRIMARY KEY, num1 INT, num2 INT)");
+        drv.prepare("INSERT INTO tbl VALUES(1, ?, ?)");
 
-TEST(SqliteDriver, TestsTableExistence) {
-    SqliteDriver ssd;
-    ssd.open(":memory:");
-    ssd.prepare("CREATE TABLE tb(id INT PRIMARY KEY, num1 INT, num2 INT)");
-    ssd.execute();
-    auto tables = ssd.tableList();
-    
-    EXPECT_THAT(tables.size(), Eq(1u));
-    ASSERT_TRUE(std::find(tables.begin(), tables.end(), "tb") != tables.end());
+        REQUIRE_THROWS_AS(drv.bindNull(3), Exception);
+        REQUIRE_THROWS_AS(drv.bindInt(4, 32767), Exception);
+        REQUIRE_THROWS_AS(drv.bindInt64(5, 9223372036854775807LL), Exception);
+        REQUIRE_THROWS_AS(drv.bindDouble(6, 3.402823466), Exception);
+        REQUIRE_THROWS_AS(drv.bindCString(7, "some_thing"), Exception);
+        REQUIRE_THROWS_AS(drv.bindStdString(8, std::string("some_thing")), Exception);
+        REQUIRE_THROWS_AS(drv.bindBlob(9, nullptr, 0), Exception);
+    }
+
+    SUBCASE("TestsTableExistence") {
+        drv.execute("CREATE TABLE tb(id INT PRIMARY KEY, num1 INT, num2 INT)");
+        auto tables = drv.tableList();
+
+        REQUIRE(tables.size() == 1u);
+        REQUIRE(std::find(tables.begin(), tables.end(), "tb") != tables.end());
+    }    
 }

@@ -22,74 +22,92 @@
 #ifndef SALSABIL_SQLREPOSITORY_HPP
 #define SALSABIL_SQLREPOSITORY_HPP
 
-#include "SqlTableConfigurer.hpp"
 #include "SqlStatementBuilder.hpp"
-
+#include "internal/Logging.hpp"
+#include "internal/TypeResolver.hpp"
 
 namespace Salsabil {
+    template<typename ClassType> class SqlTableConfigurer;
 
-    template<typename C>
+    template<typename ClassType>
     class SqlRepository {
     public:
 
-        explicit SqlRepository() {
-
+        SqlRepository() {
         }
 
-        static C* get(std::string id) {
-            SqlDriver* driver = SqlTableConfigurer<C>::driver();
+        static ClassType* get(std::string id) {
+            SALSABIL_LOG_DEBUG("Getting object from repository with id '" + id + "' ");
 
-            for (const auto& field : SqlTableConfigurer<C>::fieldList()) {
-                if (field->isPrimary()) {
-                    driver->execute(SqlStatementBuilder().SELECT_ALL_FROM(SqlTableConfigurer<C>::tableName()).WHERE(field->name()).equalTo(id).asString());
+            if (SqlTableConfigurer<ClassType>::primaryFieldList().size() == 0)
+                throw Exception("Could not fetch data, no primary field is configured.");
 
-                    if (!driver->nextRow())
-                        throw Exception("no row with id " + id + " was found");
+            SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
 
-                    C *instance = new C;
+            SqlStatementBuilder ssb;
+            SqlWhereClause& sqlWhereClause = ssb.SELECT_ALL_FROM(SqlTableConfigurer<ClassType>::tableName()).WHERE(SqlTableConfigurer<ClassType>::primaryFieldList().at(0)->name()).equalTo(id);
 
-                    for (const auto& field : SqlTableConfigurer<C>::fieldList())
-                        field->readFromDriver(driver, instance);
+            driver->execute(sqlWhereClause.asString());
 
-                    return instance;
-                }
+            SALSABIL_LOG_INFO(sqlWhereClause.asString());
+
+            if (!driver->nextRow())
+                throw Exception("no row with id(s) was found");
+
+            ClassType* instance;
+            ClassType* pInstance = Utility::initializeInstance(&instance);
+
+            for (const auto& f : SqlTableConfigurer<ClassType>::primaryFieldList())
+                f->readFromDriver(pInstance, f->column());
+            for (const auto& f : SqlTableConfigurer<ClassType>::fieldList())
+                f->readFromDriver(pInstance, f->column());
+
+            return instance;
+        }
+
+        static std::vector<ClassType*> getAll() {
+            if (SqlTableConfigurer<ClassType>::primaryFieldList().size() == 0)
+                throw Exception("Could not fetch data, no primary field is configured.");
+
+            SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
+
+//            assert(SqlTableConfigurer<C>::fieldList().size() != 0);
+
+            const std::string& statement = SqlStatementBuilder().SELECT_ALL_FROM(SqlTableConfigurer<ClassType>::tableName()).asString();
+            driver->execute(statement);
+
+            SALSABIL_LOG_INFO(statement);
+
+            std::vector<ClassType*> instanceList;
+
+            while (driver->nextRow()) {
+                ClassType* instance;
+                ClassType* pInstance = Utility::initializeInstance(&instance);
+
+                for (const auto& f : SqlTableConfigurer<ClassType>::primaryFieldList())
+                    f->readFromDriver(pInstance, f->column());
+                for (const auto& f : SqlTableConfigurer<ClassType>::fieldList())
+                    f->readFromDriver(pInstance, f->column());
+                
+                instanceList.push_back(instance);
             }
 
-            throw Exception("Could not fetch data, no primary field is configured.");
+            return instanceList;
         }
 
-        static std::vector<C*> getAll() {
-            SqlDriver* driver = SqlTableConfigurer<C>::driver();
-
-            for (const auto& field : SqlTableConfigurer<C>::fieldList()) {
-                if (field->isPrimary()) {
-                    driver->execute(SqlStatementBuilder().SELECT_ALL_FROM(SqlTableConfigurer<C>::tableName()).asString());
-
-                    std::vector<C*> instanceList;
-
-                    while (driver->nextRow()) {
-                        C *instance = new C;
-
-                        for (const auto& field : SqlTableConfigurer<C>::fieldList())
-                            field->readFromDriver(driver, instance);
-
-                        instanceList.push_back(instance);
-                    }
-
-                    return instanceList;
-                }
+        static void save(const ClassType* instance) {
+            SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
+ 
+            driver->prepare(SqlStatementBuilder().INSERT_INTO(SqlTableConfigurer<ClassType>::tableName(), driver->columnList(SqlTableConfigurer<ClassType>::tableName())).parameterizeValues().asString());
+            
+            for (const auto& field : SqlTableConfigurer<ClassType>::primaryFieldList()) {
+                field->writeToDriver(instance, field->column() + 1);
             }
-
-            throw Exception("Could not fetch data, no primary field is configured.");
-        }
-
-        static void save(const C* instance) {
-            SqlDriver* driver = SqlTableConfigurer<C>::driver();
-            driver->prepare(SqlStatementBuilder().INSERT_INTO(SqlTableConfigurer<C>::tableName(), SqlTableConfigurer<C>::fieldNameList()).parameterizeValues().asString());
-            for (const auto& field : SqlTableConfigurer<C>::fieldList()) {
-                field->writeToDriver(instance, driver);
+            for (const auto& field : SqlTableConfigurer<ClassType>::fieldList()) {
+                field->writeToDriver(instance, field->column() + 1);
             }
             driver->execute();
+
         }
     };
 }

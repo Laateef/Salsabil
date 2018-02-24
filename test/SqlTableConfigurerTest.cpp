@@ -19,132 +19,82 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gmock/gmock.h"
-#include "ClassMock.hpp"
-#include "SqlDriver.hpp"
+#include "doctest.h"
+#include "mocks/ClassMock.hpp"
 #include "Exception.hpp"
-#include "SqlDriverFactory.hpp"
 #include "SqlTableConfigurer.hpp"
-#include "core/SqlDriverMock.hpp"
-#include "ClassMock.hpp"
+#include "SqliteDriver.hpp"
 
-using namespace ::testing;
 using namespace Salsabil;
 
-TEST(SqlTableConfigurer, ThrowsIfDriverIsNull) {
+TEST_CASE("SqlTableConfigurer") {
     SqlTableConfigurer<ClassMock> conf;
 
-    ASSERT_THROW(conf.setDriver(nullptr), Exception);
-}
+    SUBCASE("ThrowsIfDriverIsNull") {
+        REQUIRE_THROWS_AS(conf.setDriver(nullptr), Exception);
+    }
 
-TEST(SqlTableConfigurer, ThrowsIfDriverIsNotOpen) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(false));
+    SqliteDriver drv;
 
-    SqlTableConfigurer<ClassMock> conf;
+    SUBCASE("ThrowsIfDriverIsNotOpen") {
+        REQUIRE_THROWS_AS(conf.setDriver(&drv), Exception);
+    }
 
-    ASSERT_THROW(conf.setDriver(&drv), Exception);
-}
-
-TEST(SqlTableConfigurer, ThrowsIfTableDoesNotExist) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{}));
-
-    SqlTableConfigurer<ClassMock> conf;
+    drv.open(":memory:");
     conf.setDriver(&drv);
 
-    ASSERT_THROW(conf.setTableName("person"), Exception);
-}
+    SUBCASE("ThrowsIfTableDoesNotExist") {
+        REQUIRE_THROWS_AS(conf.setTableName("person"), Exception);
+    }
 
-TEST(SqlTableConfigurer, RegisterFieldThroughAttributePointers) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"person"}));
-    EXPECT_CALL(drv, columnList("person")).Times(3).WillRepeatedly(Return(std::vector<std::string>{"id", "name", "weight"}));
+    drv.execute("create table person (id int NOT NULL PRIMARY KEY, name varchar(20), weight float)");
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("person");
-    conf.setField("id", &ClassMock::id);
-    conf.setField("name", &ClassMock::name);
-    conf.setField("weight", &ClassMock::weight);
-
-    ASSERT_THAT(conf.fieldList().size(), Eq(3u));
-    ASSERT_THAT(conf.fieldList().at(0)->name(), StrEq("id"));
-    ASSERT_THAT(conf.fieldList().at(0)->column(), Eq(0));
-    ASSERT_THAT(conf.fieldList().at(1)->name(), StrEq("name"));
-    ASSERT_THAT(conf.fieldList().at(1)->column(), Eq(1));
-    ASSERT_THAT(conf.fieldList().at(2)->name(), StrEq("weight"));
-    ASSERT_THAT(conf.fieldList().at(2)->column(), Eq(2));
-}
-
-TEST(SqlTableConfigurer, RegisterFieldThroughMethodPointers) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"person"}));
-    EXPECT_CALL(drv, columnList("person")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
-
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
     conf.setTableName("person");
 
-    conf.setField("id", ClassMock::getId, ClassMock::setId);
-    conf.setField("name", ClassMock::getName, ClassMock::setName);
+    SUBCASE("RegisterFieldThroughAttributePointers") {
+        conf.setField("id", &ClassMock::id);
+        conf.setField("name", &ClassMock::name);
+        conf.setField("weight", &ClassMock::weight);
 
-    ASSERT_THAT(conf.fieldList().size(), Eq(2u));
-    ASSERT_THAT(conf.fieldList().at(0)->name(), StrEq("id"));
-    ASSERT_THAT(conf.fieldList().at(0)->column(), Eq(0));
-    ASSERT_THAT(conf.fieldList().at(1)->name(), StrEq("name"));
-    ASSERT_THAT(conf.fieldList().at(1)->column(), Eq(1));
-}
+        REQUIRE(conf.fieldList().size() == 3u);
+        REQUIRE(conf.fieldList().at(0)->name() == "id");
+        REQUIRE(conf.fieldList().at(0)->column() == 0);
+        REQUIRE(conf.fieldList().at(1)->name() == "name");
+        REQUIRE(conf.fieldList().at(1)->column() == 1);
+        REQUIRE(conf.fieldList().at(2)->name() == "weight");
+        REQUIRE(conf.fieldList().at(2)->column() == 2);
+    }
 
-TEST(SqlTableConfigurer, ThrowsIfFieldDoesNotExist) {
+    SUBCASE("RegisterFieldThroughMethodPointers") {
+        conf.setField("id", ClassMock::getId, ClassMock::setId);
+        conf.setField("name", ClassMock::getName, ClassMock::setName);
 
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"person"}));
-    EXPECT_CALL(drv, columnList("person")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"name"}));
+        REQUIRE(conf.fieldList().size() == 2u);
+        REQUIRE(conf.fieldList().at(0)->name() == "id");
+        REQUIRE(conf.fieldList().at(0)->column() == 0);
+        REQUIRE(conf.fieldList().at(1)->name() == "name");
+        REQUIRE(conf.fieldList().at(1)->column() == 1);
+    }
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("person");
+    SUBCASE("ThrowsIfFieldDoesNotExist") {
+        REQUIRE_THROWS_AS(conf.setField("idfield", ClassMock::getId, ClassMock::setId), Exception);
+        REQUIRE_THROWS_AS(conf.setField("namefield", &ClassMock::name), Exception);
+    }
 
-    ASSERT_THROW(conf.setField("id", ClassMock::getId, ClassMock::setId), Exception);
-    ASSERT_NO_THROW(conf.setField("name", ClassMock::getName, ClassMock::setName));
-}
+    SUBCASE("CheckWhetherFieldIsPrimary") {
+        conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
+        conf.setField("name", ClassMock::getName, ClassMock::setName);
 
-TEST(SqlTableConfigurer, CheckWhetherFieldIsPrimary) {
+        REQUIRE(conf.fieldList().size() == 1u);
+        REQUIRE(conf.primaryFieldList().size() == 1);
+    }
 
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"person"}));
-    EXPECT_CALL(drv, columnList("person")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
+    SUBCASE("ResetStaticConfigurationAfterConstruction") {
+        conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
+        conf.setField("name", ClassMock::getName, ClassMock::setName);
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("person");
-    conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
-    conf.setField("name", ClassMock::getName, ClassMock::setName);
-
-    ASSERT_THAT(conf.fieldList().size(), Eq(2u));
-    ASSERT_TRUE(conf.fieldList().at(0)->isPrimary());
-    ASSERT_FALSE(conf.fieldList().at(1)->isPrimary());
-}
-
-TEST(SqlTableConfigurer, ResetStaticConfigurationAfterConstruction) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"person"}));
-    EXPECT_CALL(drv, columnList("person")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
-
-    SqlTableConfigurer<ClassMock> conf1;
-    conf1.setDriver(&drv);
-    conf1.setTableName("person");
-    conf1.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
-    conf1.setField("name", ClassMock::getName, ClassMock::setName);
-
-    SqlTableConfigurer<ClassMock> conf2;
-    ASSERT_TRUE(conf2.tableName().empty());
-    ASSERT_THAT(conf2.fieldList().size(), Eq(0));
+        SqlTableConfigurer<ClassMock> conf2;
+        REQUIRE(conf2.tableName().empty());
+        REQUIRE(conf2.fieldList().size() == 0);
+    }
 }

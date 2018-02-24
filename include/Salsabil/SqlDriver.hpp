@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -28,11 +28,11 @@
 namespace Salsabil {
 
     /** 
-     * @class ISqlDriver
-     * @brief ISqlDriver is an abstract base class for SQL drivers that represents basic functionality
+     * @class SqlDriver
+     * @brief SqlDriver is an abstract base class for SQL drivers that represents basic functionality
      *  for manipulating databases in a functional style.
      * 
-     * ISqlDriver encapsulates the functionality to prepare and execute SQL statements 
+     * SqlDriver encapsulates the functionality to prepare and execute SQL statements 
      * in addition to retrieving the results from executed SQL queries.
      * 
      * It can be used to execute all kinds of statements that the underlying engine 
@@ -41,12 +41,10 @@ namespace Salsabil {
      * SQL statements, such as CREATE TABLE or even any database-specific commands, such as ATTACH DATABASE.
      * 
      * Executing statements is easy and intuitive, we begin by getting the required driver 
-     * through SqlDriverFactory#getDriver(). Then
-     * /////////////////////////////////////////////////////////////////////////
-     * we open the connection to the database by specifying its name. SQLite gives 
+     * through SqlDriverFactory#getDriver(). Then we open the connection to the database by specifying its name. SQLite gives 
      * the opportunity to create temporary in-memory database to work on by specifying the 
      * database file name as ":memory:". Also, you have the option to create temporary on-disk 
-     * database to work on by specifying empty file name parameter to the #open() function. For example:
+     * database to work on by specifying empty file name parameter to the open() method. For example:
      * {@code 
      * using namespace Salsabil;
      * 
@@ -60,10 +58,10 @@ namespace Salsabil {
      *  std::cerr << e.what() << std::endl;
      * }
      * }
-     * After executing SQL queries, you can iterate over the result set using #nextRow() 
-     * and access the individual field values of the current row by using the functions 
-     * #isNull(), #getInt(), #getInt64(), #getDouble(), #getRawString(), #getCString(), 
-     * #getStdString(), #getSize(), #getBlob()
+     * After executing SQL queries, you can iterate over the result set using nextRow() 
+     * and access the individual field values of the current row by using the methods 
+     * isNull(), getInt(), getInt64(), getDouble(), getRawString(), getCString(), 
+     * getStdString(), getSize(), getBlob().
      * 
      * Each field is accessed by passing the field's position in the statement, starting from 0. 
      * The fields are numbered from left to right in the same order as the corresponding columns 
@@ -80,11 +78,11 @@ namespace Salsabil {
      * ...
      * }
      * }
-     * ISqlDriver supports binding parameter values to placeholders while preparing 
-     * SQL statements by means of the functions #bindNull(), #bindInt()
-     * #bindInt64(), #bindDouble(), #bindCString(), #bindStdString(), #bindBlob()
+     * SqlDriver supports binding parameter values to placeholders while preparing 
+     * SQL statements by means of the methods bindNull(), bindInt()
+     * bindInt64(), bindDouble(), bindCString(), bindStdString(), bindBlob().
      * 
-     * Contrary to the reult retrieving functions, binding functions bind parameter values 
+     * Contrary to the reult retrieving methods, binding methods bind parameter values 
      * to positional placeholders from index 1 in order if no indices are specified along the ? 
      * placeholders (e.g., ?1, ?3, ?5, etc). For example:
      * {@code 
@@ -98,7 +96,7 @@ namespace Salsabil {
      * ...
      * }
      * }
-     * /////////////////////////////////////////////////////////////////////////
+     * 
      */
     class SqlDriver {
     public:
@@ -106,14 +104,14 @@ namespace Salsabil {
         virtual ~SqlDriver() {
         }
 
-        /** @brief Returns the name of this driver. */
+        /// Returns the name of this driver.
         virtual std::string driverName() const = 0;
 
-        /** @brief Returns an instance of this driver. */
+        /// Returns an instance of this driver.
         virtual SqlDriver* create() const = 0;
 
         /** 
-         * @brief Opens a connection to database databaseFileName.
+         * @brief Opens a connection to database ***databaseFileName***.
          * @param databaseFileName location of the database file.
          * @throw Exception if database file not found. 
          */
@@ -133,7 +131,7 @@ namespace Salsabil {
         virtual void close() = 0;
 
         /** 
-         * @brief Prepares the SQL statement <i>sqlStatement</i> for execution.
+         * @brief Prepares the SQL statement ***sqlStatement*** for execution.
          * The statement may contain placeholders for binding values. Currently, only 
          * the ODBC style (? placeholders) is supported.
          * The statement sqlStatement may not contain more than one SQL statement. 
@@ -148,7 +146,7 @@ namespace Salsabil {
         virtual void execute() = 0;
 
         /** 
-         * @brief This convenience function prepares and executes the SQL statement <i>sqlStatement</i> in one call.
+         * @brief This convenience function prepares and executes the SQL statement ***sqlStatement*** in one call.
          * @throw Exception if an error occurred. 
          */
         virtual void execute(const std::string& sqlStatement) = 0;
@@ -170,37 +168,37 @@ namespace Salsabil {
          */
         //@{
         /**  
-         * @brief Checks whether the value of the field <i>columnIndex</i> in the current row is NULL.
+         * @brief Checks whether the value of the field ***columnIndex*** in the current row is NULL.
          * @retval true if the value is NULL.
          * @retval false otherwise.
          */
         virtual bool isNull(int columnIndex) const = 0;
 
-        /** @brief Returns the integer value of the field <i>columnIndex</i> in the current row. */
+        /// Returns the integer value of the field ***columnIndex*** in the current row.
         virtual int getInt(int columnIndex) const = 0;
 
-        /** @brief Returns the 64bit-integer value of the field <i>columnIndex</i> in the current row. */
+        /// Returns the 64bit-integer value of the field ***columnIndex*** in the current row.
         virtual int64_t getInt64(int columnIndex) const = 0;
 
-        /** @brief Returns the float value of the field <i>columnIndex</i> in the current row. */
+        /// Returns the float value of the field ***columnIndex*** in the current row.
         virtual float getFloat(int columnIndex) const = 0;
 
-        /** @brief Returns the double value of the field <i>columnIndex</i> in the current row. */
+        /// Returns the double value of the field ***columnIndex*** in the current row.
         virtual double getDouble(int columnIndex) const = 0;
 
-        /** @brief Returns the string value of the field <i>columnIndex</i> in the current row as raw data pointer. */
+        /// Returns the string value of the field ***columnIndex*** in the current row as raw data pointer.
         virtual const unsigned char* getRawString(int columnIndex) const = 0;
 
-        /** @brief Returns the string value of the field <i>columnIndex</i> in the current row as a C-string. */
+        /// Returns the string value of the field ***columnIndex*** in the current row as a C-string.
         virtual const char* getCString(int columnIndex) const = 0;
 
-        /** @brief Returns the string value of the field <i>columnIndex</i> in the current row as a STL-string. */
+        /// Returns the string value of the field ***columnIndex*** in the current row as a STL-string.
         virtual std::string getStdString(int columnIndex) const = 0;
 
-        /** @brief Returns the value size of the field <i>columnIndex</i> in the current row in bytes. */
+        /// Returns the value size of the field ***columnIndex*** in the current row in bytes.
         virtual std::size_t getSize(int columnIndex) const = 0;
 
-        /** @brief Returns the blob value of the field <i>columnIndex</i> in the current row as a void pointer. */
+        /// Returns the blob value of the field ***columnIndex*** in the current row as a void pointer.
         virtual const void* getBlob(int columnIndex) const = 0;
         //@}
 
@@ -209,42 +207,42 @@ namespace Salsabil {
          * @brief These functions bind parameter values to positional placeholders in the SQL statement 
          * text that are of the form ?NNN where NNN is an integer between 1 and 999 specifies the position of the placeholder.
          * @param position the position of the placeholder that needs to be replaced.
-         * @throw Exception if the parameter couldn't be bound or <i>position</i> is out of range. 
+         * @throw Exception if the parameter couldn't be bound or ***position*** is out of range. 
          * @see ISqlDriver 
          */
         //@{
-        /** Binds a NULL to the placeholder at <i>position</i>. */
+        /// Binds a NULL to the placeholder at ***position***.
         virtual void bindNull(int position) const = 0;
 
-        /** Binds an integer to the placeholder at <i>position</i>. */
+        /// Binds an integer to the placeholder at ***position***.
         virtual void bindInt(int position, int value) const = 0;
 
-        /** Binds a 64bit integer to the placeholder at <i>position</i>. */
+        /// Binds a 64bit integer to the placeholder at ***position***.
         virtual void bindInt64(int position, int64_t value) const = 0;
 
-        /** Binds a float to the placeholder at <i>position</i>. */
+        /// Binds a float to the placeholder at ***position***.
         virtual void bindFloat(int position, float value) const = 0;
 
-        /** Binds a double to the placeholder at <i>position</i>. */
+        /// Binds a double to the placeholder at ***position***.
         virtual void bindDouble(int position, double value) const = 0;
 
-        /** Binds a C literal string to the placeholder at <i>position</i>. */
+        /// Binds a C literal string to the placeholder at ***position***.
         virtual void bindCString(int position, const char* str) const = 0;
 
-        /** Binds a standard literal string to the placeholder at <i>position</i>. */
+        /// Binds a standard literal string to the placeholder at ***position***.
         virtual void bindStdString(int position, const std::string& str) const = 0;
 
-        /** Binds a non-typed array <i>blob</i> of length <i>size</i> to the placeholder at <i>position</i>. */
+        /// Binds a non-typed array ***blob*** of length ***size*** to the placeholder at ***position***.
         virtual void bindBlob(int position, const void* blob, std::size_t size) const = 0;
         //@}
 
-        /** Returns a list(as a vector of strings) containing the existing database tables. */
+        /// Returns a list(as a vector of strings) containing the existing database tables.
         virtual std::vector<std::string> tableList() = 0;
 
-        /** Returns a list(as a vector of strings) containing the columns of the table <i>table</i> in order. */
+        /// Returns a list(as a vector of strings) containing the columns of the table ***table*** in order.
         virtual std::vector<std::string> columnList(const std::string& table) = 0;
 
     };
 }
-#endif /* SALSABIL_SQLDRIVER_HPP */
+#endif // SALSABIL_SQLDRIVER_HPP
 

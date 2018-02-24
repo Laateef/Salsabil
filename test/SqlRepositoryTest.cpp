@@ -19,148 +19,155 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gmock/gmock.h"
-#include "ClassMock.hpp"
+#include "doctest.h"
+#include "mocks/ClassMock.hpp"
+#include "mocks/SessionMock.hpp"
 #include "Exception.hpp"
-#include "core/SqlDriverMock.hpp"
+#include "SqliteDriver.hpp"
 #include "SqlDriverFactory.hpp"
 #include "SqlTableConfigurer.hpp"
 #include "SqlRepository.hpp"
 
-using namespace ::testing;
 using namespace Salsabil;
 
-TEST(SqlRepository, ThrowsIfPrimaryFieldNotConfigured) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"user"}));
-    EXPECT_CALL(drv, columnList("user")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
+TEST_CASE("SqlRepository") {
+    SqliteDriver drv;
+    drv.open(":memory:");
+    drv.execute("create table person (id int NOT NULL PRIMARY KEY, name varchar(20), weight float)");
 
     SqlTableConfigurer<ClassMock> conf;
     conf.setDriver(&drv);
-    conf.setTableName("user");
-    conf.setField("id", ClassMock::getId, ClassMock::setId);
-    conf.setField("name", ClassMock::getName, ClassMock::setName);
+    conf.setTableName("person");
 
-    ASSERT_THROW(SqlRepository<ClassMock>::get("1"), Exception);
-}
+    SUBCASE("ThrowsIfPrimaryFieldNotConfigured") {
 
-TEST(SqlRepository, ThrowsIfRowWithThatPrimaryKeyNotFound) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"user"}));
-    EXPECT_CALL(drv, columnList("user")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
-    EXPECT_CALL(drv, execute(_)).Times(1);
-    EXPECT_CALL(drv, nextRow()).Times(1).WillOnce(Return(false));
+        SUBCASE("through attributes") {
+            conf.setField("id", &ClassMock::id);
+            REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get("1"), Exception);
+        }
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("user");
-    conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
-    conf.setField("name", ClassMock::getName, ClassMock::setName);
+        SUBCASE("through methods") {
+            conf.setField("id", ClassMock::getId, ClassMock::setId);
+            REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get("1"), Exception);
+        }
+    }
 
-    ASSERT_THROW(SqlRepository<ClassMock>::get("1"), Exception);
-}
+    SUBCASE("ThrowsIfRowWithThatPrimaryKeyNotFound") {
 
-TEST(SqlRepository, TestsGetObjectFromDatabaseThroughAttributePointers) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"user"}));
-    EXPECT_CALL(drv, columnList("user")).Times(3).WillRepeatedly(Return(std::vector<std::string>{"id", "name", "weight"}));
-    EXPECT_CALL(drv, execute(_)).Times(1);
-    EXPECT_CALL(drv, nextRow()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, getInt(0)).Times(1).WillOnce(Return(3));
-    EXPECT_CALL(drv, getStdString(1)).Times(1).WillOnce(Return("some name"));
-    EXPECT_CALL(drv, getFloat(2)).Times(1).WillOnce(Return(54.5));
+        SUBCASE("through attributes") {
+            conf.setPrimaryField("id", &ClassMock::id);
+            REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get("1"), Exception);
+        }
 
+        SUBCASE("through methods") {
+            conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
+            REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get("1"), Exception);
+        }
+    }
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("user");
-    conf.setPrimaryField("id", &ClassMock::id);
-    conf.setField("name", &ClassMock::name);
-    conf.setField("weight", &ClassMock::weight);
+    SUBCASE("TestsGetObjectFromDatabase") {
 
-    ClassMock *obj = SqlRepository<ClassMock>::get("3");
-    ASSERT_THAT(obj->id, Eq(3u));
-    ASSERT_THAT(obj->name, StrEq("some name"));
-    ASSERT_THAT(obj->weight, Eq(54.5f));
+        drv.execute("INSERT INTO person(id, name, weight) values(1, 'Ali', 80.5)");
+        drv.execute("INSERT INTO person(id, name, weight) values(2, 'Ruby', 53.8)");
 
-    delete obj;
-}
+        SUBCASE("through methods") {
+            conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
+            conf.setField("name", ClassMock::getName, ClassMock::setName);
+            conf.setField("weight", &ClassMock::getWeight, &ClassMock::setWeight);
 
-TEST(SqlRepository, TestsGetObjectFromDatabase) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"user"}));
-    EXPECT_CALL(drv, columnList("user")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
-    EXPECT_CALL(drv, execute(_)).Times(1);
-    EXPECT_CALL(drv, nextRow()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, getInt(0)).Times(1).WillOnce(Return(3));
-    EXPECT_CALL(drv, getStdString(1)).Times(1).WillOnce(Return("some name"));
+            ClassMock *obj = SqlRepository<ClassMock>::get("1");
+            REQUIRE(obj->getId() == 1);
+            REQUIRE(obj->getName() == "Ali");
+            REQUIRE(obj->getWeight() == 80.5f);
 
+            delete obj;
+        }
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("user");
-    conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
-    conf.setField("name", ClassMock::getName, ClassMock::setName);
+        SUBCASE("through attributes") {
+            conf.setPrimaryField("id", &ClassMock::id);
+            conf.setField("name", &ClassMock::name);
+            conf.setField("weight", &ClassMock::weight);
 
-    ClassMock *obj = SqlRepository<ClassMock>::get("3");
-    ASSERT_THAT(obj->getId(), Eq(3u));
-    ASSERT_THAT(obj->getName(), StrEq("some name"));
+            ClassMock *obj = SqlRepository<ClassMock>::get("1");
+            REQUIRE(obj->id == 1);
+            REQUIRE(obj->name == "Ali");
+            REQUIRE(obj->weight == 80.5f);
 
-    delete obj;
-}
+            delete obj;
+        }
 
-TEST(SqlRepository, TestsGetAllObjectFromDatabase) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"user"}));
-    EXPECT_CALL(drv, columnList("user")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
-    EXPECT_CALL(drv, execute(_)).Times(1);
-    EXPECT_CALL(drv, nextRow()).Times(3).WillOnce(Return(true)).WillOnce(Return(true)).WillOnce(Return(false));
-    EXPECT_CALL(drv, getInt(0)).Times(2).WillOnce(Return(2)).WillOnce(Return(3));
-    EXPECT_CALL(drv, getStdString(1)).Times(2).WillOnce(Return("name2")).WillOnce(Return("name3"));
+        SUBCASE("TestsGetAllObjectFromDatabase") {
 
+            SUBCASE("through methods") {
+                conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
+                conf.setField("name", ClassMock::getName, ClassMock::setName);
+                conf.setField("weight", &ClassMock::getWeight, &ClassMock::setWeight);
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("user");
-    conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
-    conf.setField("name", ClassMock::getName, ClassMock::setName);
+                std::vector<ClassMock*> objList = SqlRepository<ClassMock>::getAll();
+                REQUIRE(objList.size() == 2);
+                REQUIRE(objList.at(0)->getId() == 1);
+                REQUIRE(objList.at(0)->getName() == "Ali");
+                REQUIRE(objList.at(0)->getWeight() == 80.5f);
+                REQUIRE(objList.at(1)->getId() == 2);
+                REQUIRE(objList.at(1)->getName() == "Ruby");
+                REQUIRE(objList.at(1)->getWeight() == 53.8f);
 
-    std::vector<ClassMock*> objList = SqlRepository<ClassMock>::getAll();
-    ASSERT_THAT(objList.size(), Eq(2u));
-    ASSERT_THAT(objList.at(0)->getId(), Eq(2u));
-    ASSERT_THAT(objList.at(0)->getName(), StrEq("name2"));
-    ASSERT_THAT(objList.at(1)->getId(), Eq(3u));
-    ASSERT_THAT(objList.at(1)->getName(), StrEq("name3"));
+                delete objList.at(0);
+                delete objList.at(1);
+            }
 
-    delete objList.at(0);
-    delete objList.at(1);
-}
+            SUBCASE("through attributes") {
+                conf.setPrimaryField("id", &ClassMock::id);
+                conf.setField("name", &ClassMock::name);
+                conf.setField("weight", &ClassMock::weight);
 
-TEST(SqlRepository, TestsSaveObjectToDatabase) {
-    SqlDriverMock drv;
-    EXPECT_CALL(drv, isOpen()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(drv, tableList()).Times(1).WillOnce(Return(std::vector<std::string>{"user"}));
-    EXPECT_CALL(drv, columnList("user")).Times(2).WillRepeatedly(Return(std::vector<std::string>{"id", "name"}));
-    EXPECT_CALL(drv, prepare("INSERT INTO user (id, name) VALUES (?, ?)")).Times(1);
-    EXPECT_CALL(drv, bindInt(0, 34)).Times(1);
-    EXPECT_CALL(drv, bindStdString(1, "something")).Times(1);
-    EXPECT_CALL(drv, execute()).Times(1);
+                std::vector<ClassMock*> objList = SqlRepository<ClassMock>::getAll();
+                REQUIRE(objList.size() == 2);
+                REQUIRE(objList.at(0)->id == 1);
+                REQUIRE(objList.at(0)->name == "Ali");
+                REQUIRE(objList.at(0)->weight == 80.5f);
+                REQUIRE(objList.at(1)->id == 2);
+                REQUIRE(objList.at(1)->name == "Ruby");
+                REQUIRE(objList.at(1)->weight == 53.8f);
 
+                delete objList.at(0);
+                delete objList.at(1);
+            }
+        }
+    }
 
-    SqlTableConfigurer<ClassMock> conf;
-    conf.setDriver(&drv);
-    conf.setTableName("user");
-    conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
-    conf.setField("name", ClassMock::getName, ClassMock::setName);
+    SUBCASE("TestsSaveObjectToDatabase") {
+        ClassMock obj;
+        obj.setId(1);
+        obj.setName("Ali");
+        obj.setWeight(80.5f);
 
-    ClassMock obj;
-    obj.setId(34);
-    obj.setName("something");
+        SUBCASE("through methods") {
+            conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
+            conf.setField("name", ClassMock::getName, ClassMock::setName);
+            conf.setField("weight", &ClassMock::getWeight, &ClassMock::setWeight);
 
-    SqlRepository<ClassMock>::save(&obj);
+            SqlRepository<ClassMock>::save(&obj);
+            drv.execute("select * from person");
+            REQUIRE(drv.nextRow() == true);
+            REQUIRE(drv.getInt(0) == 1);
+            REQUIRE(drv.getStdString(1) == "Ali");
+            REQUIRE(drv.getFloat(2) == 80.5f);
+            REQUIRE(drv.nextRow() == false);
+        }
+
+        SUBCASE("through attributes") {
+            conf.setPrimaryField("id", &ClassMock::id);
+            conf.setField("name", &ClassMock::name);
+            conf.setField("weight", &ClassMock::weight);
+
+            SqlRepository<ClassMock>::save(&obj);
+            drv.execute("select * from person");
+            REQUIRE(drv.nextRow() == true);
+            REQUIRE(drv.getInt(0) == 1);
+            REQUIRE(drv.getStdString(1) == "Ali");
+            REQUIRE(drv.getFloat(2) == 80.5f);
+            REQUIRE(drv.nextRow() == false);
+        }
+    }
 }

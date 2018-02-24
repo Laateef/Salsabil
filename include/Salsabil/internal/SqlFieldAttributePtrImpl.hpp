@@ -24,7 +24,7 @@
 
 #include "SqlField.hpp"
 #include "PointerTypeHelper.hpp"
-#include "FieldTypeResolver.hpp"
+#include "TypeResolver.hpp"
 
 namespace Salsabil {
     class SqlDriver;
@@ -40,15 +40,15 @@ namespace Salsabil {
         mAttribute(attribute) {
         }
 
-        virtual void readFromDriver(const SqlDriver* driver, ClassType* instance) {
+        virtual void readFromDriver(ClassType* instance, int column) {
             FieldType t;
-            Utility::FieldTypeResolver::driverToVariable(driver, SqlField<ClassType>::column(), &t);
-
-            (instance->*getAttribute())= t;
+            Utility::driverToVariable(SqlTableConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
+            instance->*getAttribute() = t;
         }
 
-        virtual void writeToDriver(const ClassType* instance, SqlDriver* driver) {
-            Utility::FieldTypeResolver::variableToDriver(driver, SqlField<ClassType>::column(), (instance->*getAttribute()));
+        virtual void writeToDriver(const ClassType* instance, int column) {
+            FieldType t = instance->*getAttribute();
+            Utility::variableToDriver(SqlTableConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
         }
 
         void setAttribute(AttributeType attribute) {

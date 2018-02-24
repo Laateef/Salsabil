@@ -1,5 +1,5 @@
 
-# Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+# Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
 # E-mail: laateef@outlook.com
 # Github: https://github.com/Laateef/Salsabil
 #
@@ -18,14 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-include_directories(
-${gtest_SOURCE_DIR} 
-${gtest_SOURCE_DIR}/include
-)
-
-enable_testing()
-
-
 project(Tests)
 
 add_subdirectory(core)
@@ -33,9 +25,11 @@ add_subdirectory(core)
 add_subdirectory(drivers)
 
 
-add_executable(main_test SqlTableConfigurerTest.cpp SqlRepositoryTest.cpp)
+enable_testing()
 
-target_link_libraries(main_test gmock_main core_lib)
+add_executable(main_test SqlRepositoryTest.cpp SqlTableConfigurerTest.cpp)
+
+target_link_libraries(main_test doctest_with_main sqlite_driver_lib sqlite3_backend core_lib)
 
 add_test(main_test main_test)
 

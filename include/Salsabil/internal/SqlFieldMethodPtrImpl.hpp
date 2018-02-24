@@ -24,7 +24,9 @@
 
 #include "SqlField.hpp"
 #include "PointerTypeHelper.hpp"
-#include "FieldTypeResolver.hpp"
+#include "TypeResolver.hpp"
+#include "internal/Logging.hpp"
+#include "SqlTableConfigurer.hpp"
 
 namespace Salsabil {
     class SqlDriver;
@@ -41,15 +43,20 @@ namespace Salsabil {
         mSetter(setter) {
         }
 
-        virtual void readFromDriver(const SqlDriver* driver, ClassType* instance) {
+        virtual void readFromDriver(ClassType* instance, int column) {
+            SALSABIL_LOG_DEBUG("Reading field '" + SqlField<ClassType>::name() + "' from driver via pointer ");
             FieldType t;
-            Utility::FieldTypeResolver::driverToVariable(driver, SqlField<ClassType>::column(), &t);
+            Utility::driverToVariable(SqlTableConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
             (instance->*setter())(t);
         }
 
-        virtual void writeToDriver(const ClassType* instance, SqlDriver* driver) {
-            Utility::FieldTypeResolver::variableToDriver(driver, SqlField<ClassType>::column(), (instance->*getter())());
+        virtual void writeToDriver(const ClassType* instance, int column) {
+            SALSABIL_LOG_DEBUG("Writing field '" + SqlField<ClassType>::name() + "' to driver via pointer ");
+            FieldType t = (instance->*getter())();
+            Utility::variableToDriver(SqlTableConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
         }
+
+    private:
 
         void getter(GetMethodType getter) {
             mGetter = getter;

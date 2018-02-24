@@ -21,6 +21,15 @@
 
 #include "internal/StringHelper.hpp"
 
+void __M_Assert(const char* expr_str, bool expr, const char* file, int line, const char* msg) {
+    if (!expr) {
+        std::cerr << "Assert failed:\t" << msg << "\n"
+                << "Expected:\t" << expr_str << "\n"
+                << "Source:\t\t" << file << ", line " << line << "\n";
+        abort();
+    }
+}
+
 using namespace Salsabil;
 
 std::string Utility::toUpper(std::string s) {
@@ -73,9 +82,9 @@ std::string Utility::toString(long double value) {
     return trailingZerosTrimmed(std::to_string(value));
 }
 
-std::string Utility::toString(const char* value) {
-    return "'" + std::string(value) + "'";
-}
+//std::string Utility::toString(const char* value) {
+//    return std::string(value);
+//}
 
 std::string Utility::toString(std::string value) {
     return value;

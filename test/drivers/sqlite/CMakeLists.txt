@@ -20,6 +20,6 @@
 
 add_executable(sqlite_driver_test SqliteDriverTest.cpp)
 
-target_link_libraries(sqlite_driver_test sqlite_driver_lib core_lib sqlite3_backend gmock_main)
+target_link_libraries(sqlite_driver_test doctest_with_main sqlite_driver_lib core_lib sqlite3_backend)
 
 add_test(sqlite_driver_test sqlite_driver_test)

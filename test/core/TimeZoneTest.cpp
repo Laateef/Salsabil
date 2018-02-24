@@ -19,126 +19,144 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gmock/gmock.h"
+#include "doctest.h"
 #include "TimeZone.hpp"
 #include "DateTime.hpp"
 #include "date/tz.h"
 #include "Exception.hpp"
 
-using namespace ::testing;
 using namespace Salsabil;
 
-TEST(TimeZoneTest, IsInvalidIfDefaultConstructed) {
-    TimeZone tz;
-    ASSERT_FALSE(tz.isValid());
-    ASSERT_THAT(tz.id(), StrEq(""));
-    ASSERT_THAT(tz.abbreviationAt(DateTime()), StrEq(""));
-    ASSERT_THAT(tz.offsetAt(DateTime()), Eq(std::chrono::seconds(0)));
-    ASSERT_THAT(tz.standardOffsetAt(DateTime()), Eq(std::chrono::seconds(0)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime()), Eq(std::chrono::minutes(0)));
-    ASSERT_FALSE(tz.transitionBefore(DateTime()).isValid());
-    ASSERT_FALSE(tz.transitionAfter(DateTime()).isValid());
-}
+TEST_CASE("TimeZoneTest") {
 
-TEST(TimeZoneTest, ThrowsIfTimeZoneNotFound) {
-    ASSERT_THROW(TimeZone("Disney/Mickey_Mouse"), Exception);
-}
+    SUBCASE("IsInvalidIfDefaultConstructed") {
+        TimeZone tz;
+        CHECK_FALSE(tz.isValid());
+        CHECK(tz.id() == "");
 
-TEST(TimeZoneTest, ReturnsTimeZoneId) {
-    TimeZone tz("Europe/Istanbul");
-    ASSERT_THAT(tz.id(), Eq("Europe/Istanbul"));
-}
+        CHECK(tz.abbreviationAt(DateTime()) == "");
+        CHECK(tz.offsetAt(DateTime()) == std::chrono::seconds(0));
+        CHECK(tz.standardOffsetAt(DateTime()) == std::chrono::seconds(0));
+        CHECK(tz.daylightOffsetAt(DateTime()) == std::chrono::minutes(0));
+        CHECK_FALSE(tz.transitionBefore(DateTime()).isValid());
+        CHECK_FALSE(tz.transitionAfter(DateTime()).isValid());
+    }
 
-TEST(TimeZoneTest, ReturnsAbbreviationGivenTimeZone) {
-    TimeZone tz("Europe/Berlin");
-    ASSERT_THAT(tz.abbreviationAt(DateTime()), Eq(""));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(2018, 1, 6), Time(20, 52, 14))), Eq("CET"));
-    // additional tests
-    tz = TimeZone("America/Tijuana");
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(1921, 1, 1), Time(0, 0, 0))), Eq("LMT"));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(1922, 1, 1), Time(7, 59, 59))), Eq("LMT"));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(1922, 1, 1), Time(8, 0, 0))), Eq("MST"));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(1924, 1, 1), Time(6, 59, 59))), Eq("MST"));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(1924, 1, 1), Time(7, 0, 0))), Eq("PST"));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(1927, 6, 11), Time(6, 59, 59))), Eq("PST"));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(1927, 6, 11), Time(7, 0, 0))), Eq("MST"));
-}
+    SUBCASE("ThrowsIfTimeZoneNotFound") {
 
-TEST(TimeZoneTest, ReturnsOffsetAtGivenDateTimeInTimeZone) {
-    ASSERT_THAT(TimeZone("Etc/GMT-3").offsetAt(DateTime(Date(2018, 1, 13), Time(18, 56, 10))), Eq(std::chrono::hours(3)));
-    ASSERT_THAT(TimeZone("Etc/GMT+3").offsetAt(DateTime(Date(2018, 1, 13), Time(18, 56, 10))), Eq(std::chrono::hours(-3)));
+        CHECK_THROWS_AS(TimeZone("Disney/Mickey_Mouse"), Exception);
+    }
 
-    TimeZone tz("Europe/Istanbul");
-    ASSERT_THAT(tz.offsetAt(DateTime()), Eq(std::chrono::seconds(0))); // daylight saving
-    ASSERT_THAT(tz.offsetAt(DateTime(Date(2018, 1, 6), Time(21, 47, 14))), Eq(std::chrono::hours(3)));
-    ASSERT_THAT(tz.offsetAt(DateTime(Date(2018, 8, 1), Time(21, 47, 14))), Eq(std::chrono::hours(3))); // no daylight saving
-    ASSERT_THAT(tz.offsetAt(DateTime(Date(2016, 1, 5), Time(21, 0, 0))), Eq(std::chrono::hours(2)));
-    ASSERT_THAT(tz.offsetAt(DateTime(Date(2016, 8, 1), Time(21, 0, 0))), Eq(std::chrono::hours(3))); // daylight saving
-}
+    SUBCASE("ReturnsTimeZoneId") {
 
-TEST(TimeZoneTest, ReturnsDaylightOffsetAtGivenDateTimeInTimeZone) {
-    TimeZone tz("Europe/Istanbul");
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime()), Eq(std::chrono::seconds(0)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(1964, 5, 15), Time(0, 0, 0))), Eq(std::chrono::minutes(60)));
-    // additional tests
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(1973, 11, 4), Time(3, 0, 0))), Eq(std::chrono::minutes(0)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(2000, 3, 25), Time(22, 59, 59))), Eq(std::chrono::minutes(0)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(2000, 3, 25), Time(23, 0, 0))), Eq(std::chrono::minutes(60)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(2000, 10, 28), Time(22, 59, 59))), Eq(std::chrono::minutes(60)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(2000, 10, 28), Time(23, 0, 0))), Eq(std::chrono::minutes(0)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(2018, 1, 6), Time(21, 47, 14))), Eq(std::chrono::minutes(0)));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(2018, 8, 1), Time(21, 47, 14))), Eq(std::chrono::minutes(0))); //no daylight saving
-}
+        TimeZone tz("Europe/Istanbul");
+        CHECK(tz.id() == "Europe/Istanbul");
+    }
 
-TEST(TimeZoneTest, ReturnsStandardOffsetAtGivenDateTimeInTimeZone) {
-    TimeZone tz("Europe/Istanbul");
-    ASSERT_THAT(tz.standardOffsetAt(DateTime()), Eq(std::chrono::seconds(0)));
-    ASSERT_THAT(tz.standardOffsetAt(DateTime(Date(2018, 1, 6), Time(21, 47, 14))), Eq(std::chrono::hours(3)));
-    ASSERT_THAT(tz.standardOffsetAt(DateTime(Date(2018, 8, 1), Time(21, 47, 14))), Eq(std::chrono::hours(3))); // no daylight saving
-    ASSERT_THAT(tz.standardOffsetAt(DateTime(Date(2016, 1, 5), Time(21, 0, 0))), Eq(std::chrono::hours(2)));
-    ASSERT_THAT(tz.standardOffsetAt(DateTime(Date(2016, 8, 1), Time(21, 0, 0))), Eq(std::chrono::hours(2))); // daylight saving
-}
+    SUBCASE("ReturnsAbbreviationGivenTimeZone") {
 
-TEST(TimeZoneTest, ReturnsPreviousAndNextTransition) {
-    TimeZone tz("Europe/Istanbul");
-    ASSERT_FALSE(tz.transitionBefore(DateTime()).isValid());
-    ASSERT_THAT(tz.transitionBefore(DateTime(Date(2005, 1, 6), Time(21, 47, 14))), Eq(DateTime(Date(2004, 10, 30), Time(23, 0, 0))));
-    ASSERT_FALSE(tz.transitionAfter(DateTime()).isValid());
-    ASSERT_THAT(tz.transitionAfter(DateTime(Date(2005, 1, 6), Time(21, 47, 14))), Eq(DateTime(Date(2005, 3, 26), Time(23, 0, 0))));
-}
+        TimeZone tz("Europe/Berlin");
 
-TEST(TimeZoneTest, TestsEquality) {
-    ASSERT_TRUE(TimeZone("Europe/Istanbul") == TimeZone("Europe/Istanbul"));
-    ASSERT_TRUE(TimeZone("Europe/Berlin") != TimeZone("Europe/Istanbul"));
-}
+        CHECK(tz.abbreviationAt(DateTime()) == "");
+        CHECK(tz.abbreviationAt(DateTime(Date(2018, 1, 6), Time(20, 52, 14))) == "CET");
+        // additional tests
+        tz = TimeZone("America/Tijuana");
+        CHECK(tz.abbreviationAt(DateTime(Date(1921, 1, 1), Time(0, 0, 0))) == "LMT");
+        CHECK(tz.abbreviationAt(DateTime(Date(1922, 1, 1), Time(7, 59, 59))) == "LMT");
+        CHECK(tz.abbreviationAt(DateTime(Date(1922, 1, 1), Time(8, 0, 0))) == "MST");
+        CHECK(tz.abbreviationAt(DateTime(Date(1924, 1, 1), Time(6, 59, 59))) == "MST");
+        CHECK(tz.abbreviationAt(DateTime(Date(1924, 1, 1), Time(7, 0, 0))) == "PST");
+        CHECK(tz.abbreviationAt(DateTime(Date(1927, 6, 11), Time(6, 59, 59))) == "PST");
+        CHECK(tz.abbreviationAt(DateTime(Date(1927, 6, 11), Time(7, 0, 0))) == "MST");
+    }
 
-TEST(TimeZoneTest, ReturnsUTCTimeZone) {
-    TimeZone tz = TimeZone::utc();
-    ASSERT_TRUE(tz.isValid());
-    ASSERT_THAT(tz.id(), StrEq("Etc/UTC"));
-    ASSERT_THAT(tz.abbreviationAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))), StrEq("UTC"));
-    ASSERT_THAT(tz.offsetAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))), Eq(std::chrono::seconds::zero()));
-    ASSERT_THAT(tz.standardOffsetAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))), Eq(std::chrono::seconds::zero()));
-    ASSERT_THAT(tz.daylightOffsetAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))), Eq(std::chrono::seconds::zero()));
-    ASSERT_FALSE(tz.transitionBefore(DateTime(Date(2018, 1, 11), Time(0, 17, 0))).isValid());
-    ASSERT_FALSE(tz.transitionAfter(DateTime(Date(2018, 1, 11), Time(0, 17, 0))).isValid());
-}
+    SUBCASE("ReturnsOffsetAtGivenDateTimeInTimeZone") {
 
-TEST(TimeZoneTest, isTimeZoneAvailable) {
-    ASSERT_TRUE(TimeZone::isAvailable("Europe/Istanbul"));
-    ASSERT_TRUE(TimeZone::isAvailable("Europe/Berlin"));
-    ASSERT_FALSE(TimeZone::isAvailable("Disney/Mickey_Mouse"));
-}
+        CHECK(TimeZone("Etc/GMT-3").offsetAt(DateTime(Date(2018, 1, 13), Time(18, 56, 10))) == std::chrono::hours(3));
+        CHECK(TimeZone("Etc/GMT+3").offsetAt(DateTime(Date(2018, 1, 13), Time(18, 56, 10))) == std::chrono::hours(-3));
 
-TEST(TimeZoneTest, ReturnsDatabaseVersion) {
-    ASSERT_FALSE(TimeZone::databaseVersion().empty());
-}
+        TimeZone tz("Europe/Istanbul");
 
-TEST(TimeZoneTest, ReturnsWindowsId) {
-    ASSERT_THAT(TimeZone::toWindowsId("Europe/Istanbul"), StrEq("Turkey Standard Time"));
-}
+        CHECK(tz.offsetAt(DateTime()) == std::chrono::seconds(0)); // daylight saving
+        CHECK(tz.offsetAt(DateTime(Date(2018, 1, 6), Time(21, 47, 14))) == std::chrono::hours(3));
+        CHECK(tz.offsetAt(DateTime(Date(2018, 8, 1), Time(21, 47, 14))) == std::chrono::hours(3)); // no daylight saving
+        CHECK(tz.offsetAt(DateTime(Date(2016, 1, 5), Time(21, 0, 0))) == std::chrono::hours(2));
+        CHECK(tz.offsetAt(DateTime(Date(2016, 8, 1), Time(21, 0, 0))) == std::chrono::hours(3)); // daylight saving
+    }
 
-TEST(TimeZoneTest, ReturnsIanaIdFromWindowsId) {
-    ASSERT_THAT(TimeZone::toIanaId("W. Europe Standard Time"), StrEq("Europe/Berlin"));
-    ASSERT_THAT(TimeZone::toIanaId("W. Europe Standard Time", "IT"), StrEq("Europe/Rome"));
+    SUBCASE("ReturnsDaylightOffsetAtGivenDateTimeInTimeZone") {
+
+        TimeZone tz("Europe/Istanbul");
+        CHECK(tz.daylightOffsetAt(DateTime()) == std::chrono::seconds(0));
+        CHECK(tz.daylightOffsetAt(DateTime(Date(1964, 5, 15), Time(0, 0, 0))) == std::chrono::minutes(60));
+        // additional tests
+        CHECK(tz.daylightOffsetAt(DateTime(Date(1973, 11, 4), Time(3, 0, 0))) == std::chrono::minutes(0));
+        CHECK(tz.daylightOffsetAt(DateTime(Date(2000, 3, 25), Time(22, 59, 59))) == std::chrono::minutes(0));
+        CHECK(tz.daylightOffsetAt(DateTime(Date(2000, 3, 25), Time(23, 0, 0))) == std::chrono::minutes(60));
+        CHECK(tz.daylightOffsetAt(DateTime(Date(2000, 10, 28), Time(22, 59, 59))) == std::chrono::minutes(60));
+        CHECK(tz.daylightOffsetAt(DateTime(Date(2000, 10, 28), Time(23, 0, 0))) == std::chrono::minutes(0));
+        CHECK(tz.daylightOffsetAt(DateTime(Date(2018, 1, 6), Time(21, 47, 14))) == std::chrono::minutes(0));
+        CHECK(tz.daylightOffsetAt(DateTime(Date(2018, 8, 1), Time(21, 47, 14))) == std::chrono::minutes(0)); //no daylight saving
+    }
+
+    SUBCASE("ReturnsStandardOffsetAtGivenDateTimeInTimeZone") {
+
+        TimeZone tz("Europe/Istanbul");
+        CHECK(tz.standardOffsetAt(DateTime()) == std::chrono::seconds(0));
+        CHECK(tz.standardOffsetAt(DateTime(Date(2018, 1, 6), Time(21, 47, 14))) == std::chrono::hours(3));
+        CHECK(tz.standardOffsetAt(DateTime(Date(2018, 8, 1), Time(21, 47, 14))) == std::chrono::hours(3)); // no daylight saving
+        CHECK(tz.standardOffsetAt(DateTime(Date(2016, 1, 5), Time(21, 0, 0))) == std::chrono::hours(2));
+        CHECK(tz.standardOffsetAt(DateTime(Date(2016, 8, 1), Time(21, 0, 0))) == std::chrono::hours(2)); // daylight saving
+    }
+
+    SUBCASE("ReturnsPreviousAndNextTransition") {
+
+        TimeZone tz("Europe/Istanbul");
+
+        CHECK_FALSE(tz.transitionBefore(DateTime()).isValid());
+        CHECK(tz.transitionBefore(DateTime(Date(2005, 1, 6), Time(21, 47, 14))) == DateTime(Date(2004, 10, 30), Time(23, 0, 0)));
+        CHECK_FALSE(tz.transitionAfter(DateTime()).isValid());
+        CHECK(tz.transitionAfter(DateTime(Date(2005, 1, 6), Time(21, 47, 14))) == DateTime(Date(2005, 3, 26), Time(23, 0, 0)));
+    }
+
+    SUBCASE("TestsEquality") {
+
+        CHECK(TimeZone("Europe/Istanbul") == TimeZone("Europe/Istanbul"));
+        CHECK(TimeZone("Europe/Berlin") != TimeZone("Europe/Istanbul"));
+    }
+
+    SUBCASE("ReturnsUTCTimeZone") {
+
+        TimeZone tz = TimeZone::utc();
+        CHECK(tz.isValid());
+        CHECK(tz.id() == "Etc/UTC");
+        CHECK(tz.abbreviationAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))) == "UTC");
+        CHECK(tz.offsetAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))) == std::chrono::seconds::zero());
+        CHECK(tz.standardOffsetAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))) == std::chrono::seconds::zero());
+        CHECK(tz.daylightOffsetAt(DateTime(Date(2018, 1, 11), Time(0, 17, 0))) == std::chrono::seconds::zero());
+        CHECK_FALSE(tz.transitionBefore(DateTime(Date(2018, 1, 11), Time(0, 17, 0))).isValid());
+        CHECK_FALSE(tz.transitionAfter(DateTime(Date(2018, 1, 11), Time(0, 17, 0))).isValid());
+    }
+
+    SUBCASE("isTimeZoneAvailable") {
+
+        CHECK(TimeZone::isAvailable("Europe/Istanbul"));
+        CHECK(TimeZone::isAvailable("Europe/Berlin"));
+        CHECK_FALSE(TimeZone::isAvailable("Disney/Mickey_Mouse"));
+    }
+
+    SUBCASE("ReturnsDatabaseVersion") {
+
+        CHECK_FALSE(TimeZone::databaseVersion().empty());
+    }
+
+    SUBCASE("ReturnsWindowsId") {
+
+        CHECK(TimeZone::toWindowsId("Europe/Istanbul") == "Turkey Standard Time");
+    }
+
+    SUBCASE("ReturnsIanaIdFromWindowsId") {
+        CHECK(TimeZone::toIanaId("W. Europe Standard Time") == "Europe/Berlin");
+        CHECK(TimeZone::toIanaId("W. Europe Standard Time", "IT") == "Europe/Rome");
+    }
 }
