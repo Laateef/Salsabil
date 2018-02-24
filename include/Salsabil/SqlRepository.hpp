@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -22,9 +22,10 @@
 #ifndef SALSABIL_SQLREPOSITORY_HPP
 #define SALSABIL_SQLREPOSITORY_HPP
 
-#include "SqlStatementBuilder.hpp"
-#include "internal/Logging.hpp"
+#include "SqlDriver.hpp"
+#include "internal/SqlGenerator.hpp"
 #include "internal/TypeResolver.hpp"
+#include "internal/Logging.hpp"
 
 namespace Salsabil {
     template<typename ClassType> class SqlTableConfigurer;
@@ -44,12 +45,11 @@ namespace Salsabil {
 
             SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
 
-            SqlStatementBuilder ssb;
-            SqlWhereClause& sqlWhereClause = ssb.SELECT_ALL_FROM(SqlTableConfigurer<ClassType>::tableName()).WHERE(SqlTableConfigurer<ClassType>::primaryFieldList().at(0)->name()).equalTo(id);
+            const std::string& sqlStatement = SqlGenerator::fetchById(SqlTableConfigurer<ClassType>::tableName(), SqlTableConfigurer<ClassType>::primaryFieldList().at(0)->name(), id);
 
-            driver->execute(sqlWhereClause.asString());
+            SALSABIL_LOG_INFO(sqlStatement);
 
-            SALSABIL_LOG_INFO(sqlWhereClause.asString());
+            driver->execute(sqlStatement);
 
             if (!driver->nextRow())
                 throw Exception("no row with id(s) was found");
@@ -71,12 +71,12 @@ namespace Salsabil {
 
             SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
 
-//            assert(SqlTableConfigurer<C>::fieldList().size() != 0);
+            //            assert(SqlTableConfigurer<C>::fieldList().size() != 0);
 
-            const std::string& statement = SqlStatementBuilder().SELECT_ALL_FROM(SqlTableConfigurer<ClassType>::tableName()).asString();
-            driver->execute(statement);
+            const std::string& sqlStatement = SqlGenerator::fetchAll(SqlTableConfigurer<ClassType>::tableName());
+            SALSABIL_LOG_INFO(sqlStatement);
 
-            SALSABIL_LOG_INFO(statement);
+            driver->execute(sqlStatement);
 
             std::vector<ClassType*> instanceList;
 
@@ -88,7 +88,7 @@ namespace Salsabil {
                     f->readFromDriver(pInstance, f->column());
                 for (const auto& f : SqlTableConfigurer<ClassType>::fieldList())
                     f->readFromDriver(pInstance, f->column());
-                
+
                 instanceList.push_back(instance);
             }
 
@@ -97,9 +97,12 @@ namespace Salsabil {
 
         static void save(const ClassType* instance) {
             SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
- 
-            driver->prepare(SqlStatementBuilder().INSERT_INTO(SqlTableConfigurer<ClassType>::tableName(), driver->columnList(SqlTableConfigurer<ClassType>::tableName())).parameterizeValues().asString());
-            
+
+            const std::string& sqlStatement = SqlGenerator::insert(SqlTableConfigurer<ClassType>::tableName(), driver->columnList(SqlTableConfigurer<ClassType>::tableName()));
+            SALSABIL_LOG_INFO(sqlStatement);
+
+            driver->prepare(sqlStatement);
+
             for (const auto& field : SqlTableConfigurer<ClassType>::primaryFieldList()) {
                 field->writeToDriver(instance, field->column() + 1);
             }

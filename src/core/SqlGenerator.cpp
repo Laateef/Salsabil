@@ -19,39 +19,27 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "internal/SqlInsertClause.hpp"
+#include <vector>
+
+#include "internal/SqlGenerator.hpp"
 #include "internal/StringHelper.hpp"
 #include "Exception.hpp"
 
 using namespace Salsabil;
 
-SqlInsertClause::SqlInsertClause(std::string& sql, const std::string& table, std::vector<std::string> columnList)
-: mSqlString(sql)
-, mColumnList(columnList) {
-    append("INSERT INTO " + table);
-    if (columnList.size() > 0) {
-        append(" (");
-        append(Utility::join(columnList.begin(), columnList.end(), ", "));
-        append(")");
-
-    }
+std::string SqlGenerator::fetchAll(const std::string &table) {
+    return "SELECT * FROM " + table;
 }
 
-SqlInsertClause& SqlInsertClause::parameterizeValues() {
-    std::vector<std::string> questionMarkList(mColumnList.size(), "?");
+std::string SqlGenerator::fetchById(const std::string &table, const std::string& column, const std::string& id) {
+    return "SELECT * FROM " + table + " WHERE " + column + " = " + id;
+}
+
+std::string SqlGenerator::insert(const std::string& table, const std::vector<std::string>& columnList) {
+    std::vector<std::string> questionMarkList(columnList.size(), "?");
     if (questionMarkList.empty())
-        throw Exception("could not parameterize, the column list is empty!");
+        throw Exception("could not parameterize the insert statement, the column list is empty!");
 
-    append(" VALUES (" + Utility::join(questionMarkList.begin(), questionMarkList.end(), ", ") + ")");
-
-    return *this;
-}
-
-void SqlInsertClause::append(const std::string& sqlFragment) {
-
-    mSqlString += sqlFragment;
-}
-
-std::string SqlInsertClause::asString() const {
-    return mSqlString;
+    return "INSERT INTO " + table + std::string(columnList.size() == 0 ? "" : "(" + Utility::join(columnList.begin(), columnList.end(), ", ") + ")")
+            + " VALUES(" + Utility::join(questionMarkList.begin(), questionMarkList.end(), ", ") + ")";
 }

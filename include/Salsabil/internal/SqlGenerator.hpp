@@ -19,27 +19,20 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLSTATEMENTBUILDER_HPP
-#define SALSABIL_SQLSTATEMENTBUILDER_HPP
+#ifndef SALSABIL_SQLGENERATOR_HPP
+#define SALSABIL_SQLGENERATOR_HPP
 
-#include "internal/SqlSelectClause.hpp"
-#include "internal/SqlInsertClause.hpp"
+#include <string>
+#include <vector>
 
 namespace Salsabil {
 
-    class SqlStatementBuilder {
+    class SqlGenerator {
     public:
-
-        SqlSelectClause SELECT(const std::string& column);
-
-        SqlFromClause SELECT_ALL_FROM(const std::string& table);
-
-        SqlInsertClause INSERT_INTO(const std::string& table, std::vector<std::string> columnList = {});
-
-        std::string asString() const;
-
-    private:
-        std::string mSqlString;
+        static std::string fetchAll(const std::string& table);
+        static std::string fetchById(const std::string& table, const std::string& column, const std::string& id);
+        static std::string insert(const std::string& table, const std::vector<std::string>& columnList = std::vector<std::string>());
     };
 }
-#endif // SALSABIL_SQLSTATEMENTBUILDER_HPP
+
+#endif // SALSABIL_SQLGENERATOR_HPP

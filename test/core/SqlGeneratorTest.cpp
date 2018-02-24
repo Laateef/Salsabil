@@ -4,7 +4,7 @@
  * Github: https://github.com/Laateef/Salsabil
  *
  * This file is part of the Salsabil project.
- *
+ * 
  * Salsabil is free software: you can redistribute it and/or modify 
  * it under the terms of the GNU General Public License as published by 
  * the Free Software Foundation, either version 3 of the License, or 
@@ -19,20 +19,22 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "internal/SqlSelectClause.hpp"
+#include "doctest.h"
+#include "internal/SqlGenerator.hpp"
 
 using namespace Salsabil;
 
-SqlSelectClause::SqlSelectClause(std::string& sql, const std::string& column)
-: mSqlString(sql) {
-    append("SELECT " + column);
-}
+TEST_CASE("SqlGenerator") {
 
-SqlFromClause SqlSelectClause::FROM(const std::string& table) {
-    SqlFromClause sfc(mSqlString, table);
-    return sfc;
-}
+    SUBCASE(" fetch all rows from a table ") {
+        CHECK(SqlGenerator::fetchAll("user") == "SELECT * FROM user");
+    }
 
-void SqlSelectClause::append(const std::string& sqlFragment) {
-    mSqlString += sqlFragment;
+    SUBCASE(" fetch a specific row from a table ") {
+        CHECK(SqlGenerator::fetchById("user", "id", "7") == "SELECT * FROM user WHERE id = 7");
+    }
+
+    SUBCASE(" insert a row into a table with parameterized values ") {
+        CHECK(SqlGenerator::insert("user",{"id", "name"}) == "INSERT INTO user(id, name) VALUES(?, ?)");
+    }
 }

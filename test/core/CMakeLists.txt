@@ -1,5 +1,5 @@
 
-# Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+# Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
 # E-mail: laateef@outlook.com
 # Github: https://github.com/Laateef/Salsabil
 #
@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
 
-add_executable(core_test SqlDriverFactoryTest.cpp SqlStatementBuilderTest.cpp StringHelperTest.cpp LocalDateTimeTest.cpp TimeZoneTest.cpp DateTimeTest.cpp DateTest.cpp TimeTest.cpp)
+add_executable(core_test SqlDriverFactoryTest.cpp SqlGeneratorTest.cpp StringHelperTest.cpp LocalDateTimeTest.cpp TimeZoneTest.cpp DateTimeTest.cpp DateTest.cpp TimeTest.cpp)
 
 target_link_libraries(core_test doctest_with_main core_lib)
 
