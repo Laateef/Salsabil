@@ -67,6 +67,13 @@ namespace Salsabil {
         struct Traits<R(C::*)> : public Traits<R(C&)> {
             using AttributeType = R;
         };
+
+        // remove all qualifiers of a type
+
+        template<class C>
+        struct Traits {
+            using UnqualifiedType = typename std::remove_const<typename std::remove_cv<typename std::remove_pointer<typename std::remove_reference<C>::type>::type>::type>::type;
+        };
     }
 }
 

@@ -28,7 +28,7 @@
 #include "internal/Logging.hpp"
 
 namespace Salsabil {
-    template<typename ClassType> class SqlTableConfigurer;
+    template<typename ClassType> class SqlEntityConfigurer;
 
     template<typename ClassType>
     class SqlRepository {
@@ -40,12 +40,12 @@ namespace Salsabil {
         static ClassType* get(std::string id) {
             SALSABIL_LOG_DEBUG("Getting object from repository with id '" + id + "' ");
 
-            if (SqlTableConfigurer<ClassType>::primaryFieldList().size() == 0)
+            if (SqlEntityConfigurer<ClassType>::primaryFieldList().size() == 0)
                 throw Exception("Could not fetch data, no primary field is configured.");
 
-            SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
+            SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
 
-            const std::string& sqlStatement = SqlGenerator::fetchById(SqlTableConfigurer<ClassType>::tableName(), SqlTableConfigurer<ClassType>::primaryFieldList().at(0)->name(), id);
+            const std::string& sqlStatement = SqlGenerator::fetchById(SqlEntityConfigurer<ClassType>::tableName(), SqlEntityConfigurer<ClassType>::primaryFieldList().at(0)->name(), id);
 
             SALSABIL_LOG_INFO(sqlStatement);
 
@@ -57,23 +57,24 @@ namespace Salsabil {
             ClassType* instance;
             ClassType* pInstance = Utility::initializeInstance(&instance);
 
-            for (const auto& f : SqlTableConfigurer<ClassType>::primaryFieldList())
+            for (const auto& f : SqlEntityConfigurer<ClassType>::primaryFieldList())
                 f->readFromDriver(pInstance, f->column());
-            for (const auto& f : SqlTableConfigurer<ClassType>::fieldList())
+            for (const auto& f : SqlEntityConfigurer<ClassType>::persistentFieldList())
                 f->readFromDriver(pInstance, f->column());
-
+            for (const auto& r : SqlEntityConfigurer<ClassType>::transientFieldList())
+                r->readFromDriver(driver, pInstance);
             return instance;
         }
 
         static std::vector<ClassType*> getAll() {
-            if (SqlTableConfigurer<ClassType>::primaryFieldList().size() == 0)
+            if (SqlEntityConfigurer<ClassType>::primaryFieldList().size() == 0)
                 throw Exception("Could not fetch data, no primary field is configured.");
 
-            SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
+            SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
 
             //            assert(SqlTableConfigurer<C>::fieldList().size() != 0);
 
-            const std::string& sqlStatement = SqlGenerator::fetchAll(SqlTableConfigurer<ClassType>::tableName());
+            const std::string& sqlStatement = SqlGenerator::fetchAll(SqlEntityConfigurer<ClassType>::tableName());
             SALSABIL_LOG_INFO(sqlStatement);
 
             driver->execute(sqlStatement);
@@ -84,10 +85,12 @@ namespace Salsabil {
                 ClassType* instance;
                 ClassType* pInstance = Utility::initializeInstance(&instance);
 
-                for (const auto& f : SqlTableConfigurer<ClassType>::primaryFieldList())
+                for (const auto& f : SqlEntityConfigurer<ClassType>::primaryFieldList())
                     f->readFromDriver(pInstance, f->column());
-                for (const auto& f : SqlTableConfigurer<ClassType>::fieldList())
+                for (const auto& f : SqlEntityConfigurer<ClassType>::persistentFieldList())
                     f->readFromDriver(pInstance, f->column());
+                for (const auto& r : SqlEntityConfigurer<ClassType>::transientFieldList())
+                    r->readFromDriver(driver, pInstance);
 
                 instanceList.push_back(instance);
             }
@@ -96,17 +99,21 @@ namespace Salsabil {
         }
 
         static void save(const ClassType* instance) {
-            SqlDriver* driver = SqlTableConfigurer<ClassType>::driver();
+            SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
 
-            const std::string& sqlStatement = SqlGenerator::insert(SqlTableConfigurer<ClassType>::tableName(), driver->columnList(SqlTableConfigurer<ClassType>::tableName()));
+            for (const auto& relation : SqlEntityConfigurer<ClassType>::transientFieldList()) {
+                relation->writeToDriver(driver, instance);
+            }
+
+            const std::string& sqlStatement = SqlGenerator::insert(SqlEntityConfigurer<ClassType>::tableName(), driver->columnList(SqlEntityConfigurer<ClassType>::tableName()));
             SALSABIL_LOG_INFO(sqlStatement);
 
             driver->prepare(sqlStatement);
 
-            for (const auto& field : SqlTableConfigurer<ClassType>::primaryFieldList()) {
+            for (const auto& field : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
                 field->writeToDriver(instance, field->column() + 1);
             }
-            for (const auto& field : SqlTableConfigurer<ClassType>::fieldList()) {
+            for (const auto& field : SqlEntityConfigurer<ClassType>::persistentFieldList()) {
                 field->writeToDriver(instance, field->column() + 1);
             }
             driver->execute();

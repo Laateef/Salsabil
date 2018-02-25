@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *

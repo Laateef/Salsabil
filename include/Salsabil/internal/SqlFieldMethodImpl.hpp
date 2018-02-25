@@ -19,25 +19,25 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLFIELDMETHODPTRIMPL_HPP
-#define SALSABIL_SQLFIELDMETHODPTRIMPL_HPP
+#ifndef SALSABIL_SQLFIELDMETHODIMPL_HPP
+#define SALSABIL_SQLFIELDMETHODIMPL_HPP
 
 #include "SqlField.hpp"
-#include "PointerTypeHelper.hpp"
+#include "TypeHelper.hpp"
 #include "TypeResolver.hpp"
 #include "internal/Logging.hpp"
-#include "SqlTableConfigurer.hpp"
+#include "SqlEntityConfigurer.hpp"
 
 namespace Salsabil {
     class SqlDriver;
 
     template<typename ClassType, typename GetMethodType, typename SetMethodType>
-    class SqlFieldMethodPtrImpl : public SqlField<ClassType> {
+    class SqlFieldMethodImpl : public SqlField<ClassType> {
         using FieldType = typename Utility::Traits<GetMethodType>::ReturnType;
 
     public:
 
-        SqlFieldMethodPtrImpl(std::string name, int column, GetMethodType getter, SetMethodType setter, bool isPrimary) :
+        SqlFieldMethodImpl(std::string name, int column, GetMethodType getter, SetMethodType setter, bool isPrimary) :
         SqlField<ClassType>(name, column, isPrimary),
         mGetter(getter),
         mSetter(setter) {
@@ -46,14 +46,14 @@ namespace Salsabil {
         virtual void readFromDriver(ClassType* instance, int column) {
             SALSABIL_LOG_DEBUG("Reading field '" + SqlField<ClassType>::name() + "' from driver via pointer ");
             FieldType t;
-            Utility::driverToVariable(SqlTableConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
+            Utility::driverToVariable(SqlEntityConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
             (instance->*setter())(t);
         }
 
         virtual void writeToDriver(const ClassType* instance, int column) {
             SALSABIL_LOG_DEBUG("Writing field '" + SqlField<ClassType>::name() + "' to driver via pointer ");
             FieldType t = (instance->*getter())();
-            Utility::variableToDriver(SqlTableConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
+            Utility::variableToDriver(SqlEntityConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
         }
 
     private:
@@ -79,5 +79,5 @@ namespace Salsabil {
         SetMethodType mSetter;
     };
 }
-#endif // SALSABIL_SQLFIELDMETHODPTRIMPL_HPP
+#endif // SALSABIL_SQLFIELDMETHODIMPL_HPP
 

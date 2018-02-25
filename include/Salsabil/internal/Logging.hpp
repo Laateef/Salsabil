@@ -24,17 +24,29 @@
 
 #include <iostream>
 
+#if defined(_MSC_VER)  // Visual C++
+#define CURRENT_FUNCTION_SIGNATURE __FUNCSIG__
+#elif defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__INTEL_COMPILER) || defined(__clang__)
+#define CURRENT_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
+#else // Unknown
+#if defined(__func__)
+#define CURRENT_FUNCTION_SIGNATURE __func__
+#else
+#define CURRENT_FUNCTION_SIGNATURE ""
+#endif
+#endif
+
 #define SALSABIL_ENABLE_LOG_DEBUG 1
 #define SALSABIL_ENABLE_LOG_INFO  1
 
 #if SALSABIL_ENABLE_LOG_DEBUG
-#define SALSABIL_LOG_DEBUG(ARG) std::cout << "[debug] " << ARG << std::endl;
+#define SALSABIL_LOG_DEBUG(ARG) std::cout << "\nSalsabil [debug] file: '" << __FILE__ << "', line: '"<< __LINE__ << "', function: \n" << CURRENT_FUNCTION_SIGNATURE << "\n"<< ARG << "\n";
 #else
 #define SALSABIL_LOG_DEBUG(ARG)
 #endif
 
 #if SALSABIL_ENABLE_LOG_INFO
-#define SALSABIL_LOG_INFO(ARG) std::cout << "[info] " << ARG << std::endl;
+#define SALSABIL_LOG_INFO(ARG) std::cout << "\nSalsabil [info]: " << ARG << "\n";
 #else
 #define SALSABIL_LOG_INFO(ARG)
 #endif

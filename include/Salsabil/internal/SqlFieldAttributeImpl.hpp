@@ -19,36 +19,36 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLFIELDATTRIBUTEPTRIMPL_HPP
-#define SALSABIL_SQLFIELDATTRIBUTEPTRIMPL_HPP
+#ifndef SALSABIL_SQLFIELDATTRIBUTEIMPL_HPP
+#define SALSABIL_SQLFIELDATTRIBUTEIMPL_HPP
 
 #include "SqlField.hpp"
-#include "PointerTypeHelper.hpp"
+#include "TypeHelper.hpp"
 #include "TypeResolver.hpp"
 
 namespace Salsabil {
     class SqlDriver;
 
     template<typename ClassType, typename AttributeType>
-    class SqlFieldAttributePtrImpl : public SqlField<ClassType> {
+    class SqlFieldAttributeImpl : public SqlField<ClassType> {
         using FieldType = typename Utility::Traits<AttributeType>::AttributeType;
 
     public:
 
-        SqlFieldAttributePtrImpl(std::string name, int column, AttributeType attribute, bool isPrimary) :
+        SqlFieldAttributeImpl(std::string name, int column, AttributeType attribute, bool isPrimary) :
         SqlField<ClassType>(name, column, isPrimary),
         mAttribute(attribute) {
         }
 
         virtual void readFromDriver(ClassType* instance, int column) {
             FieldType t;
-            Utility::driverToVariable(SqlTableConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
+            Utility::driverToVariable(SqlEntityConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
             instance->*getAttribute() = t;
         }
 
         virtual void writeToDriver(const ClassType* instance, int column) {
             FieldType t = instance->*getAttribute();
-            Utility::variableToDriver(SqlTableConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
+            Utility::variableToDriver(SqlEntityConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
         }
 
         void setAttribute(AttributeType attribute) {
@@ -63,5 +63,5 @@ namespace Salsabil {
         AttributeType mAttribute;
     };
 }
-#endif // SALSABIL_SQLFIELDATTRIBUTEPTRIMPL_HPP
+#endif // SALSABIL_SQLFIELDATTRIBUTEIMPL_HPP
 

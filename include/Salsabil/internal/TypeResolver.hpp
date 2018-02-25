@@ -8,7 +8,7 @@
 
 
 namespace Salsabil {
-    template<typename> class SqlTableConfigurer;
+    template<typename> class SqlEntityConfigurer;
 
     namespace Utility {
 
@@ -34,16 +34,16 @@ namespace Salsabil {
         }
 
         template<class T>
-        void driverToVariable(const SqlDriver* driver, int column, T* to) {
+        void driverToVariable(const SqlDriver*, int column, T* to) {
             SALSABIL_LOG_DEBUG("Fetching entity's primary key at column '" + std::to_string(column) + "' ");
-            for (const auto& field : SqlTableConfigurer<T>::primaryFieldList())
+            for (const auto& field : SqlEntityConfigurer<T>::primaryFieldList())
                 field->readFromDriver(to, column);
         }
 
         template<class T>
-        void variableToDriver(SqlDriver* driver, int column, const T* from) {
+        void variableToDriver(SqlDriver*, int column, const T* from) {
             SALSABIL_LOG_DEBUG("Binding entity's primary key at column '" + std::to_string(column) + "'");
-            for (const auto& field : SqlTableConfigurer<T>::primaryFieldList())
+            for (const auto& field : SqlEntityConfigurer<T>::primaryFieldList())
                 field->writeToDriver(from, column);
         }
 

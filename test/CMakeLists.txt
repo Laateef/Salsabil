@@ -27,7 +27,7 @@ add_subdirectory(drivers)
 
 enable_testing()
 
-add_executable(main_test SqlRepositoryTest.cpp SqlTableConfigurerTest.cpp)
+add_executable(main_test SqlOneToOneRelationTest SqlRepositoryTest.cpp SqlEntityConfigurerTest.cpp)
 
 target_link_libraries(main_test doctest_with_main sqlite_driver_lib sqlite3_backend core_lib)
 

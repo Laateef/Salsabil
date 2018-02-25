@@ -22,13 +22,13 @@
 #include "doctest.h"
 #include "mocks/ClassMock.hpp"
 #include "Exception.hpp"
-#include "SqlTableConfigurer.hpp"
+#include "SqlEntityConfigurer.hpp"
 #include "SqliteDriver.hpp"
 
 using namespace Salsabil;
 
-TEST_CASE("SqlTableConfigurer") {
-    SqlTableConfigurer<ClassMock> conf;
+TEST_CASE("SqlEntityConfigurer") {
+    SqlEntityConfigurer<ClassMock> conf;
 
     SUBCASE("ThrowsIfDriverIsNull") {
         REQUIRE_THROWS_AS(conf.setDriver(nullptr), Exception);
@@ -56,24 +56,24 @@ TEST_CASE("SqlTableConfigurer") {
         conf.setField("name", &ClassMock::name);
         conf.setField("weight", &ClassMock::weight);
 
-        REQUIRE(conf.fieldList().size() == 3u);
-        REQUIRE(conf.fieldList().at(0)->name() == "id");
-        REQUIRE(conf.fieldList().at(0)->column() == 0);
-        REQUIRE(conf.fieldList().at(1)->name() == "name");
-        REQUIRE(conf.fieldList().at(1)->column() == 1);
-        REQUIRE(conf.fieldList().at(2)->name() == "weight");
-        REQUIRE(conf.fieldList().at(2)->column() == 2);
+        REQUIRE(conf.persistentFieldList().size() == 3u);
+        REQUIRE(conf.persistentFieldList().at(0)->name() == "id");
+        REQUIRE(conf.persistentFieldList().at(0)->column() == 0);
+        REQUIRE(conf.persistentFieldList().at(1)->name() == "name");
+        REQUIRE(conf.persistentFieldList().at(1)->column() == 1);
+        REQUIRE(conf.persistentFieldList().at(2)->name() == "weight");
+        REQUIRE(conf.persistentFieldList().at(2)->column() == 2);
     }
 
     SUBCASE("RegisterFieldThroughMethodPointers") {
         conf.setField("id", ClassMock::getId, ClassMock::setId);
         conf.setField("name", ClassMock::getName, ClassMock::setName);
 
-        REQUIRE(conf.fieldList().size() == 2u);
-        REQUIRE(conf.fieldList().at(0)->name() == "id");
-        REQUIRE(conf.fieldList().at(0)->column() == 0);
-        REQUIRE(conf.fieldList().at(1)->name() == "name");
-        REQUIRE(conf.fieldList().at(1)->column() == 1);
+        REQUIRE(conf.persistentFieldList().size() == 2u);
+        REQUIRE(conf.persistentFieldList().at(0)->name() == "id");
+        REQUIRE(conf.persistentFieldList().at(0)->column() == 0);
+        REQUIRE(conf.persistentFieldList().at(1)->name() == "name");
+        REQUIRE(conf.persistentFieldList().at(1)->column() == 1);
     }
 
     SUBCASE("ThrowsIfFieldDoesNotExist") {
@@ -85,7 +85,7 @@ TEST_CASE("SqlTableConfigurer") {
         conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
         conf.setField("name", ClassMock::getName, ClassMock::setName);
 
-        REQUIRE(conf.fieldList().size() == 1u);
+        REQUIRE(conf.persistentFieldList().size() == 1u);
         REQUIRE(conf.primaryFieldList().size() == 1);
     }
 
@@ -93,8 +93,8 @@ TEST_CASE("SqlTableConfigurer") {
         conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
         conf.setField("name", ClassMock::getName, ClassMock::setName);
 
-        SqlTableConfigurer<ClassMock> conf2;
+        SqlEntityConfigurer<ClassMock> conf2;
         REQUIRE(conf2.tableName().empty());
-        REQUIRE(conf2.fieldList().size() == 0);
+        REQUIRE(conf2.persistentFieldList().size() == 0);
     }
 }

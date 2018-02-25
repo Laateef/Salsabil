@@ -25,7 +25,7 @@
 #include "Exception.hpp"
 #include "SqliteDriver.hpp"
 #include "SqlDriverFactory.hpp"
-#include "SqlTableConfigurer.hpp"
+#include "SqlEntityConfigurer.hpp"
 #include "SqlRepository.hpp"
 
 using namespace Salsabil;
@@ -35,7 +35,7 @@ TEST_CASE("SqlRepository") {
     drv.open(":memory:");
     drv.execute("create table person (id int NOT NULL PRIMARY KEY, name varchar(20), weight float)");
 
-    SqlTableConfigurer<ClassMock> conf;
+    SqlEntityConfigurer<ClassMock> conf;
     conf.setDriver(&drv);
     conf.setTableName("person");
 
