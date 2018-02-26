@@ -32,76 +32,25 @@ class SessionMock;
 
 class UserMock {
 public:
-    //    MOCK_CONST_METHOD0(getId, int(void));
-    //    MOCK_CONST_METHOD0(getName, std::string(void));
-    //    MOCK_CONST_METHOD0(getSession, SessionMock*(void));
-    //    MOCK_CONST_METHOD0(getSessions, std::vector<SessionMock*>(void));
-    //    MOCK_METHOD1(setId, void(int));
-    //    MOCK_METHOD1(setName, void(const std::string&));
-    //    MOCK_METHOD1(setSessions, void(const std::vector<SessionMock*>&));
-    //    MOCK_METHOD1(setSession, void(SessionMock*));
-    //
-    //    void registerCallbacks() {
-    //        ON_CALL(*this, setId(_)).WillByDefault(WithArgs<0>(Invoke(pSetId)));
-    //        ON_CALL(*this, getId()).WillByDefault(Return(id));
-    //
-    //        ON_CALL(*this, setName(_)).WillByDefault(WithArgs<0>(Invoke(pSetName)));
-    //        ON_CALL(*this, getName()).WillByDefault(Return(name));
-    //
-    //        //        ON_CALL(*this, setId(_)).WillByDefault(Invoke([&, this](int id) {
-    //        //            this->id = id;
-    //        //            ON_CALL(*this, getId()).WillByDefault(Return(Invoke(pGetId)));
-    //        //        }));
-    //
-    //        //        ON_CALL(*this, setName(_)).WillByDefault(Invoke([&, this](const std::string & name) {
-    //        //            ON_CALL(*this, getName()).WillByDefault(Return(name));
-    //        //        }));
-    //
-    //        ON_CALL(*this, setSession(_)).WillByDefault(Invoke([&, this](SessionMock * session) {
-    //            ON_CALL(*this, getSession()).WillByDefault(Return(session));
-    //        }));
-    //
-    //        ON_CALL(*this, setSessions(_)).WillByDefault(Invoke([&, this](const std::vector<SessionMock*>& sessions) {
-    //            ON_CALL(*this, getSessions()).WillByDefault(Return(sessions));
-    //        }));
-    //    }
 
-    UserMock() : id(0), name("") {
-        //        registerCallbacks();
+    UserMock() : id(0), name(""), session(nullptr) {
     }
 
     UserMock(const UserMock& u) : id(u.id), name(u.name) {
-        //        registerCallbacks();
-
-        //        this->id = u.id;
-        //        this->name = u.name;
-        //        setId(u.getId());
-        //        setName(u.getName());
     }
 
     UserMock(UserMock&& u) : id(std::move(u.id)), name(std::move(u.name)) {
-        //        this->id = std::move(u.id);
-        //        this->name = std::move(u.name);
-        //            registerCallbacks();
-        //            setId(std::move(u.getId()));
-        //            setName(std::move(u.getName()));
     }
 
     UserMock& operator=(const UserMock& u) {
         this->id = u.id;
         this->name = u.name;
-        //            registerCalls();
-        //            setId(u.getId());
-        //            setName(u.getName());
         return *this;
     }
 
     UserMock& operator=(UserMock&& u) {
         this->id = std::move(u.id);
         this->name = std::move(u.name);
-        //            registerCalls();
-        //            setId(std::move(u.getId()));
-        //            setName(std::move(u.getName()));
         return *this;
     }
 
@@ -137,15 +86,10 @@ public:
         this->sessions = sessions;
     }
 
-private:
     int id;
     std::string name;
     SessionMock* session;
     std::vector<SessionMock*> sessions;
 };
 
-//std::ostream& operator<<(std::ostream& s, const UserMock& u) {
-//    s << "UserMock {" << u.getId() << ", " << u.getName();
-//    return s;
-//}
 #endif // SALSABIL_USERMOCK_HPP

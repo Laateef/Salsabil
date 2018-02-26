@@ -47,11 +47,11 @@ public:
     }
 
     UserMock getStackUser() const {
-        return sUser;
+        return stackUser;
     }
 
     void setStackUser(const UserMock& user) {
-        this->sUser = user;
+        this->stackUser = user;
     }
 
     UserMock* getUser() const {
@@ -62,11 +62,10 @@ public:
         this->user = user;
     }
 
-private:
     int id;
     std::string time;
     UserMock* user;
-    UserMock sUser;
+    UserMock stackUser;
 
 };
 #endif // SALSABIL_SESSIONMOCK_HPP

@@ -26,7 +26,9 @@
 #include "Exception.hpp"
 #include "internal/SqlFieldAttributeImpl.hpp"
 #include "internal/SqlFieldMethodImpl.hpp"
+#include "internal/SqlRelationOneToOnePersistentAttributeImpl.hpp"
 #include "internal/SqlRelationOneToOnePersistentMethodImpl.hpp"
+#include "internal/SqlRelationOneToOneTransientAttributeImpl.hpp"
 #include "internal/SqlRelationOneToOneTransientMethodImpl.hpp"
 #include "internal/Logging.hpp"
 #include <vector>
@@ -107,11 +109,24 @@ namespace Salsabil {
             mPersistentFieldList.push_back(new SqlFieldMethodImpl<ClassType, GetMethodType, SetMethodType>(columnName, fieldColumnIndex(columnName), getter, setter, false));
         }
 
+        template<typename AttributeType>
+        static void setOneToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
+            SALSABIL_LOG_DEBUG("Setting one to one relation with persistent field '" + targetTableName + "' at field '" + columnName + "' via attribute");
+            mPersistentFieldList.push_back(new SqlFieldAttributeImpl<ClassType, AttributeType>(columnName, fieldColumnIndex(columnName), attribute, false));
+            mTransientFieldList.push_back(new SqlRelationOneToOnePersistentAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::OneToOne, attribute));
+        }
+
         template<typename GetMethodType, typename SetMethodType>
         static void setOneToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
             SALSABIL_LOG_DEBUG("Setting one to one relation with persistent field '" + targetTableName + "' at field '" + columnName + "' via method");
             mPersistentFieldList.push_back(new SqlFieldMethodImpl<ClassType, GetMethodType, SetMethodType>(columnName, fieldColumnIndex(columnName), getter, setter, false));
             mTransientFieldList.push_back(new SqlRelationOneToOnePersistentMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::OneToOne, getter, setter));
+        }
+
+        template<typename AttributeType>
+        static void setOneToOneTransientField(const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
+            SALSABIL_LOG_DEBUG("Setting one to one relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via attribute");
+            mTransientFieldList.push_back(new SqlRelationOneToOneTransientAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::OneToOne, attribute));
         }
 
         template<typename GetMethodType, typename SetMethodType>

@@ -30,7 +30,7 @@
 
 using namespace Salsabil;
 
-TEST_CASE("SqlOneToOneRelation") {
+TEST_CASE("SqlOneToOneRelationAttributeImpl") {
     SqliteDriver drv;
     drv.open(":memory:");
     drv.execute("create table user (id int NOT NULL PRIMARY KEY, name varchar(20))");
@@ -53,62 +53,62 @@ TEST_CASE("SqlOneToOneRelation") {
         drv.execute("INSERT INTO session(id, time, user_id) values(1, '2018-01-23T08:54:22', 1)");
 
         SUBCASE("with a pointer foreign field ") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getUser, SessionMock::setUser);
+            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", &SessionMock::user);
 
             SessionMock* session = SqlRepository<SessionMock>::get("1");
 
-            CHECK(session != nullptr);
+            REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
             CHECK(session->getTime() == "2018-01-23T08:54:22");
-            CHECK(session->getUser() != nullptr);
-            CHECK(session->getUser()->getId() == 1);
-            CHECK(session->getUser()->getName() == "Ali");
+            REQUIRE(session->user != nullptr);
+            CHECK(session->user->id == 1);
+            CHECK(session->user->name == "Ali");
 
-            delete session->getUser();
+            delete session->user;
             delete session;
         }
 
         SUBCASE("with a reference foreign field ") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
+            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", &SessionMock::stackUser);
 
             SessionMock* session = SqlRepository<SessionMock>::get("1");
 
-            CHECK(session != nullptr);
+            REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
             CHECK(session->getTime() == "2018-01-23T08:54:22");
-            CHECK(session->getStackUser().getId() == 1);
-            CHECK(session->getStackUser().getName() == "Ali");
+            CHECK(session->stackUser.getId() == 1);
+            CHECK(session->stackUser.getName() == "Ali");
 
             delete session;
         }
 
-        SUBCASE("with a pointer referential field ") {
-            userConfig.setOneToOneTransientField("session", "user_id", UserMock::getSession, UserMock::setSession);
+        SUBCASE("with a pointer transient field ") {
+            userConfig.setOneToOneTransientField("session", "user_id", &UserMock::session);
 
             UserMock* user = SqlRepository<UserMock>::get("1");
 
-            CHECK(user != nullptr);
+            REQUIRE(user != nullptr);
             CHECK(user->getId() == 1);
             CHECK(user->getName() == "Ali");
-            CHECK(user->getSession() != nullptr);
-            CHECK(user->getSession()->getId() == 1);
-            CHECK(user->getSession()->getTime() == "2018-01-23T08:54:22");
+            REQUIRE(user->session != nullptr);
+            CHECK(user->session->id == 1);
+            CHECK(user->session->time == "2018-01-23T08:54:22");
 
-            delete user->getSession();
+            delete user->session;
             delete user;
 
         }
 
-        SUBCASE("with a reference referential field ") {
-            sessionConfig.setOneToOneTransientField("user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
+        SUBCASE("with a reference transient field ") {
+            sessionConfig.setOneToOneTransientField("user", "id", &SessionMock::stackUser);
 
             SessionMock* session = SqlRepository<SessionMock>::get("1");
 
-            CHECK(session != nullptr);
+            REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
             CHECK(session->getTime() == "2018-01-23T08:54:22");
-            CHECK(session->getStackUser().getId() == 1);
-            CHECK(session->getStackUser().getName() == "Ali");
+            CHECK(session->stackUser.id == 1);
+            CHECK(session->stackUser.name == "Ali");
 
             delete session;
 
@@ -125,8 +125,8 @@ TEST_CASE("SqlOneToOneRelation") {
         SqlRepository<UserMock>::save(&user);
 
         SUBCASE("with a pointer foreign field") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getUser, SessionMock::setUser);
-            session.setUser(&user);
+            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", &SessionMock::user);
+            session.user = &user;
 
             SqlRepository<SessionMock>::save(&session);
 
@@ -144,8 +144,8 @@ TEST_CASE("SqlOneToOneRelation") {
         }
 
         SUBCASE("with a reference foreign field") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
-            session.setStackUser(user);
+            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", &SessionMock::stackUser);
+            session.stackUser = user;
 
             SqlRepository<SessionMock>::save(&session);
 
@@ -162,9 +162,9 @@ TEST_CASE("SqlOneToOneRelation") {
             CHECK(drv.nextRow() == false);
         }
 
-        SUBCASE("with a pointer referential field") {
-            sessionConfig.setOneToOneTransientField("user", "id", SessionMock::getUser, SessionMock::setUser);
-            session.setUser(&user);
+        SUBCASE("with a pointer transient field") {
+            sessionConfig.setOneToOneTransientField("user", "id", &SessionMock::user);
+            session.user = &user;
 
             SqlRepository<SessionMock>::save(&session);
 
@@ -181,9 +181,9 @@ TEST_CASE("SqlOneToOneRelation") {
 
         }
 
-        SUBCASE("with a reference referential field") {
-            sessionConfig.setOneToOneTransientField("user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
-            session.setStackUser(user);
+        SUBCASE("with a reference transient field") {
+            sessionConfig.setOneToOneTransientField("user", "id", &SessionMock::stackUser);
+            session.stackUser = user;
 
             SqlRepository<SessionMock>::save(&session);
 
