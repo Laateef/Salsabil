@@ -31,6 +31,7 @@ add_executable(
 main_test 
 SqlRelationOneToOneAttributeTest.cpp 
 SqlRelationOneToOneMethodTest.cpp 
+SqlRelationOneToManyAttributeTest.cpp
 SqlRelationOneToManyMethodTest.cpp
 SqlRepositoryTest.cpp 
 SqlEntityConfigurerTest.cpp
