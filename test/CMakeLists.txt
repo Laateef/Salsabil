@@ -33,6 +33,7 @@ SqlRelationOneToOneAttributeTest.cpp
 SqlRelationOneToOneMethodTest.cpp 
 SqlRelationOneToManyAttributeTest.cpp
 SqlRelationOneToManyMethodTest.cpp
+SqlRelationManyToOneMethodTest.cpp
 SqlRepositoryTest.cpp 
 SqlEntityConfigurerTest.cpp
 )
