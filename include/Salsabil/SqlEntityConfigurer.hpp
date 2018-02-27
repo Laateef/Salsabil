@@ -149,6 +149,13 @@ namespace Salsabil {
             mTransientFieldList.push_back(new SqlRelationOneToManyMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::OneToMany, getter, setter));
         }
 
+        template<typename AttributeType>
+        static void setManyToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
+            SALSABIL_LOG_DEBUG("Setting many to one relation with persistent field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
+            mPersistentFieldList.push_back(new SqlFieldAttributeImpl<ClassType, AttributeType>(columnName, fieldColumnIndex(columnName), attribute, false));
+            mTransientFieldList.push_back(new SqlRelationOneToOnePersistentAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::ManyToOne, attribute));
+        }
+
         template<typename GetMethodType, typename SetMethodType>
         static void setManyToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
             SALSABIL_LOG_DEBUG("Setting many to one relation with persistent field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
