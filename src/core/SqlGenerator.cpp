@@ -20,6 +20,8 @@
  */
 
 #include <vector>
+#include <map>
+#include <cassert>
 
 #include "internal/SqlGenerator.hpp"
 #include "internal/StringHelper.hpp"
@@ -42,4 +44,20 @@ std::string SqlGenerator::insert(const std::string& table, const std::vector<std
 
     return "INSERT INTO " + table + std::string(columnList.size() == 0 ? "" : "(" + Utility::join(columnList.begin(), columnList.end(), ", ") + ")")
             + " VALUES(" + Utility::join(questionMarkList.begin(), questionMarkList.end(), ", ") + ")";
+}
+
+std::string SqlGenerator::update(
+        const std::string& table,
+        const std::map<std::string, std::string>& columnValueMap,
+        const std::string& columnName,
+        const std::string& id
+        ) {
+    std::string statement = "UPDATE " + table + " SET ";
+    std::for_each(columnValueMap.begin(), columnValueMap.end(), [&](const std::pair<std::string, std::string>& p) {
+        statement.append(p.first + " = " + p.second + ", ");
+    });
+    assert(columnValueMap.size() >= 1);
+    statement.erase(statement.end() - 2, statement.end());
+    statement += " WHERE " + columnName + " = " + id;
+    return statement;
 }

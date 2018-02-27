@@ -30,6 +30,8 @@
 #include "internal/SqlRelationOneToOnePersistentMethodImpl.hpp"
 #include "internal/SqlRelationOneToOneTransientAttributeImpl.hpp"
 #include "internal/SqlRelationOneToOneTransientMethodImpl.hpp"
+#include "internal/SqlRelationOneToManyAttributeImpl.hpp"
+#include "internal/SqlRelationOneToManyMethodImpl.hpp"
 #include "internal/Logging.hpp"
 #include <vector>
 #include <string>
@@ -133,6 +135,19 @@ namespace Salsabil {
         static void setOneToOneTransientField(const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
             SALSABIL_LOG_DEBUG("Setting one to one relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
             mTransientFieldList.push_back(new SqlRelationOneToOneTransientMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::OneToOne, getter, setter));
+        }
+
+//        template<typename AttributeType>
+//        static void setOneToManyTransientField(const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
+//            SALSABIL_LOG_DEBUG("Setting one to many relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
+//            mTransientFieldList.push_back(new SqlRelationOneToManyAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::OneToMany, attribute));
+//        }
+
+        template<typename GetMethodType, typename SetMethodType>
+        static void setOneToManyTransientField(const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
+            SALSABIL_LOG_DEBUG("Setting one to many relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
+            mTransientFieldList.push_back(new SqlRelationOneToManyMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::OneToMany, getter, setter));
+
         }
 
         static std::vector< std::string > columnNameList() {

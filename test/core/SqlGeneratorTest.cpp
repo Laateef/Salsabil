@@ -35,6 +35,10 @@ TEST_CASE("SqlGenerator") {
     }
 
     SUBCASE(" insert a row into a table with parameterized values ") {
-        CHECK(SqlGenerator::insert("user",{"id", "name"}) == "INSERT INTO user(id, name) VALUES(?, ?)");
+        CHECK(SqlGenerator::insert("user", {"id", "name"}) == "INSERT INTO user(id, name) VALUES(?, ?)");
+    }
+
+    SUBCASE(" update a row in a table with parameterized values ") {
+        CHECK(SqlGenerator::update("user", {std::make_pair("name", "Osama")}, "id", "1") == "UPDATE user SET name = 'OSAMA' WHERE id = 1");
     }
 }
