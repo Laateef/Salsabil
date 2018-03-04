@@ -62,10 +62,18 @@ public:
         this->user = user;
     }
 
+    std::vector<UserMock*> getUsers() const {
+        return users;
+    }
+
+    void setUsers(const std::vector<UserMock*>& users) {
+        this->users = users;
+    }
+
     int id;
     std::string time;
     UserMock* user;
     UserMock stackUser;
-
+    std::vector<UserMock*> users;
 };
 #endif // SALSABIL_SESSIONMOCK_HPP

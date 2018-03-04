@@ -37,6 +37,12 @@ std::string SqlGenerator::fetchById(const std::string &table, const std::string&
     return "SELECT * FROM " + table + " WHERE " + column + " = " + id;
 }
 
+std::string SqlGenerator::fetchByJoin(SqlGenerator::JoinMode mode, const std::string& table, const std::string& intersectionTable, const std::string& onCondition, const std::string& whereCondition) {
+    return "SELECT " + table + ".* FROM " + table + " " +
+            std::string(mode == SqlGenerator::JoinMode::Left ? "LEFT" : (mode == SqlGenerator::JoinMode::Right ? "RIGHT" : (mode == SqlGenerator::JoinMode::Inner ? "INNER" : "FULL OUTER")))
+            + " JOIN " + intersectionTable + " ON " + onCondition + " WHERE " + whereCondition;
+}
+
 std::string SqlGenerator::insert(const std::string& table, const std::vector<std::string>& columnList) {
     std::vector<std::string> questionMarkList(columnList.size(), "?");
     if (questionMarkList.empty())

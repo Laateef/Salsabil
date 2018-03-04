@@ -32,6 +32,7 @@
 #include "internal/SqlRelationOneToOneTransientMethodImpl.hpp"
 #include "internal/SqlRelationOneToManyAttributeImpl.hpp"
 #include "internal/SqlRelationOneToManyMethodImpl.hpp"
+#include "internal/SqlRelationManyToManyMethodImpl.hpp"
 #include "internal/Logging.hpp"
 #include <vector>
 #include <string>
@@ -89,78 +90,84 @@ namespace Salsabil {
 
         template<typename AttributeType>
         static void setPrimaryField(std::string columnName, AttributeType attribute) {
-            SALSABIL_LOG_DEBUG("Setting primary field '" + columnName + "' via attribute");
+            SALSABIL_LOG_DEBUG("Setting primary field[attribute]: " + columnName);
             mPrimaryFieldList.push_back(new SqlFieldAttributeImpl<ClassType, AttributeType>(columnName, fieldColumnIndex(columnName), attribute, true));
         }
 
         template<typename GetMethodType, typename SetMethodType>
         static void setPrimaryField(std::string columnName, GetMethodType getter, SetMethodType setter) {
-            SALSABIL_LOG_DEBUG("Setting primary field '" + columnName + "' via method");
+            SALSABIL_LOG_DEBUG("Setting primary field[method]: " + columnName);
             mPrimaryFieldList.push_back(new SqlFieldMethodImpl<ClassType, GetMethodType, SetMethodType>(columnName, fieldColumnIndex(columnName), getter, setter, true));
         }
 
         template<typename AttributeType>
         static void setField(std::string columnName, AttributeType attribute) {
-            SALSABIL_LOG_DEBUG("Setting field '" + columnName + "' via attribute");
+            SALSABIL_LOG_DEBUG("Setting field[attribute]: " + columnName);
             mPersistentFieldList.push_back(new SqlFieldAttributeImpl<ClassType, AttributeType>(columnName, fieldColumnIndex(columnName), attribute, false));
         }
 
         template<typename GetMethodType, typename SetMethodType>
         static void setField(std::string columnName, GetMethodType getter, SetMethodType setter) {
-            SALSABIL_LOG_DEBUG("Setting field '" + columnName + "' via method");
+            SALSABIL_LOG_DEBUG("Setting field[method]: " + columnName);
             mPersistentFieldList.push_back(new SqlFieldMethodImpl<ClassType, GetMethodType, SetMethodType>(columnName, fieldColumnIndex(columnName), getter, setter, false));
         }
 
         template<typename AttributeType>
         static void setOneToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
-            SALSABIL_LOG_DEBUG("Setting one to one relation with persistent field '" + targetTableName + "' at field '" + columnName + "' via attribute");
+            SALSABIL_LOG_DEBUG("Setting one-to-one persistent relational field[attribute]: " + tableName() + "(" + columnName + ") -> " + targetTableName + "(" + targetColumnName + ")");
             mPersistentFieldList.push_back(new SqlFieldAttributeImpl<ClassType, AttributeType>(columnName, fieldColumnIndex(columnName), attribute, false));
             mTransientFieldList.push_back(new SqlRelationOneToOnePersistentAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::OneToOne, attribute));
         }
 
         template<typename GetMethodType, typename SetMethodType>
         static void setOneToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
-            SALSABIL_LOG_DEBUG("Setting one to one relation with persistent field '" + targetTableName + "' at field '" + columnName + "' via method");
+            SALSABIL_LOG_DEBUG("Setting one-to-one persistent relational field[method]: " + tableName() + "(" + columnName + ") -> " + targetTableName + "(" + targetColumnName + ")");
             mPersistentFieldList.push_back(new SqlFieldMethodImpl<ClassType, GetMethodType, SetMethodType>(columnName, fieldColumnIndex(columnName), getter, setter, false));
             mTransientFieldList.push_back(new SqlRelationOneToOnePersistentMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::OneToOne, getter, setter));
         }
 
         template<typename AttributeType>
         static void setOneToOneTransientField(const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
-            SALSABIL_LOG_DEBUG("Setting one to one relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via attribute");
+            SALSABIL_LOG_DEBUG("Setting one-to-one transient relational field[attribute]: " + tableName() + " -> " + targetTableName + "(" + targetColumnName + ")");
             mTransientFieldList.push_back(new SqlRelationOneToOneTransientAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::OneToOne, attribute));
         }
 
         template<typename GetMethodType, typename SetMethodType>
         static void setOneToOneTransientField(const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
-            SALSABIL_LOG_DEBUG("Setting one to one relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
+            SALSABIL_LOG_DEBUG("Setting one-to-one transient relational field[method]: " + tableName() + " -> " + targetTableName + "(" + targetColumnName + ")");
             mTransientFieldList.push_back(new SqlRelationOneToOneTransientMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::OneToOne, getter, setter));
         }
 
         template<typename AttributeType>
         static void setOneToManyTransientField(const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
-            SALSABIL_LOG_DEBUG("Setting one to many relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via attribute");
+            SALSABIL_LOG_DEBUG("Setting one-to-many transient relational field[attribute]: " + tableName() + " -> " + targetTableName + "(" + targetColumnName + ")");
             mTransientFieldList.push_back(new SqlRelationOneToManyAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::OneToMany, attribute));
         }
 
         template<typename GetMethodType, typename SetMethodType>
         static void setOneToManyTransientField(const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
-            SALSABIL_LOG_DEBUG("Setting one to many relation with transient field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
+            SALSABIL_LOG_DEBUG("Setting one-to-many transient relational field[method]: " + tableName() + " -> " + targetTableName + "(" + targetColumnName + ")");
             mTransientFieldList.push_back(new SqlRelationOneToManyMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::OneToMany, getter, setter));
         }
 
         template<typename AttributeType>
         static void setManyToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
-            SALSABIL_LOG_DEBUG("Setting many to one relation with persistent field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
+            SALSABIL_LOG_DEBUG("Setting many-to-one persistent relational field[attribute]: " + tableName() + "(" + columnName + ") -> " + targetTableName + "(" + targetColumnName + ")");
             mPersistentFieldList.push_back(new SqlFieldAttributeImpl<ClassType, AttributeType>(columnName, fieldColumnIndex(columnName), attribute, false));
             mTransientFieldList.push_back(new SqlRelationOneToOnePersistentAttributeImpl<ClassType, AttributeType>(targetTableName, targetColumnName, RelationType::ManyToOne, attribute));
         }
 
         template<typename GetMethodType, typename SetMethodType>
         static void setManyToOnePersistentField(const std::string& columnName, const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
-            SALSABIL_LOG_DEBUG("Setting many to one relation with persistent field '" + targetTableName + "' at field '" + targetColumnName + "' via method");
+            SALSABIL_LOG_DEBUG("Setting many-to-one persistent relational field[method]: " + tableName() + "(" + columnName + ") -> " + targetTableName + "(" + targetColumnName + ")");
             mPersistentFieldList.push_back(new SqlFieldMethodImpl<ClassType, GetMethodType, SetMethodType>(columnName, fieldColumnIndex(columnName), getter, setter, false));
             mTransientFieldList.push_back(new SqlRelationOneToOnePersistentMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::ManyToOne, getter, setter));
+        }
+
+        template<typename GetMethodType, typename SetMethodType>
+        static void setManyToManyTransientField(const std::string& targetTableName, const std::string& intersectionTableName, const std::string& intersectionTargetColumnName, const std::string& intersectionColumnName, GetMethodType getter, SetMethodType setter) {
+            SALSABIL_LOG_DEBUG("Setting many-to-many transient relational field[method]: " + tableName() + " -> " + intersectionTableName + "(" + intersectionColumnName + ", " + intersectionTargetColumnName + ")" + " <- " + targetTableName);
+            mTransientFieldList.push_back(new SqlRelationManyToManyMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, intersectionTableName, intersectionTargetColumnName, intersectionColumnName, RelationType::ManyToMany, getter, setter));
         }
 
         static std::vector< std::string > columnNameList() {
@@ -169,18 +176,22 @@ namespace Salsabil {
                 nameList.push_back(field->name());
             for (const auto& field : mPersistentFieldList)
                 nameList.push_back(field->name());
+
             return nameList;
         }
 
         static const std::vector< SqlField<ClassType>* >& primaryFieldList() {
+
             return mPrimaryFieldList;
         }
 
         static const std::vector< SqlField<ClassType>* >& persistentFieldList() {
+
             return mPersistentFieldList;
         }
 
         static const std::vector< SqlRelation<ClassType>* >& transientFieldList() {
+
             return mTransientFieldList;
         }
 
@@ -193,6 +204,7 @@ namespace Salsabil {
                 delete ptr; });
             mPersistentFieldList.clear();
             std::for_each(mTransientFieldList.begin(), mTransientFieldList.end(), [](SqlRelation<ClassType>* ptr) {
+
                 delete ptr; });
             mTransientFieldList.clear();
         }
