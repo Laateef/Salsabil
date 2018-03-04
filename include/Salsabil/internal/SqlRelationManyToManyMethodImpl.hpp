@@ -39,13 +39,14 @@ namespace Salsabil {
         using FieldItemPureType = typename Utility::Traits<FieldItemType>::UnqualifiedType;
 
     public:
+
         SqlRelationManyToManyMethodImpl(const std::string& targetTableName, const std::string& intersectionTableName, const std::string& intersectionTargetColumnName, const std::string& intersectionColumnName, RelationType type, GetMethodType getter, SetMethodType setter) :
-        SqlRelation<ClassType>(targetTableName, "", type),
-        mGetter(getter),
-        mSetter(setter),
+        SqlRelation<ClassType>(targetTableName, type),
         mIntersectionTableName(intersectionTableName),
+        mIntersectionColumnName(intersectionColumnName),
         mIntersectionTargetColumnName(intersectionTargetColumnName),
-        mIntersectionColumnName(intersectionColumnName) {
+        mGetter(getter),
+        mSetter(setter) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
@@ -121,12 +122,12 @@ namespace Salsabil {
         }
 
     private:
+        std::string mIntersectionTableName;
+        std::string mIntersectionColumnName;
+        std::string mIntersectionTargetColumnName;
+
         GetMethodType mGetter;
         SetMethodType mSetter;
-
-        std::string mIntersectionTableName;
-        std::string mIntersectionTargetColumnName;
-        std::string mIntersectionColumnName;
     };
 }
 #endif // SALSABIL_SQLRELATIONMANYTOMANYMETHODIMPL_HPP

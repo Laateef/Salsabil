@@ -38,16 +38,15 @@ namespace Salsabil {
         using FieldPureType = typename Utility::Traits<FieldType>::UnqualifiedType;
     public:
 
-        SqlRelationOneToOnePersistentMethodImpl(const std::string& targetTableName, const std::string& targetColumnName, RelationType type, GetMethodType getter, SetMethodType setter) :
-        SqlRelation<ClassType>(targetTableName, targetColumnName, type),
+        SqlRelationOneToOnePersistentMethodImpl(const std::string& targetTableName, const std::string& columnName, RelationType type, GetMethodType getter, SetMethodType setter) :
+        SqlRelation<ClassType>(targetTableName, type),
+        mColumnName(columnName),
         mGetter(getter),
         mSetter(setter) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
-            SALSABIL_LOG_DEBUG("Reading field '" + SqlRelation<ClassType>::fieldName() + "' from driver via pointer ");
-
-            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), SqlRelation<ClassType>::fieldName(), "?");
+            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), mColumnName, "?");
             driver->prepare(sqlStatement);
             SALSABIL_LOG_INFO(sqlStatement);
 
@@ -95,6 +94,8 @@ namespace Salsabil {
         }
 
     private:
+        std::string mColumnName;
+
         GetMethodType mGetter;
         SetMethodType mSetter;
     };

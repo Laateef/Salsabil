@@ -40,12 +40,13 @@ namespace Salsabil {
     public:
 
         SqlRelationOneToManyAttributeImpl(const std::string& targetTableName, const std::string& targetColumnName, RelationType type, AttributeType attribute) :
-        SqlRelation<ClassType>(targetTableName, targetColumnName, type),
+        SqlRelation<ClassType>(targetTableName, type),
+        mTargetColumnName(targetColumnName),
         mAttribute(attribute) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
-            const std::string& sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), SqlRelation<ClassType>::fieldName(), "?");
+            const std::string& sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), mTargetColumnName, "?");
             driver->prepare(sqlStatement);
             SALSABIL_LOG_INFO(sqlStatement);
             for (const auto& f : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
@@ -71,7 +72,7 @@ namespace Salsabil {
         }
 
         virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
-            std::string sqlStatement = SqlGenerator::update(SqlEntityConfigurer<FieldItemPureType>::tableName(),{std::make_pair(SqlRelation<ClassType>::fieldName(), "?")},
+            std::string sqlStatement = SqlGenerator::update(SqlEntityConfigurer<FieldItemPureType>::tableName(),{std::make_pair(mTargetColumnName, "?")},
             SqlEntityConfigurer<FieldItemPureType>::primaryFieldList().at(0)->name(), "?");
             SALSABIL_LOG_INFO(sqlStatement);
 
@@ -99,6 +100,8 @@ namespace Salsabil {
         }
 
     private:
+        std::string mTargetColumnName;
+
         AttributeType mAttribute;
     };
 }

@@ -38,15 +38,14 @@ namespace Salsabil {
         using FieldPureType = typename Utility::Traits<FieldType>::UnqualifiedType;
     public:
 
-        SqlRelationOneToOnePersistentAttributeImpl(const std::string& targetTableName, const std::string& targetColumnName, RelationType type, AttributeType attribute) :
-        SqlRelation<ClassType>(targetTableName, targetColumnName, type),
+        SqlRelationOneToOnePersistentAttributeImpl(const std::string& targetTableName, const std::string& columnName, RelationType type, AttributeType attribute) :
+        SqlRelation<ClassType>(targetTableName, type),
+        mColumnName(columnName),
         mAttribute(attribute) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
-            SALSABIL_LOG_DEBUG("SqlRelationOneToOnePersistentAttributeImpl, reading field '" + SqlRelation<ClassType>::fieldName() + "' from driver ");
-
-            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), SqlRelation<ClassType>::fieldName(), "?");
+            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), mColumnName, "?");
             driver->prepare(sqlStatement);
             SALSABIL_LOG_INFO(sqlStatement);
 
@@ -82,6 +81,8 @@ namespace Salsabil {
         }
 
     private:
+        std::string mColumnName;
+
         AttributeType mAttribute;
     };
 }

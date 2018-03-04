@@ -32,7 +32,7 @@ namespace Salsabil {
     class SqlRelation {
     public:
 
-        explicit SqlRelation(const std::string& foreignTableName, const std::string& foreignFieldName, RelationType type) : mTableName(foreignTableName), mFieldName(foreignFieldName), mType(type) {
+        explicit SqlRelation(const std::string& targetTableName, RelationType type) : mTableName(targetTableName), mType(type) {
         }
 
         virtual ~SqlRelation() {
@@ -50,14 +50,6 @@ namespace Salsabil {
             mTableName = name;
         }
 
-        std::string fieldName() const {
-            return mFieldName;
-        }
-
-        void setFieldName(std::string name) {
-            mFieldName = name;
-        }
-
         RelationType type() const {
             return mType;
         }
@@ -68,7 +60,6 @@ namespace Salsabil {
 
     private:
         std::string mTableName;
-        std::string mFieldName;
         RelationType mType;
     };
 }

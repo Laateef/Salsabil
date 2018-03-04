@@ -39,14 +39,15 @@ namespace Salsabil {
 
     public:
 
-        SqlRelationOneToOneTransientMethodImpl(const std::string& foreignTableName, const std::string& foreignFieldName, RelationType type, GetMethodType getter, SetMethodType setter) :
-        SqlRelation<ClassType>(foreignTableName, foreignFieldName, type),
+        SqlRelationOneToOneTransientMethodImpl(const std::string& targetTableName, const std::string& targetColumnName, RelationType type, GetMethodType getter, SetMethodType setter) :
+        SqlRelation<ClassType>(targetTableName, type),
+        mTargetColumnName(targetColumnName),
         mGetter(getter),
         mSetter(setter) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
-            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), SqlRelation<ClassType>::fieldName(), "?");
+            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), mTargetColumnName, "?");
             driver->prepare(sqlStatement);
             SALSABIL_LOG_INFO(sqlStatement);
             for (const auto& f : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
@@ -71,7 +72,6 @@ namespace Salsabil {
         }
 
         virtual void writeToDriver(SqlDriver*, const ClassType*) {
-
         }
 
         void getter(GetMethodType getter) {
@@ -91,6 +91,8 @@ namespace Salsabil {
         }
 
     private:
+        std::string mTargetColumnName;
+
         GetMethodType mGetter;
         SetMethodType mSetter;
     };

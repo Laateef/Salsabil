@@ -41,11 +41,11 @@ namespace Salsabil {
     public:
 
         SqlRelationManyToManyAttributeImpl(const std::string& targetTableName, const std::string& intersectionTableName, const std::string& intersectionTargetColumnName, const std::string& intersectionColumnName, RelationType type, AttributeType attribute) :
-        SqlRelation<ClassType>(targetTableName, "", type),
-        mAttribute(attribute),
+        SqlRelation<ClassType>(targetTableName, type),
         mIntersectionTableName(intersectionTableName),
+        mIntersectionColumnName(intersectionColumnName),
         mIntersectionTargetColumnName(intersectionTargetColumnName),
-        mIntersectionColumnName(intersectionColumnName) {
+        mAttribute(attribute) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
@@ -110,11 +110,11 @@ namespace Salsabil {
         }
 
     private:
-        AttributeType mAttribute;
-
         std::string mIntersectionTableName;
-        std::string mIntersectionTargetColumnName;
         std::string mIntersectionColumnName;
+        std::string mIntersectionTargetColumnName;
+
+        AttributeType mAttribute;
     };
 }
 #endif // SALSABIL_SQLRELATIONMANYTOMANYATTRIBUTEIMPL_HPP
