@@ -32,6 +32,7 @@
 #include "internal/SqlRelationOneToOneTransientMethodImpl.hpp"
 #include "internal/SqlRelationOneToManyAttributeImpl.hpp"
 #include "internal/SqlRelationOneToManyMethodImpl.hpp"
+#include "internal/SqlRelationManyToManyAttributeImpl.hpp"
 #include "internal/SqlRelationManyToManyMethodImpl.hpp"
 #include "internal/Logging.hpp"
 #include <vector>
@@ -162,6 +163,12 @@ namespace Salsabil {
             SALSABIL_LOG_DEBUG("Setting many-to-one persistent relational field[method]: " + tableName() + "(" + columnName + ") -> " + targetTableName + "(" + targetColumnName + ")");
             mPersistentFieldList.push_back(new SqlFieldMethodImpl<ClassType, GetMethodType, SetMethodType>(columnName, fieldColumnIndex(columnName), getter, setter, false));
             mTransientFieldList.push_back(new SqlRelationOneToOnePersistentMethodImpl<ClassType, GetMethodType, SetMethodType>(targetTableName, targetColumnName, RelationType::ManyToOne, getter, setter));
+        }
+
+        template<typename AttributeType>
+        static void setManyToManyTransientField(const std::string& targetTableName, const std::string& intersectionTableName, const std::string& intersectionTargetColumnName, const std::string& intersectionColumnName, AttributeType attribute) {
+            SALSABIL_LOG_DEBUG("Setting many-to-many transient relational field[attribute]: " + tableName() + " -> " + intersectionTableName + "(" + intersectionColumnName + ", " + intersectionTargetColumnName + ")" + " <- " + targetTableName);
+            mTransientFieldList.push_back(new SqlRelationManyToManyAttributeImpl<ClassType, AttributeType>(targetTableName, intersectionTableName, intersectionTargetColumnName, intersectionColumnName, RelationType::ManyToMany, attribute));
         }
 
         template<typename GetMethodType, typename SetMethodType>
