@@ -19,34 +19,33 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLRELATIONMANYTOMANYMETHODIMPL_HPP
-#define SALSABIL_SQLRELATIONMANYTOMANYMETHODIMPL_HPP
+#ifndef SALSABIL_SQLRELATIONMANYTOMANYIMPL_HPP
+#define SALSABIL_SQLRELATIONMANYTOMANYIMPL_HPP
 
 #include "SqlRelation.hpp"
 #include "TypeHelper.hpp"
 #include "TypeResolver.hpp"
 #include "SqlEntityConfigurer.hpp"
 #include "SqlGenerator.hpp"
+#include "AccessWrapper.hpp"
 #include "Logging.hpp"
 
 namespace Salsabil {
     class SqlDriver;
 
-    template<class ClassType, typename GetMethodType, typename SetMethodType>
-    class SqlRelationManyToManyMethodImpl : public SqlRelation<ClassType> {
-        using FieldType = typename Utility::Traits<GetMethodType>::ReturnType;
+    template<typename ClassType, typename FieldType>
+    class SqlRelationManyToManyImpl : public SqlRelation<ClassType> {
         using FieldItemType = typename FieldType::value_type;
         using FieldItemPureType = typename Utility::Traits<FieldItemType>::UnqualifiedType;
 
     public:
 
-        SqlRelationManyToManyMethodImpl(const std::string& targetTableName, const std::string& intersectionTableName, const std::string& intersectionTargetColumnName, const std::string& intersectionColumnName, RelationType type, GetMethodType getter, SetMethodType setter) :
+        SqlRelationManyToManyImpl(const std::string& targetTableName, const std::string& intersectionTableName, const std::string& intersectionTargetColumnName, const std::string& intersectionColumnName, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
         SqlRelation<ClassType>(targetTableName, type),
         mIntersectionTableName(intersectionTableName),
         mIntersectionColumnName(intersectionColumnName),
         mIntersectionTargetColumnName(intersectionTargetColumnName),
-        mGetter(getter),
-        mSetter(setter) {
+        mAccessWrapper(accessWrapper) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
@@ -76,12 +75,13 @@ namespace Salsabil {
 
                 fieldInstanceContainer.push_back(fieldInstance);
             }
-            (classInstance->*setter())(fieldInstanceContainer);
+            mAccessWrapper->set(classInstance, &fieldInstanceContainer);
         }
 
         virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
             const std::string& sqlStatement = SqlGenerator::insert(mIntersectionTableName,{mIntersectionColumnName, mIntersectionTargetColumnName});
-            FieldType fieldInstanceContainer = (classInstance->*getter())();
+            FieldType fieldInstanceContainer;
+            mAccessWrapper->get(classInstance, &fieldInstanceContainer);
 
             typename FieldType::const_iterator iter = fieldInstanceContainer.begin();
             while (iter < fieldInstanceContainer.end()) {
@@ -102,33 +102,13 @@ namespace Salsabil {
             }
         }
 
-        void getter(GetMethodType getter) {
-
-            mGetter = getter;
-        }
-
-        GetMethodType getter() {
-
-            return mGetter;
-        }
-
-        void setter(SetMethodType setter) {
-
-            mSetter = setter;
-        }
-
-        SetMethodType setter() {
-            return mSetter;
-        }
-
     private:
         std::string mIntersectionTableName;
         std::string mIntersectionColumnName;
         std::string mIntersectionTargetColumnName;
 
-        GetMethodType mGetter;
-        SetMethodType mSetter;
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
-#endif // SALSABIL_SQLRELATIONMANYTOMANYMETHODIMPL_HPP
+#endif // SALSABIL_SQLRELATIONMANYTOMANYIMPL_HPP
 

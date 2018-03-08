@@ -19,49 +19,42 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLFIELDATTRIBUTEIMPL_HPP
-#define SALSABIL_SQLFIELDATTRIBUTEIMPL_HPP
+#ifndef SALSABIL_SQLFIELDIMPL_HPP
+#define SALSABIL_SQLFIELDIMPL_HPP
 
 #include "SqlField.hpp"
 #include "TypeHelper.hpp"
 #include "TypeResolver.hpp"
+#include "AccessWrapper.hpp"
+#include <memory>
 
 namespace Salsabil {
     class SqlDriver;
 
-    template<typename ClassType, typename AttributeType>
-    class SqlFieldAttributeImpl : public SqlField<ClassType> {
-        using FieldType = typename Utility::Traits<AttributeType>::AttributeType;
-
+    template<typename ClassType, typename FieldType>
+    class SqlFieldImpl : public SqlField<ClassType> {
     public:
 
-        SqlFieldAttributeImpl(std::string name, int column, AttributeType attribute, bool isPrimary) :
-        SqlField<ClassType>(name, column, isPrimary),
-        mAttribute(attribute) {
+        SqlFieldImpl(std::string name, int column, AccessWrapper<ClassType, FieldType>* accessWrapper) :
+        SqlField<ClassType>(name, column, false),
+        mAccessWrapper(accessWrapper) {
         }
 
         virtual void readFromDriver(ClassType* instance, int column) {
             FieldType t;
             Utility::driverToVariable(SqlEntityConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
-            instance->*getAttribute() = t;
+            mAccessWrapper->set(instance, &t);
         }
 
         virtual void writeToDriver(const ClassType* instance, int column) {
-            FieldType t = instance->*getAttribute();
+            FieldType t;
+            mAccessWrapper->get(instance, &t);
             Utility::variableToDriver(SqlEntityConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
         }
 
-        void setAttribute(AttributeType attribute) {
-            mAttribute = attribute;
-        }
-
-        AttributeType getAttribute() const {
-            return mAttribute;
-        }
-
     private:
-        AttributeType mAttribute;
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
-#endif // SALSABIL_SQLFIELDATTRIBUTEIMPL_HPP
+#endif // SALSABIL_SQLFIELDIMPL_HPP
 

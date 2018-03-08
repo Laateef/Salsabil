@@ -19,8 +19,8 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLRELATIONONETOONEPERSISTENTMETHODIMPL_HPP
-#define SALSABIL_SQLRELATIONONETOONEPERSISTENTMETHODIMPL_HPP
+#ifndef SALSABIL_SQLRELATIONONETOONEPERSISTENTIMPL_HPP
+#define SALSABIL_SQLRELATIONONETOONEPERSISTENTIMPL_HPP
 
 #include "SqlRelation.hpp"
 #include "TypeHelper.hpp"
@@ -28,21 +28,21 @@
 #include "Logging.hpp"
 #include "SqlEntityConfigurer.hpp"
 #include "SqlGenerator.hpp"
+#include "AccessWrapper.hpp"
 
 namespace Salsabil {
     class SqlDriver;
 
-    template<class ClassType, typename GetMethodType, typename SetMethodType>
-    class SqlRelationOneToOnePersistentMethodImpl : public SqlRelation<ClassType> {
-        using FieldType = typename Utility::Traits<GetMethodType>::ReturnType;
+    template<typename ClassType, typename FieldType>
+    class SqlRelationOneToOnePersistentImpl : public SqlRelation<ClassType> {
         using FieldPureType = typename Utility::Traits<FieldType>::UnqualifiedType;
+
     public:
 
-        SqlRelationOneToOnePersistentMethodImpl(const std::string& targetTableName, const std::string& columnName, RelationType type, GetMethodType getter, SetMethodType setter) :
+        SqlRelationOneToOnePersistentImpl(const std::string& targetTableName, const std::string& columnName, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
         SqlRelation<ClassType>(targetTableName, type),
         mColumnName(columnName),
-        mGetter(getter),
-        mSetter(setter) {
+        mAccessWrapper(accessWrapper) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
@@ -50,11 +50,13 @@ namespace Salsabil {
             driver->prepare(sqlStatement);
             SALSABIL_LOG_INFO(sqlStatement);
 
-            FieldType ins = (classInstance->*getter())();
-            FieldPureType* fieldInstance = Utility::pointerizeInstance(&ins);
+            FieldType fieldInstance;
+            mAccessWrapper->get(classInstance, &fieldInstance);
+
+            FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
 
             for (std::size_t idx = 0; idx < SqlEntityConfigurer<FieldPureType>::primaryFieldList().size(); ++idx) {
-                SqlEntityConfigurer<FieldPureType>::primaryFieldList()[idx]->writeToDriver(fieldInstance, idx + 1);
+                SqlEntityConfigurer<FieldPureType>::primaryFieldList()[idx]->writeToDriver(pFieldInstance, idx + 1);
             }
 
             driver->execute();
@@ -63,42 +65,21 @@ namespace Salsabil {
                 throw Exception("No rows to fetch");
 
             for (const auto& f : SqlEntityConfigurer<FieldPureType>::persistentFieldList())
-                f->readFromDriver(fieldInstance, f->column());
+                f->readFromDriver(pFieldInstance, f->column());
             for (const auto& r : SqlEntityConfigurer<FieldPureType>::transientFieldList())
-                r->readFromDriver(driver, fieldInstance);
+                r->readFromDriver(driver, pFieldInstance);
 
-            (classInstance->*setter())(ins);
+            mAccessWrapper->set(classInstance, &fieldInstance);
         }
 
         virtual void writeToDriver(SqlDriver*, const ClassType*) {
-
-        }
-
-        void getter(GetMethodType getter) {
-
-            mGetter = getter;
-        }
-
-        GetMethodType getter() {
-
-            return mGetter;
-        }
-
-        void setter(SetMethodType setter) {
-
-            mSetter = setter;
-        }
-
-        SetMethodType setter() {
-            return mSetter;
         }
 
     private:
         std::string mColumnName;
 
-        GetMethodType mGetter;
-        SetMethodType mSetter;
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
-#endif // SALSABIL_SQLRELATIONONETOONEPERSISTENTMETHODIMPL_HPP
+#endif // SALSABIL_SQLRELATIONONETOONEPERSISTENTIMPL_HPP
 

@@ -19,30 +19,30 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLRELATIONONETOMANYATTRIBUTEIMPL_HPP
-#define SALSABIL_SQLRELATIONONETOMANYATTRIBUTEIMPL_HPP
+#ifndef SALSABIL_SQLRELATIONONETOMANYIMPL_HPP
+#define SALSABIL_SQLRELATIONONETOMANYIMPL_HPP
 
 #include "SqlRelation.hpp"
 #include "TypeHelper.hpp"
 #include "TypeResolver.hpp"
 #include "SqlEntityConfigurer.hpp"
 #include "SqlGenerator.hpp"
+#include "AccessWrapper.hpp"
 
 namespace Salsabil {
     class SqlDriver;
 
-    template<class ClassType, typename AttributeType>
-    class SqlRelationOneToManyAttributeImpl : public SqlRelation<ClassType> {
-        using FieldType = typename Utility::Traits<AttributeType>::AttributeType;
+    template<typename ClassType, typename FieldType>
+    class SqlRelationOneToManyImpl : public SqlRelation<ClassType> {
         using FieldItemType = typename FieldType::value_type;
         using FieldItemPureType = typename Utility::Traits<FieldItemType>::UnqualifiedType;
 
     public:
 
-        SqlRelationOneToManyAttributeImpl(const std::string& targetTableName, const std::string& targetColumnName, RelationType type, AttributeType attribute) :
+        SqlRelationOneToManyImpl(const std::string& targetTableName, const std::string& targetColumnName, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
         SqlRelation<ClassType>(targetTableName, type),
         mTargetColumnName(targetColumnName),
-        mAttribute(attribute) {
+        mAccessWrapper(accessWrapper) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
@@ -67,8 +67,7 @@ namespace Salsabil {
                 fieldInstanceContainer.push_back(pFieldInstance);
             }
 
-            classInstance->*getAttribute() = fieldInstanceContainer;
-
+            mAccessWrapper->set(classInstance, &fieldInstanceContainer);
         }
 
         virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
@@ -76,9 +75,10 @@ namespace Salsabil {
             SqlEntityConfigurer<FieldItemPureType>::primaryFieldList().at(0)->name(), "?");
             SALSABIL_LOG_INFO(sqlStatement);
 
-            FieldType fieldInstanceContinaer = classInstance->*getAttribute();
+            FieldType fieldInstanceContainer;
+            mAccessWrapper->get(classInstance, &fieldInstanceContainer);
 
-            for (auto fieldInstanceItem : fieldInstanceContinaer) {
+            for (auto fieldInstanceItem : fieldInstanceContainer) {
                 FieldItemPureType* pFieldInstanceItem = Utility::pointerizeInstance(&fieldInstanceItem);
                 driver->prepare(sqlStatement);
                 for (const auto& field : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
@@ -91,19 +91,11 @@ namespace Salsabil {
             }
         }
 
-        void setAttribute(AttributeType attribute) {
-            mAttribute = attribute;
-        }
-
-        AttributeType getAttribute() const {
-            return mAttribute;
-        }
-
     private:
         std::string mTargetColumnName;
 
-        AttributeType mAttribute;
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
-#endif // SALSABIL_SQLRELATIONONETOMANYATTRIBUTEIMPL_HPP
+#endif // SALSABIL_SQLRELATIONONETOMANYIMPL_HPP
 

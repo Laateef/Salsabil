@@ -19,72 +19,65 @@
  * along with Salsabil. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SALSABIL_SQLRELATIONONETOONEPERSISTENTATTRIBUTEIMPL_HPP
-#define SALSABIL_SQLRELATIONONETOONEPERSISTENTATTRIBUTEIMPL_HPP
+#ifndef SALSABIL_SQLONETOONERELATIONTRANSIENTIMPL_HPP
+#define SALSABIL_SQLONETOONERELATIONTRANSIENTIMPL_HPP
 
 #include "SqlRelation.hpp"
 #include "TypeHelper.hpp"
 #include "TypeResolver.hpp"
-#include "Logging.hpp"
 #include "SqlEntityConfigurer.hpp"
 #include "SqlGenerator.hpp"
+#include "AccessWrapper.hpp"
+#include "Logging.hpp"
 
 namespace Salsabil {
     class SqlDriver;
 
-    template<class ClassType, typename AttributeType>
-    class SqlRelationOneToOnePersistentAttributeImpl : public SqlRelation<ClassType> {
-        using FieldType = typename Utility::Traits<AttributeType>::AttributeType;
+    template<typename ClassType, typename FieldType>
+    class SqlRelationOneToOneTransientImpl : public SqlRelation<ClassType> {
         using FieldPureType = typename Utility::Traits<FieldType>::UnqualifiedType;
+
     public:
 
-        SqlRelationOneToOnePersistentAttributeImpl(const std::string& targetTableName, const std::string& columnName, RelationType type, AttributeType attribute) :
+        SqlRelationOneToOneTransientImpl(const std::string& targetTableName, const std::string& targetColumnName, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
         SqlRelation<ClassType>(targetTableName, type),
-        mColumnName(columnName),
-        mAttribute(attribute) {
+        mTargetColumnName(targetColumnName),
+        mAccessWrapper(accessWrapper) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
-            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), mColumnName, "?");
+            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), mTargetColumnName, "?");
             driver->prepare(sqlStatement);
             SALSABIL_LOG_INFO(sqlStatement);
-
-            FieldType ins = classInstance->*getAttribute();
-            FieldPureType* fieldInstance = Utility::pointerizeInstance(&ins);
-
-            for (std::size_t idx = 0; idx < SqlEntityConfigurer<FieldPureType>::primaryFieldList().size(); ++idx) {
-                SqlEntityConfigurer<FieldPureType>::primaryFieldList()[idx]->writeToDriver(fieldInstance, idx + 1);
+            for (const auto& f : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
+                f->writeToDriver(classInstance, 1);
             }
-
             driver->execute();
 
             if (!driver->nextRow())
-                throw Exception("No rows to fetch");
+                throw Exception("no row with id(s) was found");
 
+            FieldType fieldInstance;
+            FieldPureType* pfieldInstance = Utility::initializeInstance(&fieldInstance);
+
+            for (const auto& f : SqlEntityConfigurer<FieldPureType>::primaryFieldList())
+                f->readFromDriver(pfieldInstance, f->column());
             for (const auto& f : SqlEntityConfigurer<FieldPureType>::persistentFieldList())
-                f->readFromDriver(fieldInstance, f->column());
+                f->readFromDriver(pfieldInstance, f->column());
             for (const auto& r : SqlEntityConfigurer<FieldPureType>::transientFieldList())
-                r->readFromDriver(driver, fieldInstance);
+                r->readFromDriver(driver, pfieldInstance);
 
-            classInstance->*getAttribute() = ins;
+            mAccessWrapper->set(classInstance, &fieldInstance);
         }
 
         virtual void writeToDriver(SqlDriver*, const ClassType*) {
         }
 
-        void setAttribute(AttributeType attribute) {
-            mAttribute = attribute;
-        }
-
-        AttributeType getAttribute() const {
-            return mAttribute;
-        }
-
     private:
-        std::string mColumnName;
+        std::string mTargetColumnName;
 
-        AttributeType mAttribute;
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
-#endif // SALSABIL_SQLRELATIONONETOONEPERSISTENTATTRIBUTEIMPL_HPP
+#endif // SALSABIL_SQLONETOONERELATIONTRANSIENTIMPL_HPP
 
