@@ -34,7 +34,14 @@ TEST_CASE("SqlGenerator") {
         CHECK(SqlGenerator::fetchById("user", "id", "7") == "SELECT * FROM user WHERE id = 7");
     }
 
-    SUBCASE(" fetch common rows by joining") {
+    SUBCASE(" fetch a specific row from a table with a composite primary key ") {
+        CHECK(SqlGenerator::fetchById("user",{
+            {"no", "7"},
+            {"name", "'Ali'"}
+        }) == "SELECT * FROM user WHERE name = 'Ali' AND no = 7");
+    }
+
+    SUBCASE(" fetch common rows by joining ") {
         CHECK(SqlGenerator::fetchByJoin(SqlGenerator::JoinMode::Inner, "session", "user_session", "user_session.session_id = session.id", "user_session.user_id = 1")
                 == "SELECT session.* FROM session INNER JOIN user_session ON user_session.session_id = session.id WHERE user_session.user_id = 1");
     }
@@ -44,6 +51,8 @@ TEST_CASE("SqlGenerator") {
     }
 
     SUBCASE(" update a row in a table with parameterized values ") {
-        CHECK(SqlGenerator::update("user",{std::make_pair("name", "Osama")}, "id", "1") == "UPDATE user SET name = 'OSAMA' WHERE id = 1");
+        CHECK(SqlGenerator::update("user",{
+            {"name", "'Osama'"}
+        }, "id", "1") == "UPDATE user SET name = 'Osama' WHERE id = 1");
     }
 }

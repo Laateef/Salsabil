@@ -55,7 +55,7 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
         SUBCASE("with a pointer foreign field ") {
             sessionConfig.setOneToOnePersistentField("user_id", "user", "id", &SessionMock::user);
 
-            SessionMock* session = SqlRepository<SessionMock>::get("1");
+            SessionMock* session = SqlRepository<SessionMock>::get(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -71,7 +71,7 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
         SUBCASE("with a reference foreign field ") {
             sessionConfig.setOneToOnePersistentField("user_id", "user", "id", &SessionMock::stackUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get("1");
+            SessionMock* session = SqlRepository<SessionMock>::get(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -85,7 +85,7 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
         SUBCASE("with a pointer transient field ") {
             userConfig.setOneToOneTransientField("session", "user_id", &UserMock::session);
 
-            UserMock* user = SqlRepository<UserMock>::get("1");
+            UserMock* user = SqlRepository<UserMock>::get(1);
 
             REQUIRE(user != nullptr);
             CHECK(user->getId() == 1);
@@ -96,13 +96,12 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
 
             delete user->session;
             delete user;
-
         }
 
         SUBCASE("with a reference transient field ") {
             sessionConfig.setOneToOneTransientField("user", "id", &SessionMock::stackUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get("1");
+            SessionMock* session = SqlRepository<SessionMock>::get(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -111,7 +110,6 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
             CHECK(session->stackUser.name == "Ali");
 
             delete session;
-
         }
     }
 
@@ -131,16 +129,17 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
             CHECK(drv.getInt(2) == 1);
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
         }
 
         SUBCASE("with a reference foreign field") {
@@ -150,16 +149,17 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
             CHECK(drv.getInt(2) == 1);
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
         }
 
         SUBCASE("with a pointer transient field") {
@@ -169,15 +169,16 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
 
         }
 
@@ -188,15 +189,16 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
         }
     }
 }

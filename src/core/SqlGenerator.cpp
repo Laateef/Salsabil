@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -37,6 +37,16 @@ std::string SqlGenerator::fetchById(const std::string &table, const std::string&
     return "SELECT * FROM " + table + " WHERE " + column + " = " + id;
 }
 
+std::string SqlGenerator::fetchById(const std::string& table, const std::map<std::string, std::string>& columnValueMap) {
+    std::string statement = "SELECT * FROM " + table + " WHERE ";
+
+    for (const auto& columnValuePair : columnValueMap)
+        statement.append(columnValuePair.first + " = " + columnValuePair.second + " AND ");
+
+    statement.erase(statement.end() - 5, statement.end());
+    return statement;
+}
+
 std::string SqlGenerator::fetchByJoin(SqlGenerator::JoinMode mode, const std::string& table, const std::string& intersectionTable, const std::string& onCondition, const std::string& whereCondition) {
     return "SELECT " + table + ".* FROM " + table + " " +
             std::string(mode == SqlGenerator::JoinMode::Left ? "LEFT" : (mode == SqlGenerator::JoinMode::Right ? "RIGHT" : (mode == SqlGenerator::JoinMode::Inner ? "INNER" : "FULL OUTER")))
@@ -59,11 +69,12 @@ std::string SqlGenerator::update(
         const std::string& id
         ) {
     std::string statement = "UPDATE " + table + " SET ";
-    std::for_each(columnValueMap.begin(), columnValueMap.end(), [&](const std::pair<std::string, std::string>& p) {
-        statement.append(p.first + " = " + p.second + ", ");
-    });
+
+    for (const auto& columnValuePair : columnValueMap)
+        statement.append(columnValuePair.first + " = " + columnValuePair.second + ", ");
+
     assert(columnValueMap.size() >= 1);
     statement.erase(statement.end() - 2, statement.end());
-    statement += " WHERE " + columnName + " = " + id;
+    statement.append(" WHERE " + columnName + " = " + id);
     return statement;
 }

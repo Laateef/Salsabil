@@ -57,7 +57,7 @@ TEST_CASE("SqlRelationManyToManyAttributeImpl") {
         drv.execute("INSERT INTO user_session(user_id, session_id, exp) values(1, 1, 'abc')");
         drv.execute("INSERT INTO user_session(user_id, session_id, exp) values(1, 2, 'xyz')");
 
-        UserMock* user = SqlRepository<UserMock>::get("1");
+        UserMock* user = SqlRepository<UserMock>::get(1);
 
         REQUIRE(user != nullptr);
         CHECK(user->id == 1);

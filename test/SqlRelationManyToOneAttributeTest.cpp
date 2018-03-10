@@ -54,7 +54,7 @@ TEST_CASE("SqlRelationManyToOneAttributeImpl") {
         drv.execute("INSERT INTO session(id, time, user_id) values(1, '2018-01-23T08:54:22', 1)");
         drv.execute("INSERT INTO session(id, time, user_id) values(2, '2018-01-27T01:48:44', 1)");
 
-        SessionMock* session1 = SqlRepository<SessionMock>::get("1");
+        SessionMock* session1 = SqlRepository<SessionMock>::get(1);
 
         REQUIRE(session1 != nullptr);
         CHECK(session1->id == 1);
@@ -63,7 +63,7 @@ TEST_CASE("SqlRelationManyToOneAttributeImpl") {
         CHECK(session1->user->id == 1);
         CHECK(session1->user->name == "Ali");
 
-        SessionMock* session2 = SqlRepository<SessionMock>::get("2");
+        SessionMock* session2 = SqlRepository<SessionMock>::get(2);
 
         REQUIRE(session2 != nullptr);
         CHECK(session2->id == 2);
@@ -102,6 +102,7 @@ TEST_CASE("SqlRelationManyToOneAttributeImpl") {
         CHECK(drv.getInt(0) == 1);
         CHECK(drv.getStdString(1) == "Ali");
         REQUIRE(drv.nextRow() == false);
+        
         drv.execute("select * from session");
         REQUIRE(drv.nextRow() == true);
         CHECK(drv.getInt(0) == 1);

@@ -55,7 +55,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE("with a pointer foreign field ") {
             sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getUser, SessionMock::setUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get("1");
+            SessionMock* session = SqlRepository<SessionMock>::get(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -71,7 +71,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE("with a reference foreign field ") {
             sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get("1");
+            SessionMock* session = SqlRepository<SessionMock>::get(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -85,7 +85,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE("with a pointer referential field ") {
             userConfig.setOneToOneTransientField("session", "user_id", UserMock::getSession, UserMock::setSession);
 
-            UserMock* user = SqlRepository<UserMock>::get("1");
+            UserMock* user = SqlRepository<UserMock>::get(1);
 
             REQUIRE(user != nullptr);
             CHECK(user->getId() == 1);
@@ -96,13 +96,12 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
 
             delete user->getSession();
             delete user;
-
         }
 
         SUBCASE("with a reference referential field ") {
             sessionConfig.setOneToOneTransientField("user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get("1");
+            SessionMock* session = SqlRepository<SessionMock>::get(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -111,7 +110,6 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             CHECK(session->getStackUser().getName() == "Ali");
 
             delete session;
-
         }
     }
 
@@ -131,16 +129,17 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
             CHECK(drv.getInt(2) == 1);
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
         }
 
         SUBCASE("with a reference foreign field") {
@@ -150,16 +149,17 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
             CHECK(drv.getInt(2) == 1);
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
         }
 
         SUBCASE("with a pointer referential field") {
@@ -169,16 +169,16 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-            CHECK(drv.nextRow() == false);
-
+            REQUIRE(drv.nextRow() == false);
         }
 
         SUBCASE("with a reference referential field") {
@@ -188,15 +188,16 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             SqlRepository<SessionMock>::save(&session);
 
             drv.execute("select * from session");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
+
             drv.execute("select * from user");
-            CHECK(drv.nextRow() == true);
+            REQUIRE(drv.nextRow() == true);
             CHECK(drv.getInt(0) == 1);
             CHECK(drv.getStdString(1) == "Ali");
-            CHECK(drv.nextRow() == false);
+            REQUIRE(drv.nextRow() == false);
         }
     }
 }
