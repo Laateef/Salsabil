@@ -47,7 +47,7 @@ TEST_CASE("SqlRelationManyToOneAttributeImpl") {
     sessionConfig.setTableName("session");
     sessionConfig.setPrimaryField("id", &SessionMock::id);
     sessionConfig.setField("time", &SessionMock::time);
-    sessionConfig.setManyToOnePersistentField("user_id", "user", "id", &SessionMock::user);
+    sessionConfig.setManyToOneField("user", "user_id", "id", &SessionMock::user);
 
     SUBCASE("fetching entities") {
         drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
@@ -102,7 +102,7 @@ TEST_CASE("SqlRelationManyToOneAttributeImpl") {
         CHECK(drv.getInt(0) == 1);
         CHECK(drv.getStdString(1) == "Ali");
         REQUIRE(drv.nextRow() == false);
-        
+
         drv.execute("select * from session");
         REQUIRE(drv.nextRow() == true);
         CHECK(drv.getInt(0) == 1);

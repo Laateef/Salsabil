@@ -28,15 +28,16 @@ add_subdirectory(drivers)
 enable_testing()
 
 add_executable(
-main_test 
-SqlRelationOneToOneAttributeTest.cpp 
-SqlRelationOneToOneMethodTest.cpp 
+main_test
+SqlRelationManyToManyAttributeTest.cpp
+SqlRelationManyToManyMethodTest.cpp 
 SqlRelationOneToManyAttributeTest.cpp
 SqlRelationOneToManyMethodTest.cpp
 SqlRelationManyToOneAttributeTest.cpp
 SqlRelationManyToOneMethodTest.cpp
-SqlRelationManyToManyAttributeTest.cpp
-SqlRelationManyToManyMethodTest.cpp
+SqlRelationOneToOneAttributeTest.cpp 
+SqlRelationOneToOneMethodTest.cpp 
+SqlRelationWithCompositePrimaryKeyTest.cpp
 SqlRepositoryTest.cpp 
 SqlEntityConfigurerTest.cpp
 )
@@ -44,8 +45,3 @@ SqlEntityConfigurerTest.cpp
 target_link_libraries(main_test doctest_with_main sqlite_driver_lib sqlite3_backend core_lib)
 
 add_test(main_test main_test)
-
-
-
-
-

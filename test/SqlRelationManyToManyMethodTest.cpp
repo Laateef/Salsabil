@@ -42,7 +42,10 @@ TEST_CASE("SqlRelationManyToManyMethodImpl") {
     userConfig.setTableName("user");
     userConfig.setPrimaryField("id", UserMock::getId, UserMock::setId);
     userConfig.setField("name", UserMock::getName, UserMock::setName);
-    userConfig.setManyToManyTransientField("session", "user_session", "session_id", "user_id", UserMock::getSessions, UserMock::setSessions);
+    SqlManyToManyMapping mapping("user", "user_session", "session");
+    mapping.setLeftMapping("user_id", "id");
+    mapping.setRightMapping("session_id", "id");
+    userConfig.setManyToManyField(mapping, UserMock::getSessions, UserMock::setSessions);
 
     SqlEntityConfigurer<SessionMock> sessionConfig;
     sessionConfig.setDriver(&drv);
@@ -101,7 +104,7 @@ TEST_CASE("SqlRelationManyToManyMethodImpl") {
         CHECK(drv.getInt(0) == 1);
         CHECK(drv.getStdString(1) == "Ali");
         REQUIRE(drv.nextRow() == false);
-        
+
         drv.execute("select * from session");
         REQUIRE(drv.nextRow() == true);
         CHECK(drv.getInt(0) == 1);
@@ -110,7 +113,7 @@ TEST_CASE("SqlRelationManyToManyMethodImpl") {
         CHECK(drv.getInt(0) == 2);
         CHECK(drv.getStdString(1) == "2018-02-18T01:48:44");
         REQUIRE(drv.nextRow() == false);
-        
+
         drv.execute("select * from user_session");
         REQUIRE(drv.nextRow() == true);
         CHECK(drv.getInt(0) == 1);

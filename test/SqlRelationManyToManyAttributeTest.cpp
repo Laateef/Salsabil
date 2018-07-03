@@ -42,7 +42,10 @@ TEST_CASE("SqlRelationManyToManyAttributeImpl") {
     userConfig.setTableName("user");
     userConfig.setPrimaryField("id", &UserMock::id);
     userConfig.setField("name", &UserMock::name);
-    userConfig.setManyToManyTransientField("session", "user_session", "session_id", "user_id", &UserMock::sessions);
+    SqlManyToManyMapping mapping("user", "user_session", "session");
+    mapping.setLeftMapping("user_id", "id");
+    mapping.setRightMapping("session_id", "id");
+    userConfig.setManyToManyField(mapping, &UserMock::sessions);
 
     SqlEntityConfigurer<SessionMock> sessionConfig;
     sessionConfig.setDriver(&drv);

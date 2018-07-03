@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Abdullatif Kalla. All rights reserved.
+ * Copyright (C) 2017-2018, Abdullatif Kalla. All rights reserved.
  * E-mail: laateef@outlook.com
  * Github: https://github.com/Laateef/Salsabil
  *
@@ -26,6 +26,8 @@
 #include "TypeHelper.hpp"
 #include "TypeResolver.hpp"
 #include "AccessWrapper.hpp"
+#include "Logging.hpp"
+
 #include <memory>
 
 namespace Salsabil {
@@ -33,27 +35,33 @@ namespace Salsabil {
 
     template<typename ClassType, typename FieldType>
     class SqlFieldImpl : public SqlField<ClassType> {
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
+
     public:
 
-        SqlFieldImpl(std::string name, int column, AccessWrapper<ClassType, FieldType>* accessWrapper) :
-        SqlField<ClassType>(name, column, false),
+        SqlFieldImpl(const std::string& name, int column, AccessWrapper<ClassType, FieldType>* accessWrapper) :
+        SqlField<ClassType>(name, column),
         mAccessWrapper(accessWrapper) {
         }
 
-        virtual void readFromDriver(ClassType* instance, int column) {
+        virtual SqlValue fetchFromInstance(const ClassType* instance) {
             FieldType t;
-            Utility::driverToVariable(SqlEntityConfigurer<ClassType>::driver(), column, Utility::initializeInstance(&t));
+            mAccessWrapper->get(instance, &t);
+            return SqlValue(t);
+        }
+
+        virtual void readFromDriver(ClassType* instance, int columnIndex) {
+            SALSABIL_LOG_DEBUG("SqlFieldImpl, readFromDriver at column: " + std::to_string(columnIndex));
+            FieldType t;
+            Utility::driverToVariable(SqlEntityConfigurer<ClassType>::driver(), columnIndex, Utility::initializeInstance(&t));
             mAccessWrapper->set(instance, &t);
         }
 
-        virtual void writeToDriver(const ClassType* instance, int column) {
+        virtual void writeToDriver(const ClassType* instance, int columnIndex) {
             FieldType t;
             mAccessWrapper->get(instance, &t);
-            Utility::variableToDriver(SqlEntityConfigurer<ClassType>::driver(), column, Utility::pointerizeInstance(&t));
+            Utility::variableToDriver(SqlEntityConfigurer<ClassType>::driver(), columnIndex, Utility::pointerizeInstance(&t));
         }
-
-    private:
-        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
 #endif // SALSABIL_SQLFIELDIMPL_HPP

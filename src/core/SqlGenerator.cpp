@@ -53,13 +53,15 @@ std::string SqlGenerator::fetchByJoin(SqlGenerator::JoinMode mode, const std::st
             + " JOIN " + intersectionTable + " ON " + onCondition + " WHERE " + whereCondition;
 }
 
-std::string SqlGenerator::insert(const std::string& table, const std::vector<std::string>& columnList) {
-    std::vector<std::string> questionMarkList(columnList.size(), "?");
-    if (questionMarkList.empty())
-        throw Exception("could not parameterize the insert statement, the column list is empty!");
-
-    return "INSERT INTO " + table + std::string(columnList.size() == 0 ? "" : "(" + Utility::join(columnList.begin(), columnList.end(), ", ") + ")")
-            + " VALUES(" + Utility::join(questionMarkList.begin(), questionMarkList.end(), ", ") + ")";
+std::string SqlGenerator::insert(const std::string& table, const std::map<std::string, std::string>& columnValueMap) {
+    std::string statement = "INSERT INTO " + table + "(";
+    for (auto columnNameValuePair : columnValueMap)
+        statement.append(columnNameValuePair.first + ", ");
+    statement.replace(statement.end() - 2, statement.end(), ") VALUES(");
+    for (auto columnNameValuePair : columnValueMap)
+        statement.append(columnNameValuePair.second + ", ");
+    statement.replace(statement.end() - 2, statement.end(), ")");
+    return statement;
 }
 
 std::string SqlGenerator::update(
@@ -76,5 +78,26 @@ std::string SqlGenerator::update(
     assert(columnValueMap.size() >= 1);
     statement.erase(statement.end() - 2, statement.end());
     statement.append(" WHERE " + columnName + " = " + id);
+    return statement;
+}
+
+std::string SqlGenerator::update(const std::string& table,
+        const std::map<std::string, std::string>& columnValueMap,
+        const std::map<std::string, std::string>& whereConditionMap) {
+    std::string statement = "UPDATE " + table + " SET ";
+
+    for (const auto& columnValuePair : columnValueMap)
+        statement.append(columnValuePair.first + " = " + columnValuePair.second + ", ");
+
+    assert(columnValueMap.size() >= 1);
+    statement.erase(statement.end() - 2, statement.end());
+    statement.append(" WHERE ");
+
+    for (const auto& whereConditionPair : whereConditionMap)
+        statement.append(whereConditionPair.first + " = " + whereConditionPair.second + " AND ");
+
+    assert(whereConditionMap.size() >= 1);
+    statement.erase(statement.end() - 5, statement.end());
+
     return statement;
 }

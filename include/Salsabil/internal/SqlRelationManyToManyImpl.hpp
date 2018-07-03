@@ -28,6 +28,7 @@
 #include "SqlEntityConfigurer.hpp"
 #include "SqlGenerator.hpp"
 #include "AccessWrapper.hpp"
+#include "SqlManyToManyMapping.hpp"
 #include "Logging.hpp"
 
 namespace Salsabil {
@@ -35,33 +36,36 @@ namespace Salsabil {
 
     template<typename ClassType, typename FieldType>
     class SqlRelationManyToManyImpl : public SqlRelation<ClassType> {
+        SqlManyToManyMapping mRelationMapping;
+        bool mIsRelationLeftSided;
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
+
         using FieldItemType = typename FieldType::value_type;
         using FieldItemPureType = typename Utility::Traits<FieldItemType>::UnqualifiedType;
 
     public:
 
-        SqlRelationManyToManyImpl(const std::string& targetTableName, const std::string& intersectionTableName, const std::string& intersectionTargetColumnName, const std::string& intersectionColumnName, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
-        SqlRelation<ClassType>(targetTableName, type),
-        mIntersectionTableName(intersectionTableName),
-        mIntersectionColumnName(intersectionColumnName),
-        mIntersectionTargetColumnName(intersectionTargetColumnName),
+        SqlRelationManyToManyImpl(const SqlManyToManyMapping& mapping, AccessWrapper<ClassType, FieldType>* accessWrapper) :
+        SqlRelation<ClassType>(mapping.leftTableName() == SqlEntityConfigurer<ClassType>::tableName() ? mapping.rightTableName() : mapping.leftTableName(), RelationType::ManyToMany),
+        mRelationMapping(mapping),
+        mIsRelationLeftSided(mapping.leftTableName() == SqlEntityConfigurer<ClassType>::tableName()),
         mAccessWrapper(accessWrapper) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
-            const std::string& sqlStatement = SqlGenerator::fetchByJoin(SqlGenerator::JoinMode::Inner,
-                    SqlRelation<ClassType>::tableName(),
-                    mIntersectionTableName,
-                    mIntersectionTableName + "." + mIntersectionTargetColumnName + " = " + SqlRelation<ClassType>::tableName() + "." + SqlEntityConfigurer<FieldItemPureType>::primaryFieldList().at(0)->name(),
-                    mIntersectionTableName + "." + mIntersectionColumnName + " = ?");
-
-            driver->prepare(sqlStatement);
-            SALSABIL_LOG_INFO(sqlStatement);
-
-            for (const auto& f : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
-                f->writeToDriver(classInstance, 1);
+            std::vector<std::string> onConditionList;
+            for (auto field : SqlEntityConfigurer<FieldItemPureType>::primaryFieldList()) {
+                onConditionList.push_back(SqlEntityConfigurer<FieldItemPureType>::tableName() + "." + field->name() + " = " + mRelationMapping.intersectionTableName() + "." + mRelationMapping.backwardMapping(SqlEntityConfigurer<FieldItemPureType>::tableName(), field->name()));
             }
-            driver->execute();
+            std::vector<std::string> whereConditionList;
+            for (auto field : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
+                whereConditionList.push_back(mRelationMapping.intersectionTableName() + "." + mRelationMapping.backwardMapping(SqlEntityConfigurer<ClassType>::tableName(), field->name()) + " = " + field->fetchFromInstance(classInstance).toString());
+            }
+            const std::string& sqlStatement = "SELECT " + SqlEntityConfigurer<FieldItemPureType>::tableName() + ".* FROM " + SqlEntityConfigurer<FieldItemPureType>::tableName() + " INNER JOIN " + mRelationMapping.intersectionTableName() + " ON " +
+                    Utility::join(onConditionList.begin(), onConditionList.end(), " AND ") + " WHERE " + Utility::join(whereConditionList.begin(), whereConditionList.end(), " AND ");
+
+            driver->execute(sqlStatement);
+            SALSABIL_LOG_INFO(sqlStatement);
 
             FieldType fieldInstanceContainer;
 
@@ -70,7 +74,7 @@ namespace Salsabil {
                 FieldItemPureType* pFieldInstance = Utility::initializeInstance(&fieldInstance);
                 for (const auto& f : SqlEntityConfigurer<FieldItemPureType>::primaryFieldList())
                     f->readFromDriver(pFieldInstance, f->column());
-                for (const auto& f : SqlEntityConfigurer<FieldItemPureType>::persistentFieldList())
+                for (const auto& f : SqlEntityConfigurer<FieldItemPureType>::fieldList())
                     f->readFromDriver(pFieldInstance, f->column());
 
                 fieldInstanceContainer.push_back(fieldInstance);
@@ -79,35 +83,32 @@ namespace Salsabil {
         }
 
         virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
-            const std::string& sqlStatement = SqlGenerator::insert(mIntersectionTableName,{mIntersectionColumnName, mIntersectionTargetColumnName});
+
             FieldType fieldInstanceContainer;
             mAccessWrapper->get(classInstance, &fieldInstanceContainer);
 
             typename FieldType::const_iterator iter = fieldInstanceContainer.begin();
-            while (iter < fieldInstanceContainer.end()) {
-
-                driver->prepare(sqlStatement);
-                SALSABIL_LOG_INFO(sqlStatement);
+            while (iter != fieldInstanceContainer.end()) {
+                std::map<std::string, std::string> columnValueMap;
 
                 for (const auto& f : SqlEntityConfigurer<ClassType>::primaryFieldList()) {
-                    f->writeToDriver(classInstance, 1);
+                    columnValueMap.insert({mRelationMapping.backwardMapping(SqlEntityConfigurer<ClassType>::tableName(), f->name()), f->fetchFromInstance(classInstance).toString()});
                 }
 
-                FieldItemType fieldInstance = *iter++;
+                FieldItemType fieldInstance = *iter;
                 FieldItemPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
                 for (const auto& f : SqlEntityConfigurer<FieldItemPureType>::primaryFieldList()) {
-                    f->writeToDriver(pFieldInstance, 2);
+                    columnValueMap.insert({mRelationMapping.backwardMapping(SqlEntityConfigurer<FieldItemPureType>::tableName(), f->name()), f->fetchFromInstance(pFieldInstance).toString()});
                 }
-                driver->execute();
+
+                const std::string& sqlStatement = SqlGenerator::insert(mRelationMapping.intersectionTableName(), columnValueMap);
+
+                SALSABIL_LOG_INFO(sqlStatement);
+                driver->execute(sqlStatement);
+
+                ++iter;
             }
         }
-
-    private:
-        std::string mIntersectionTableName;
-        std::string mIntersectionColumnName;
-        std::string mIntersectionTargetColumnName;
-
-        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
 #endif // SALSABIL_SQLRELATIONMANYTOMANYIMPL_HPP

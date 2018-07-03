@@ -48,7 +48,7 @@ TEST_CASE("SqlRelationOneToManyAttributeImpl") {
     userConfig.setTableName("user");
     userConfig.setPrimaryField("id", &UserMock::id);
     userConfig.setField("name", &UserMock::name);
-    userConfig.setOneToManyTransientField("session", "user_id", &UserMock::sessions);
+    userConfig.setOneToManyField("session", "user_id", &UserMock::sessions);
 
     SUBCASE("fetching entities") {
         drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");

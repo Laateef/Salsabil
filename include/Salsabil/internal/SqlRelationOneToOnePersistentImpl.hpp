@@ -29,6 +29,7 @@
 #include "SqlEntityConfigurer.hpp"
 #include "SqlGenerator.hpp"
 #include "AccessWrapper.hpp"
+#include "SqlRepository.hpp"
 
 namespace Salsabil {
     class SqlDriver;
@@ -36,35 +37,41 @@ namespace Salsabil {
     template<typename ClassType, typename FieldType>
     class SqlRelationOneToOnePersistentImpl : public SqlRelation<ClassType> {
         using FieldPureType = typename Utility::Traits<FieldType>::UnqualifiedType;
+        std::map<std::string, std::string> mColumnNameMap;
+        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
 
     public:
 
-        SqlRelationOneToOnePersistentImpl(const std::string& targetTableName, const std::string& columnName, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
+        SqlRelationOneToOnePersistentImpl(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
         SqlRelation<ClassType>(targetTableName, type),
-        mColumnName(columnName),
         mAccessWrapper(accessWrapper) {
+            for (auto columnNamePair : columnNameMap) {
+                mColumnNameMap.insert({columnNamePair.second, columnNamePair.first});
+            }
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
-            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), mColumnName, "?");
-            driver->prepare(sqlStatement);
-            SALSABIL_LOG_INFO(sqlStatement);
+            SALSABIL_LOG_DEBUG("SqlRelationOneToOnePersistentImpl, readFromDriver");
 
             FieldType fieldInstance;
             mAccessWrapper->get(classInstance, &fieldInstance);
 
             FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
 
-            for (std::size_t idx = 0; idx < SqlEntityConfigurer<FieldPureType>::primaryFieldList().size(); ++idx) {
-                SqlEntityConfigurer<FieldPureType>::primaryFieldList()[idx]->writeToDriver(pFieldInstance, idx + 1);
+            std::map<std::string, std::string> columnNameValueMap;
+            auto primaryFieldList = SqlEntityConfigurer<FieldPureType>::primaryFieldList();
+            for (std::size_t idx = 0; idx < primaryFieldList.size(); ++idx) {
+                columnNameValueMap.insert({primaryFieldList.at(idx)->name(), primaryFieldList.at(idx)->fetchFromInstance(pFieldInstance).toString()});
             }
+            std::string sqlStatement = SqlGenerator::fetchById(SqlRelation<ClassType>::tableName(), columnNameValueMap);
 
-            driver->execute();
+            SALSABIL_LOG_INFO(sqlStatement);
+            driver->execute(sqlStatement);
 
             if (!driver->nextRow())
-                throw Exception("No rows to fetch");
+                throw Exception("SqlRelationOneToOnePersistentImpl, readFromDriver, no rows to fetch");
 
-            for (const auto& f : SqlEntityConfigurer<FieldPureType>::persistentFieldList())
+            for (const auto& f : SqlEntityConfigurer<FieldPureType>::fieldList())
                 f->readFromDriver(pFieldInstance, f->column());
             for (const auto& r : SqlEntityConfigurer<FieldPureType>::transientFieldList())
                 r->readFromDriver(driver, pFieldInstance);
@@ -74,11 +81,6 @@ namespace Salsabil {
 
         virtual void writeToDriver(SqlDriver*, const ClassType*) {
         }
-
-    private:
-        std::string mColumnName;
-
-        std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
     };
 }
 #endif // SALSABIL_SQLRELATIONONETOONEPERSISTENTIMPL_HPP

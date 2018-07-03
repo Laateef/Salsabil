@@ -47,7 +47,7 @@ TEST_CASE("SqlRelationManyToOneMethodImpl") {
     sessionConfig.setTableName("session");
     sessionConfig.setPrimaryField("id", SessionMock::getId, SessionMock::setId);
     sessionConfig.setField("time", SessionMock::getTime, SessionMock::setTime);
-    sessionConfig.setManyToOnePersistentField("user_id", "user", "id", SessionMock::getUser, SessionMock::setUser);
+    sessionConfig.setManyToOneField("user", "user_id", "id", SessionMock::getUser, SessionMock::setUser);
 
     SUBCASE("fetching entities") {
         drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
@@ -64,7 +64,7 @@ TEST_CASE("SqlRelationManyToOneMethodImpl") {
         CHECK(session1->getUser()->getName() == "Ali");
 
         SessionMock* session2 = SqlRepository<SessionMock>::get(2);
-        
+
         REQUIRE(session1 != nullptr);
         CHECK(session2->getId() == 2);
         CHECK(session2->getTime() == "2018-01-27T01:48:44");
@@ -102,7 +102,7 @@ TEST_CASE("SqlRelationManyToOneMethodImpl") {
         CHECK(drv.getInt(0) == 1);
         CHECK(drv.getStdString(1) == "Ali");
         REQUIRE(drv.nextRow() == false);
-        
+
         drv.execute("select * from session");
         REQUIRE(drv.nextRow() == true);
         CHECK(drv.getInt(0) == 1);

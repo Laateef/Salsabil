@@ -41,11 +41,16 @@ namespace Salsabil {
 
         static std::string fetchById(const std::string& table, const std::map<std::string, std::string >& columnValueMap);
 
+        //        static std::string fetchByJoin(JoinMode mode, const std::string& table, const std::string& intersectionTable, const std::string& onCondition, const std::map<std::string, std::string>& columnValueMap);
         static std::string fetchByJoin(JoinMode mode, const std::string& table, const std::string& intersectionTable, const std::string& onCondition, const std::string& whereCondition);
 
-        static std::string insert(const std::string& table, const std::vector<std::string>& columnList = std::vector<std::string>());
+        //        static std::string insert(const std::string& table, const std::vector<std::string>& columnList = std::vector<std::string>());
 
-        static std::string update(const std::string& table, const std::map<std::string, std::string>& columnValueList, const std::string& columnName, const std::string& id);
+        static std::string insert(const std::string& table, const std::map<std::string, std::string>& columnValueMap);
+
+        static std::string update(const std::string& table, const std::map<std::string, std::string>& columnValueMap, const std::string& columnName, const std::string& id);
+        
+        static std::string update(const std::string& table, const std::map<std::string, std::string>& columnValueMap, const std::map<std::string, std::string>& whereConditionMap);
     };
 }
 

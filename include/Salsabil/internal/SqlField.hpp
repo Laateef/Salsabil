@@ -24,21 +24,23 @@
 
 #include <string>
 
-namespace Salsabil {
+#include "SqlValue.hpp"
 
-    class SqlDriver;
+namespace Salsabil {
 
     template<typename ClassType>
     class SqlField {
-        using Class = ClassType;
-
+        std::string mName;
+        int mColumn;
     public:
 
-        SqlField(const std::string& name, int column, bool isPrimary) : mName(name), mColumn(column), mIsPrimary(isPrimary) {
+        SqlField(const std::string& name, int column) : mName(name), mColumn(column) {
         }
 
         virtual ~SqlField() {
         }
+
+        virtual SqlValue fetchFromInstance(const ClassType* instance) = 0;
 
         /* Reads the data at the corresponding column from <i>driver</i> and inject it in <i>instance</i> using its setter method. */
         virtual void readFromDriver(ClassType* instance, int column) = 0;
@@ -46,34 +48,13 @@ namespace Salsabil {
         /* Gets the data from <i>instance</i> via its getter method and writes it to <i>driver</i> at the corresponding column. */
         virtual void writeToDriver(const ClassType* instance, int column) = 0;
 
-        void setName(std::string name) {
-            mName = name;
-        }
-
         std::string name() const {
             return mName;
-        }
-
-        void setColumn(int column) {
-            mColumn = column;
         }
 
         int column() const {
             return mColumn;
         }
-
-        bool isPrimary() const {
-            return mIsPrimary;
-        }
-
-        void setPrimary(bool isPrimary) {
-            mIsPrimary = isPrimary;
-        }
-
-    private:
-        std::string mName;
-        int mColumn;
-        bool mIsPrimary;
     };
 
 }

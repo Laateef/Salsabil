@@ -53,7 +53,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         drv.execute("INSERT INTO session(id, time, user_id) values(1, '2018-01-23T08:54:22', 1)");
 
         SUBCASE("with a pointer foreign field ") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getUser, SessionMock::setUser);
+            sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getUser, SessionMock::setUser);
 
             SessionMock* session = SqlRepository<SessionMock>::get(1);
 
@@ -69,7 +69,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         }
 
         SUBCASE("with a reference foreign field ") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
+            sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getStackUser, SessionMock::setStackUser);
 
             SessionMock* session = SqlRepository<SessionMock>::get(1);
 
@@ -123,7 +123,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SqlRepository<UserMock>::save(&user);
 
         SUBCASE("with a pointer foreign field") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getUser, SessionMock::setUser);
+            sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getUser, SessionMock::setUser);
             session.setUser(&user);
 
             SqlRepository<SessionMock>::save(&session);
@@ -143,7 +143,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         }
 
         SUBCASE("with a reference foreign field") {
-            sessionConfig.setOneToOnePersistentField("user_id", "user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
+            sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getStackUser, SessionMock::setStackUser);
             session.setStackUser(user);
 
             SqlRepository<SessionMock>::save(&session);

@@ -26,6 +26,7 @@
 
 #include "SqlDriver.hpp"
 #include "internal/Logging.hpp"
+#include "SqlField.hpp"
 
 
 namespace Salsabil {
@@ -54,29 +55,29 @@ namespace Salsabil {
             return *obj;
         }
 
-        template<class T>
-        void driverToVariable(const SqlDriver*, int column, T* to) {
-            SALSABIL_LOG_DEBUG("Fetching entity's primary key at column '" + std::to_string(column) + "' ");
-            for (const auto& field : SqlEntityConfigurer<T>::primaryFieldList())
-                field->readFromDriver(to, column);
-        }
-
-        template<class T>
-        void variableToDriver(SqlDriver*, int column, const T* from) {
-            SALSABIL_LOG_DEBUG("Binding entity's primary key at column '" + std::to_string(column) + "'");
-            for (const auto& field : SqlEntityConfigurer<T>::primaryFieldList())
-                field->writeToDriver(from, column);
-        }
-
-        template<class T>
-        void driverToVariable(const SqlDriver* driver, int column, T** to) {
-            driverToVariable(driver, column, *to);
-        }
-
-        template<class T>
-        void variableToDriver(SqlDriver* driver, int column, const T** from) {
-            variableToDriver(driver, column, *from);
-        }
+        //        template<class T>
+        //        void driverToVariable(const SqlDriver*, int column, T* to) {
+        //            SALSABIL_LOG_DEBUG("Fetching entity's primary key at column '" + std::to_string(column) + "' ");
+        //            for (const auto& field : SqlEntityConfigurer<T>::primaryFieldList())
+        //                field->readFromDriver(to, column);
+        //        }
+        //
+        //        template<class T>
+        //        void variableToDriver(SqlDriver*, int column, const T* from) {
+        //            SALSABIL_LOG_DEBUG("Binding entity's primary key at column '" + std::to_string(column) + "' ");
+        //            for (const auto& field : SqlEntityConfigurer<T>::primaryFieldList())
+        //                field->writeToDriver(from, column);
+        //        }
+        //
+        //        template<class T>
+        //        void driverToVariable(const SqlDriver* driver, int column, T** to) {
+        //            driverToVariable(driver, column, *to);
+        //        }
+        //
+        //        template<class T>
+        //        void variableToDriver(SqlDriver* driver, int column, const T** from) {
+        //            variableToDriver(driver, column, *from);
+        //        }
 
         inline void driverToVariable(const SqlDriver* driver, int column, int* to) {
             *to = driver->getInt(column);
