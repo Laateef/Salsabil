@@ -200,4 +200,32 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             REQUIRE(drv.nextRow() == false);
         }
     }
+
+    SUBCASE(" cascading ") {
+        UserMock user;
+        user.setId(1);
+        user.setName("Ali");
+        SessionMock session;
+        session.setId(1);
+        session.setTime("2018-07-09T08:09:44");
+        user.setSession(&session);
+
+        SUBCASE(" persist ") {
+            userConfig.setOneToOneTransientField("session", "id", UserMock::getSession, UserMock::setSession, CascadeType::Persist);
+
+            SqlRepository<UserMock>::save(&user);
+
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow() == true);
+            CHECK(drv.getInt(0) == 1);
+            CHECK(drv.getStdString(1) == "Ali");
+            REQUIRE(drv.nextRow() == false);
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow() == true);
+            CHECK(drv.getInt(0) == 1);
+            CHECK(drv.getStdString(1) == "2018-07-09T08:09:44");
+            REQUIRE(drv.nextRow() == false);
+        }
+    }
 }

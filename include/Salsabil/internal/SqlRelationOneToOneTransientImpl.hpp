@@ -29,6 +29,7 @@
 #include "SqlGenerator.hpp"
 #include "AccessWrapper.hpp"
 #include "Logging.hpp"
+#include "Declarations.hpp"
 
 namespace Salsabil {
     class SqlDriver;
@@ -38,13 +39,15 @@ namespace Salsabil {
         using FieldPureType = typename Utility::Traits<FieldType>::UnqualifiedType;
         std::map<std::string, std::string> mColumnNameMap;
         std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
+        CascadeType mCascadeType;
 
     public:
 
-        SqlRelationOneToOneTransientImpl(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
+        SqlRelationOneToOneTransientImpl(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper, CascadeType cascade) :
         SqlRelation<ClassType>(targetTableName, type),
         mColumnNameMap(columnNameMap),
-        mAccessWrapper(accessWrapper) {
+        mAccessWrapper(accessWrapper),
+        mCascadeType(cascade) {
         }
 
         virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
@@ -75,26 +78,12 @@ namespace Salsabil {
         }
 
         virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
-            std::map<std::string, std::string> mColumnNameReversedMap;
-            for (auto columnNamePair : mColumnNameMap) {
-                mColumnNameReversedMap.insert({columnNamePair.second, columnNamePair.first});
+            if (mCascadeType == CascadeType::Persist) {
+                FieldType fieldInstance;
+                mAccessWrapper->get(classInstance, &fieldInstance);
+                FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
+                SqlRepository<FieldPureType>::save(pFieldInstance);
             }
-
-            FieldType fieldInstance;
-            mAccessWrapper->get(classInstance, &fieldInstance);
-            FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
-
-            std::map<std::string, std::string> columnNameValueMap;
-            for (auto f : SqlEntityConfigurer<ClassType>::primaryFieldList())
-                columnNameValueMap.insert({mColumnNameReversedMap.at(f->name()), f->fetchFromInstance(classInstance).toString()});
-
-            std::map<std::string, std::string> whereConditionMap;
-            for (auto f : SqlEntityConfigurer<FieldPureType>::primaryFieldList())
-                whereConditionMap.insert({f->name(), f->fetchFromInstance(pFieldInstance).toString()});
-
-            std::string sqlStatement = SqlGenerator::update(SqlRelation<ClassType>::tableName(), columnNameValueMap, whereConditionMap);
-            SALSABIL_LOG_INFO(sqlStatement);
-            driver->execute(sqlStatement);
         }
     };
 }
