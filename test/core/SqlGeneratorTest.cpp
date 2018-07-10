@@ -72,4 +72,11 @@ TEST_CASE("SqlGenerator") {
             }
         }) == "UPDATE user SET name = 'Osama' WHERE id = 1 AND name = 'Omar'");
     }
+
+    SUBCASE(" remove a row from a table ") {
+        CHECK(SqlGenerator::remove("user",{
+            { "id", "1"},
+            { "name", "'Omar'"}
+        }) == "DELETE FROM user WHERE id = 1 AND name = 'Omar'");
+    }
 }

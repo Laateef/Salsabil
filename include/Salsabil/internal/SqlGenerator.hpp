@@ -49,8 +49,10 @@ namespace Salsabil {
         static std::string insert(const std::string& table, const std::map<std::string, std::string>& columnValueMap);
 
         static std::string update(const std::string& table, const std::map<std::string, std::string>& columnValueMap, const std::string& columnName, const std::string& id);
-        
+
         static std::string update(const std::string& table, const std::map<std::string, std::string>& columnValueMap, const std::map<std::string, std::string>& whereConditionMap);
+
+        static std::string remove(const std::string& table, const std::map<std::string, std::string>& primaryColumnValueMap);
     };
 }
 

@@ -101,3 +101,11 @@ std::string SqlGenerator::update(const std::string& table,
 
     return statement;
 }
+
+std::string SqlGenerator::remove(const std::string& table, const std::map<std::string, std::string>& primaryColumnValueMap) {
+    std::string statement = "DELETE FROM " + table + " WHERE ";
+    for (auto columnNameValuePair : primaryColumnValueMap)
+        statement.append(columnNameValuePair.first + " = " + columnNameValuePair.second + " AND ");
+    statement.erase(statement.end() - 5, statement.end());
+    return statement;
+}
