@@ -78,11 +78,14 @@ namespace Salsabil {
         }
 
         virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
+            FieldType fieldInstance;
+            mAccessWrapper->get(classInstance, &fieldInstance);
+            FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
+
             if (mCascadeType == CascadeType::Persist) {
-                FieldType fieldInstance;
-                mAccessWrapper->get(classInstance, &fieldInstance);
-                FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
                 SqlRepository<FieldPureType>::persist(pFieldInstance);
+            } else if (mCascadeType == CascadeType::Update) {
+                SqlRepository<FieldPureType>::update(pFieldInstance);
             }
         }
     };

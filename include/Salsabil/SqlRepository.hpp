@@ -119,9 +119,8 @@ namespace Salsabil {
         static void persist(const ClassType * instance) {
             SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
 
-            for (auto relation : SqlEntityConfigurer<ClassType>::transientFieldList()) {
+            for (auto relation : SqlEntityConfigurer<ClassType>::transientFieldList())
                 relation->writeToDriver(driver, instance);
-            }
 
             std::map<std::string, std::string> columnValueMap;
             for (auto field : SqlEntityConfigurer<ClassType>::primaryFieldList())
@@ -134,6 +133,27 @@ namespace Salsabil {
                 columnValueMap.insert(m.begin(), m.end());
             }
             const std::string& sqlStatement = SqlGenerator::insert(SqlEntityConfigurer<ClassType>::tableName(), columnValueMap);
+
+            SALSABIL_LOG_INFO(sqlStatement);
+
+            driver->execute(sqlStatement);
+        }
+
+        static void update(const ClassType * instance) {
+            SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
+
+            for (auto relation : SqlEntityConfigurer<ClassType>::transientFieldList())
+                relation->writeToDriver(driver, instance);
+
+            std::map<std::string, std::string> primaryColumnValueMap;
+            for (auto field : SqlEntityConfigurer<ClassType>::primaryFieldList())
+                primaryColumnValueMap.insert({field->name(), field->fetchFromInstance(instance).toString()});
+
+            std::map<std::string, std::string> columnValueMap;
+            for (auto field : SqlEntityConfigurer<ClassType>::fieldList())
+                columnValueMap.insert({field->name(), field->fetchFromInstance(instance).toString()});
+
+            const std::string& sqlStatement = SqlGenerator::update(SqlEntityConfigurer<ClassType>::tableName(), columnValueMap, primaryColumnValueMap);
 
             SALSABIL_LOG_INFO(sqlStatement);
 
@@ -154,23 +174,6 @@ namespace Salsabil {
             driver->execute(sqlStatement);
         }
 
-        static void update(const ClassType * instance) {
-            SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
-
-            std::map<std::string, std::string> primaryColumnValueMap;
-            for (auto field : SqlEntityConfigurer<ClassType>::primaryFieldList())
-                primaryColumnValueMap.insert({field->name(), field->fetchFromInstance(instance).toString()});
-
-            std::map<std::string, std::string> columnValueMap;
-            for (auto field : SqlEntityConfigurer<ClassType>::fieldList())
-                columnValueMap.insert({field->name(), field->fetchFromInstance(instance).toString()});
-
-            const std::string& sqlStatement = SqlGenerator::update(SqlEntityConfigurer<ClassType>::tableName(), columnValueMap, primaryColumnValueMap);
-
-            SALSABIL_LOG_INFO(sqlStatement);
-
-            driver->execute(sqlStatement);
-        }
     };
 }
 
