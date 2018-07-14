@@ -86,6 +86,8 @@ namespace Salsabil {
                 SqlRepository<FieldPureType>::persist(pFieldInstance);
             } else if (mCascadeType == CascadeType::Update) {
                 SqlRepository<FieldPureType>::update(pFieldInstance);
+            } else if (mCascadeType == CascadeType::Remove) {
+                SqlRepository<FieldPureType>::remove(pFieldInstance);
             }
         }
     };

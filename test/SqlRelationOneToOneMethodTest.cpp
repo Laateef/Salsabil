@@ -250,5 +250,18 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             REQUIRE(drv.nextRow() == false);
         }
 
+        SUBCASE(" remove object from database ") {
+            drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
+            drv.execute("INSERT INTO session(id, time) values(1, '2018-01-23T08:54:22')");
+
+            userConfig.setOneToOneTransientField("session", "id", UserMock::getSession, UserMock::setSession, CascadeType::Remove);
+            SqlRepository<UserMock>::remove(&user);
+
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow() == false);
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow() == false);
+        }
     }
 }

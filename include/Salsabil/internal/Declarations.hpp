@@ -27,7 +27,8 @@ namespace Salsabil {
     enum class CascadeType {
         None,
         Persist,
-        Update
+        Update,
+        Remove
     };
 }
 
