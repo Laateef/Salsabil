@@ -55,7 +55,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE("with a pointer foreign field ") {
             sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getUser, SessionMock::setUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get(1);
+            SessionMock* session = SqlRepository<SessionMock>::fetch(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -71,7 +71,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE("with a reference foreign field ") {
             sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getStackUser, SessionMock::setStackUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get(1);
+            SessionMock* session = SqlRepository<SessionMock>::fetch(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -85,7 +85,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE("with a pointer referential field ") {
             userConfig.setOneToOneTransientField("session", "user_id", UserMock::getSession, UserMock::setSession);
 
-            UserMock* user = SqlRepository<UserMock>::get(1);
+            UserMock* user = SqlRepository<UserMock>::fetch(1);
 
             REQUIRE(user != nullptr);
             CHECK(user->getId() == 1);
@@ -101,7 +101,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE("with a reference referential field ") {
             sessionConfig.setOneToOneTransientField("user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
 
-            SessionMock* session = SqlRepository<SessionMock>::get(1);
+            SessionMock* session = SqlRepository<SessionMock>::fetch(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);
@@ -120,13 +120,13 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SessionMock session;
         session.setId(1);
         session.setTime("2018-01-23T08:54:22");
-        SqlRepository<UserMock>::save(&user);
+        SqlRepository<UserMock>::persist(&user);
 
         SUBCASE("with a pointer foreign field") {
             sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getUser, SessionMock::setUser);
             session.setUser(&user);
 
-            SqlRepository<SessionMock>::save(&session);
+            SqlRepository<SessionMock>::persist(&session);
 
             drv.execute("select * from session");
             REQUIRE(drv.nextRow() == true);
@@ -146,7 +146,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             sessionConfig.setOneToOnePersistentField("user", "user_id", "id", SessionMock::getStackUser, SessionMock::setStackUser);
             session.setStackUser(user);
 
-            SqlRepository<SessionMock>::save(&session);
+            SqlRepository<SessionMock>::persist(&session);
 
             drv.execute("select * from session");
             REQUIRE(drv.nextRow() == true);
@@ -166,7 +166,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             sessionConfig.setOneToOneTransientField("user", "id", SessionMock::getUser, SessionMock::setUser);
             session.setUser(&user);
 
-            SqlRepository<SessionMock>::save(&session);
+            SqlRepository<SessionMock>::persist(&session);
 
             drv.execute("select * from user");
             REQUIRE(drv.nextRow() == true);
@@ -185,7 +185,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             sessionConfig.setOneToOneTransientField("user", "id", SessionMock::getStackUser, SessionMock::setStackUser);
             session.setStackUser(user);
 
-            SqlRepository<SessionMock>::save(&session);
+            SqlRepository<SessionMock>::persist(&session);
 
             drv.execute("select * from session");
             REQUIRE(drv.nextRow() == true);
@@ -213,7 +213,7 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
         SUBCASE(" persist ") {
             userConfig.setOneToOneTransientField("session", "id", UserMock::getSession, UserMock::setSession, CascadeType::Persist);
 
-            SqlRepository<UserMock>::save(&user);
+            SqlRepository<UserMock>::persist(&user);
 
             drv.execute("select * from user");
             REQUIRE(drv.nextRow() == true);

@@ -45,12 +45,12 @@ TEST_CASE("SqlRepository") {
 
             SUBCASE("through attributes") {
                 conf.setField("id", &ClassMock::id);
-                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get(1), Exception);
+                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::fetch(1), Exception);
             }
 
             SUBCASE("through methods") {
                 conf.setField("id", ClassMock::getId, ClassMock::setId);
-                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get(1), Exception);
+                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::fetch(1), Exception);
             }
         }
 
@@ -58,12 +58,12 @@ TEST_CASE("SqlRepository") {
 
             SUBCASE("through attributes") {
                 conf.setPrimaryField("id", &ClassMock::id);
-                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get(1), Exception);
+                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::fetch(1), Exception);
             }
 
             SUBCASE("through methods") {
                 conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
-                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::get(1), Exception);
+                REQUIRE_THROWS_AS(SqlRepository<ClassMock>::fetch(1), Exception);
             }
         }
 
@@ -76,7 +76,7 @@ TEST_CASE("SqlRepository") {
                 conf.setField("name", ClassMock::getName, ClassMock::setName);
                 conf.setField("weight", &ClassMock::getWeight, &ClassMock::setWeight);
 
-                ClassMock *obj = SqlRepository<ClassMock>::get(1);
+                ClassMock *obj = SqlRepository<ClassMock>::fetch(1);
 
                 CHECK(obj->getId() == 1);
                 CHECK(obj->getName() == "Ali");
@@ -90,7 +90,7 @@ TEST_CASE("SqlRepository") {
                 conf.setField("name", &ClassMock::name);
                 conf.setField("weight", &ClassMock::weight);
 
-                ClassMock *obj = SqlRepository<ClassMock>::get(1);
+                ClassMock *obj = SqlRepository<ClassMock>::fetch(1);
 
                 CHECK(obj->id == 1);
                 CHECK(obj->name == "Ali");
@@ -106,7 +106,7 @@ TEST_CASE("SqlRepository") {
                     conf.setField("name", ClassMock::getName, ClassMock::setName);
                     conf.setField("weight", &ClassMock::getWeight, &ClassMock::setWeight);
 
-                    std::vector<ClassMock*> objList = SqlRepository<ClassMock>::getAll();
+                    std::vector<ClassMock*> objList = SqlRepository<ClassMock>::fetchAll();
 
                     REQUIRE(objList.size() == 2);
                     CHECK(objList.at(0)->getId() == 1);
@@ -125,7 +125,7 @@ TEST_CASE("SqlRepository") {
                     conf.setField("name", &ClassMock::name);
                     conf.setField("weight", &ClassMock::weight);
 
-                    std::vector<ClassMock*> objList = SqlRepository<ClassMock>::getAll();
+                    std::vector<ClassMock*> objList = SqlRepository<ClassMock>::fetchAll();
 
                     REQUIRE(objList.size() == 2);
                     CHECK(objList.at(0)->id == 1);
@@ -152,7 +152,7 @@ TEST_CASE("SqlRepository") {
                 conf.setField("name", ClassMock::getName, ClassMock::setName);
                 conf.setField("weight", &ClassMock::getWeight, &ClassMock::setWeight);
 
-                SqlRepository<ClassMock>::save(&obj);
+                SqlRepository<ClassMock>::persist(&obj);
 
                 drv.execute("select * from person");
                 REQUIRE(drv.nextRow() == true);
@@ -167,7 +167,7 @@ TEST_CASE("SqlRepository") {
                 conf.setField("name", &ClassMock::name);
                 conf.setField("weight", &ClassMock::weight);
 
-                SqlRepository<ClassMock>::save(&obj);
+                SqlRepository<ClassMock>::persist(&obj);
 
                 drv.execute("select * from person");
                 REQUIRE(drv.nextRow() == true);
@@ -192,7 +192,7 @@ TEST_CASE("SqlRepository") {
         conf.setPrimaryField("name", &ClassMock::name);
         conf.setField("weight", &ClassMock::weight);
 
-        ClassMock *obj = SqlRepository<ClassMock>::get({2, "Tom"});
+        ClassMock *obj = SqlRepository<ClassMock>::fetch({2, "Tom"});
 
         REQUIRE(obj != nullptr);
         CHECK(obj->id == 2);

@@ -42,7 +42,7 @@ namespace Salsabil {
         SqlRepository() {
         }
 
-        static ClassType* get(std::initializer_list<SqlValue> idList) {
+        static ClassType* fetch(std::initializer_list<SqlValue> idList) {
             if (SqlEntityConfigurer<ClassType>::primaryFieldList().size() == 0)
                 throw Exception("Could not fetch data, no primary field is configured.");
 
@@ -80,11 +80,11 @@ namespace Salsabil {
             return instance;
         }
 
-        static ClassType* get(SqlValue id) {
-            return get({id});
+        static ClassType* fetch(SqlValue id) {
+            return fetch({id});
         }
 
-        static std::vector<ClassType*> getAll() {
+        static std::vector<ClassType*> fetchAll() {
             if (SqlEntityConfigurer<ClassType>::primaryFieldList().size() == 0)
                 throw Exception("Could not fetch data, no primary field is configured.");
 
@@ -116,7 +116,7 @@ namespace Salsabil {
             return instanceList;
         }
 
-        static void save(const ClassType * instance) {
+        static void persist(const ClassType * instance) {
             SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
 
             for (auto relation : SqlEntityConfigurer<ClassType>::transientFieldList()) {

@@ -55,7 +55,7 @@ TEST_CASE("SqlOneToOneRelationAttributeImpl") {
 //        SUBCASE("with a pointer foreign field") {
             sessionConfig.setOneToOnePersistentField("user", "user_id", "id", &SessionMock::user);
 
-            SessionMock* session = SqlRepository<SessionMock>::get(1);
+            SessionMock* session = SqlRepository<SessionMock>::fetch(1);
 
             REQUIRE(session != nullptr);
             CHECK(session->getId() == 1);

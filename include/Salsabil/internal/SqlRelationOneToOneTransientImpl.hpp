@@ -82,7 +82,7 @@ namespace Salsabil {
                 FieldType fieldInstance;
                 mAccessWrapper->get(classInstance, &fieldInstance);
                 FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
-                SqlRepository<FieldPureType>::save(pFieldInstance);
+                SqlRepository<FieldPureType>::persist(pFieldInstance);
             }
         }
     };

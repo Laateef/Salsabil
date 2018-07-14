@@ -71,7 +71,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                     {"user_name", "name"}
                 }, SessionMock::getUser, SessionMock::setUser);
 
-                UserMock* user = SqlRepository<UserMock>::get({1, "Ali"});
+                UserMock* user = SqlRepository<UserMock>::fetch({1, "Ali"});
                 REQUIRE(user != nullptr);
                 CHECK(user->getId() == 1);
                 CHECK(user->getName() == "Ali");
@@ -85,7 +85,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                     {"user_name", "name"}
                 }, SessionMock::getUser, SessionMock::setUser);
 
-                SessionMock* session1 = SqlRepository<SessionMock>::get(1);
+                SessionMock* session1 = SqlRepository<SessionMock>::fetch(1);
 
                 REQUIRE(session1 != nullptr);
                 CHECK(session1->getId() == 1);
@@ -94,7 +94,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 CHECK(session1->getUser()->getId() == 1);
                 CHECK(session1->getUser()->getName() == "Ali");
 
-                SessionMock* session2 = SqlRepository<SessionMock>::get(2);
+                SessionMock* session2 = SqlRepository<SessionMock>::fetch(2);
 
                 REQUIRE(session2 != nullptr);
                 CHECK(session2->getId() == 2);
@@ -116,7 +116,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                     {"name", "user_name"}
                 }, UserMock::getSession, UserMock::setSession);
 
-                UserMock* user = SqlRepository<UserMock>::get({1, "Sami"});
+                UserMock* user = SqlRepository<UserMock>::fetch({1, "Sami"});
 
                 REQUIRE(user != nullptr);
                 CHECK(user->getId() == 1);
@@ -135,7 +135,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                     {"id", "user_id"}
                 }, UserMock::getSessions, UserMock::setSessions);
 
-                UserMock* user = SqlRepository<UserMock>::get({1, "Ali"});
+                UserMock* user = SqlRepository<UserMock>::fetch({1, "Ali"});
 
                 REQUIRE(user != nullptr);
                 CHECK(user->getId() == 1);
@@ -157,7 +157,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 userConfig.setManyToManyField(mapping, UserMock::getSessions, UserMock::setSessions);
 
-                UserMock* user = SqlRepository<UserMock>::get({1, "Ali"});
+                UserMock* user = SqlRepository<UserMock>::fetch({1, "Ali"});
 
                 REQUIRE(user != nullptr);
                 CHECK(user->getId() == 1);
@@ -181,7 +181,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 user->setId(1);
                 user->setName("Ali");
 
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<UserMock>::persist(user);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -206,8 +206,8 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 session->setTime("2018-01-23T08:54:22");
                 session->setUser(user);
 
-                SqlRepository<UserMock>::save(user);
-                SqlRepository<SessionMock>::save(session);
+                SqlRepository<UserMock>::persist(user);
+                SqlRepository<SessionMock>::persist(session);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -243,10 +243,10 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 session2->setTime("2018-07-02T12:47:13");
                 session2->setUser(user);
 
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<UserMock>::persist(user);
 
-                SqlRepository<SessionMock>::save(session1);
-                SqlRepository<SessionMock>::save(session2);
+                SqlRepository<SessionMock>::persist(session1);
+                SqlRepository<SessionMock>::persist(session2);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -285,9 +285,9 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 user->setName("Sarah");
                 user->setSessions({session1, session2});
 
-                SqlRepository<SessionMock>::save(session1);
-                SqlRepository<SessionMock>::save(session2);
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<SessionMock>::persist(session1);
+                SqlRepository<SessionMock>::persist(session2);
+                SqlRepository<UserMock>::persist(user);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -328,9 +328,9 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 user->setName("Sarah");
                 user->setSessions({session1, session2});
 
-                SqlRepository<SessionMock>::save(session1);
-                SqlRepository<SessionMock>::save(session2);
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<SessionMock>::persist(session1);
+                SqlRepository<SessionMock>::persist(session2);
+                SqlRepository<UserMock>::persist(user);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -400,7 +400,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                     {"user_id", "id"}
                 }, SessionMock::getUser, SessionMock::setUser);
 
-                SessionMock* session = SqlRepository<SessionMock>::get(1);
+                SessionMock* session = SqlRepository<SessionMock>::fetch(1);
 
                 REQUIRE(session != nullptr);
                 CHECK(session->getId() == 1);
@@ -419,7 +419,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                     {"name", "user_name"}
                 }, UserMock::getSession, UserMock::setSession);
 
-                UserMock* user = SqlRepository<UserMock>::get({"Sami", 1});
+                UserMock* user = SqlRepository<UserMock>::fetch({"Sami", 1});
 
                 REQUIRE(user != nullptr);
                 CHECK(user->getId() == 1);
@@ -438,7 +438,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                     {"name", "user_name"}
                 }, UserMock::getSessions, UserMock::setSessions);
 
-                UserMock* user = SqlRepository<UserMock>::get({"Ali", 1});
+                UserMock* user = SqlRepository<UserMock>::fetch({"Ali", 1});
 
                 REQUIRE(user != nullptr);
                 CHECK(user->getId() == 1);
@@ -460,7 +460,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 userConfig.setManyToManyField(mapping, UserMock::getSessions, UserMock::setSessions);
 
-                UserMock* user = SqlRepository<UserMock>::get({"Ali", 1});
+                UserMock* user = SqlRepository<UserMock>::fetch({"Ali", 1});
 
                 REQUIRE(user != nullptr);
                 CHECK(user->getId() == 1);
@@ -484,7 +484,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 user->setId(1);
                 user->setName("Ali");
 
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<UserMock>::persist(user);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -509,8 +509,8 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 session->setTime("2018-01-23T08:54:22");
                 session->setUser(user);
 
-                SqlRepository<UserMock>::save(user);
-                SqlRepository<SessionMock>::save(session);
+                SqlRepository<UserMock>::persist(user);
+                SqlRepository<SessionMock>::persist(session);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -548,10 +548,10 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 session2->setTime("2018-07-02T12:47:13");
                 session2->setUser(user);
 
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<UserMock>::persist(user);
 
-                SqlRepository<SessionMock>::save(session1);
-                SqlRepository<SessionMock>::save(session2);
+                SqlRepository<SessionMock>::persist(session1);
+                SqlRepository<SessionMock>::persist(session2);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -594,9 +594,9 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 user->setName("Sarah");
                 user->setSessions({session1, session2});
 
-                SqlRepository<SessionMock>::save(session1);
-                SqlRepository<SessionMock>::save(session2);
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<SessionMock>::persist(session1);
+                SqlRepository<SessionMock>::persist(session2);
+                SqlRepository<UserMock>::persist(user);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
@@ -637,9 +637,9 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 user->setName("Sarah");
                 user->setSessions({session1, session2});
 
-                SqlRepository<SessionMock>::save(session1);
-                SqlRepository<SessionMock>::save(session2);
-                SqlRepository<UserMock>::save(user);
+                SqlRepository<SessionMock>::persist(session1);
+                SqlRepository<SessionMock>::persist(session2);
+                SqlRepository<UserMock>::persist(user);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());

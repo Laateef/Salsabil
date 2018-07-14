@@ -60,7 +60,7 @@ TEST_CASE("SqlRelationManyToManyMethodImpl") {
         drv.execute("INSERT INTO user_session(user_id, session_id, exp) values(1, 1, 'abc')");
         drv.execute("INSERT INTO user_session(user_id, session_id, exp) values(1, 2, 'xyz')");
 
-        UserMock* user = SqlRepository<UserMock>::get(1);
+        UserMock* user = SqlRepository<UserMock>::fetch(1);
 
         REQUIRE(user != nullptr);
         CHECK(user->getId() == 1);
@@ -94,10 +94,10 @@ TEST_CASE("SqlRelationManyToManyMethodImpl") {
         sessionList.push_back(&session2);
         user.setSessions(sessionList);
 
-        SqlRepository<SessionMock>::save(&session1);
-        SqlRepository<SessionMock>::save(&session2);
+        SqlRepository<SessionMock>::persist(&session1);
+        SqlRepository<SessionMock>::persist(&session2);
 
-        SqlRepository<UserMock>::save(&user);
+        SqlRepository<UserMock>::persist(&user);
 
         drv.execute("select * from user");
         REQUIRE(drv.nextRow() == true);
