@@ -153,6 +153,24 @@ namespace Salsabil {
 
             driver->execute(sqlStatement);
         }
+
+        static void update(const ClassType * instance) {
+            SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
+
+            std::map<std::string, std::string> primaryColumnValueMap;
+            for (auto field : SqlEntityConfigurer<ClassType>::primaryFieldList())
+                primaryColumnValueMap.insert({field->name(), field->fetchFromInstance(instance).toString()});
+
+            std::map<std::string, std::string> columnValueMap;
+            for (auto field : SqlEntityConfigurer<ClassType>::fieldList())
+                columnValueMap.insert({field->name(), field->fetchFromInstance(instance).toString()});
+
+            const std::string& sqlStatement = SqlGenerator::update(SqlEntityConfigurer<ClassType>::tableName(), columnValueMap, primaryColumnValueMap);
+
+            SALSABIL_LOG_INFO(sqlStatement);
+
+            driver->execute(sqlStatement);
+        }
     };
 }
 

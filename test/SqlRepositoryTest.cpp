@@ -203,6 +203,7 @@ TEST_CASE("SqlRepository") {
     }
 
     SUBCASE(" remove object from database ") {
+        drv.execute("create table person (id int NOT NULL PRIMARY KEY, name varchar(20), weight float)");
         drv.execute("INSERT INTO person(id, name, weight) values(1, 'Ali', 80.5)");
         drv.execute("INSERT INTO person(id, name, weight) values(2, 'Ruby', 53.8)");
 
@@ -224,6 +225,31 @@ TEST_CASE("SqlRepository") {
         CHECK(drv.getInt(0) == 2);
         CHECK(drv.getStdString(1) == "Ruby");
         CHECK(drv.getFloat(2) == 53.8f);
+        REQUIRE(drv.nextRow() == false);
+    }
+
+    SUBCASE(" update object in database ") {
+        drv.execute("create table person (id int NOT NULL PRIMARY KEY, name varchar(20), weight float)");
+        drv.execute("INSERT INTO person(id, name, weight) values(1, 'Ali', 80.5)");
+
+        SqlEntityConfigurer<ClassMock> conf;
+        conf.setDriver(&drv);
+        conf.setTableName("person");
+        conf.setPrimaryField("id", ClassMock::getId, ClassMock::setId);
+        conf.setField("name", ClassMock::getName, ClassMock::setName);
+        conf.setField("weight", &ClassMock::getWeight, &ClassMock::setWeight);
+
+        ClassMock obj;
+        obj.setId(1);
+        obj.setName("Sami");
+        obj.setWeight(105.5f);
+        SqlRepository<ClassMock>::update(&obj);
+
+        drv.execute("select * from person");
+        REQUIRE(drv.nextRow() == true);
+        CHECK(drv.getInt(0) == 1);
+        CHECK(drv.getStdString(1) == "Sami");
+        CHECK(drv.getFloat(2) == 105.5f);
         REQUIRE(drv.nextRow() == false);
     }
 }
