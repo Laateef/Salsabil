@@ -143,7 +143,7 @@ namespace Salsabil {
             SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
 
             for (auto relation : SqlEntityConfigurer<ClassType>::transientFieldList())
-                relation->writeToDriver(driver, instance);
+                relation->update(instance);
 
             std::map<std::string, std::string> primaryColumnValueMap;
             for (auto field : SqlEntityConfigurer<ClassType>::primaryFieldList())
@@ -164,7 +164,7 @@ namespace Salsabil {
             SqlDriver* driver = SqlEntityConfigurer<ClassType>::driver();
 
             for (auto relation : SqlEntityConfigurer<ClassType>::transientFieldList())
-                relation->writeToDriver(driver, instance);
+                relation->remove(instance);
 
             std::map<std::string, std::string> primaryColumnValueMap;
             for (auto field : SqlEntityConfigurer<ClassType>::primaryFieldList())

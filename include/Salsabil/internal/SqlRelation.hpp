@@ -42,6 +42,18 @@ namespace Salsabil {
 
         virtual void writeToDriver(SqlDriver* driver, const ClassType* instance) = 0;
 
+        virtual void fetch(SqlDriver* driver, ClassType* classInstance) {
+        }
+
+        virtual void persist(const ClassType* classInstance) {
+        }
+
+        virtual void update(const ClassType* classInstance) {
+        }
+
+        virtual void remove(const ClassType* classInstance) {
+        }
+
         std::string tableName() const {
             return mTableName;
         }

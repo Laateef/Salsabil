@@ -24,12 +24,14 @@
 
 namespace Salsabil {
 
-    enum class CascadeType {
-        None,
-        Persist,
-        Update,
-        Remove
+    enum CascadeType {
+        None = 0x0,
+        Persist = 0x1,
+        Update = 0x2,
+        Remove = 0x4,
+        All = 0xF
     };
+
 }
 
 #endif // SALSABIL_DECLARATIONS_HPP

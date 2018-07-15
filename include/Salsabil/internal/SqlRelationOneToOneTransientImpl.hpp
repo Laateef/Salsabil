@@ -39,18 +39,26 @@ namespace Salsabil {
         using FieldPureType = typename Utility::Traits<FieldType>::UnqualifiedType;
         std::map<std::string, std::string> mColumnNameMap;
         std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
-        CascadeType mCascadeType;
+        int mCascade;
 
     public:
 
-        SqlRelationOneToOneTransientImpl(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper, CascadeType cascade) :
+        SqlRelationOneToOneTransientImpl(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper, int cascade) :
         SqlRelation<ClassType>(targetTableName, type),
         mColumnNameMap(columnNameMap),
         mAccessWrapper(accessWrapper),
-        mCascadeType(cascade) {
+        mCascade(cascade) {
         }
 
-        virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
+        virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) override {
+            fetch(driver, classInstance);
+        }
+
+        virtual void writeToDriver(SqlDriver*, const ClassType* classInstance) override {
+            persist(classInstance);
+        }
+
+        virtual void fetch(SqlDriver* driver, ClassType* classInstance) override {
             std::map<std::string, std::string> columnNameValueMap;
             auto primaryFieldList = SqlEntityConfigurer<ClassType>::primaryFieldList();
             for (std::size_t idx = 0; idx < primaryFieldList.size(); ++idx) {
@@ -72,23 +80,30 @@ namespace Salsabil {
             for (const auto& f : SqlEntityConfigurer<FieldPureType>::fieldList())
                 f->readFromDriver(pfieldInstance, f->column());
             for (const auto& r : SqlEntityConfigurer<FieldPureType>::transientFieldList())
-                r->readFromDriver(driver, pfieldInstance);
+                r->fetch(driver, pfieldInstance);
 
             mAccessWrapper->set(classInstance, &fieldInstance);
         }
 
-        virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
+        virtual void persist(const ClassType* classInstance) override {
+            if (mCascade & CascadeType::Persist)
+                SqlRepository<FieldPureType>::persist(pointerizedFieldInstance(classInstance));
+        }
+
+        virtual void update(const ClassType* classInstance) override {
+            if (mCascade & CascadeType::Update)
+                SqlRepository<FieldPureType>::update(pointerizedFieldInstance(classInstance));
+        }
+
+        virtual void remove(const ClassType* classInstance) override {
+            if (mCascade & CascadeType::Remove)
+                SqlRepository<FieldPureType>::remove(pointerizedFieldInstance(classInstance));
+        }
+
+        FieldPureType* pointerizedFieldInstance(const ClassType* classInstance) {
             FieldType fieldInstance;
             mAccessWrapper->get(classInstance, &fieldInstance);
-            FieldPureType* pFieldInstance = Utility::pointerizeInstance(&fieldInstance);
-
-            if (mCascadeType == CascadeType::Persist) {
-                SqlRepository<FieldPureType>::persist(pFieldInstance);
-            } else if (mCascadeType == CascadeType::Update) {
-                SqlRepository<FieldPureType>::update(pFieldInstance);
-            } else if (mCascadeType == CascadeType::Remove) {
-                SqlRepository<FieldPureType>::remove(pFieldInstance);
-            }
+            return Utility::pointerizeInstance(&fieldInstance);
         }
     };
 }

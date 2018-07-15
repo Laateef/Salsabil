@@ -263,5 +263,47 @@ TEST_CASE("SqlOneToOneRelationMethodImpl") {
             drv.execute("select * from session");
             REQUIRE(drv.nextRow() == false);
         }
+
+        SUBCASE(" persist, update and remove object ") {
+            userConfig.setOneToOneTransientField("session", "id", UserMock::getSession, UserMock::setSession, CascadeType::Persist | CascadeType::Update | CascadeType::Remove);
+            std::cout << "persist, update and remove object" << std::endl;
+            SqlRepository<UserMock>::persist(&user);
+
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow() == true);
+            CHECK(drv.getInt(0) == 1);
+            CHECK(drv.getStdString(1) == "Ali");
+            REQUIRE(drv.nextRow() == false);
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow() == true);
+            CHECK(drv.getInt(0) == 1);
+            CHECK(drv.getStdString(1) == "2018-07-09T08:09:44");
+            REQUIRE(drv.nextRow() == false);
+
+            user.setName("Mary");
+            user.getSession()->setTime("2018-07-14T20:36:26");
+            SqlRepository<UserMock>::update(&user);
+
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow() == true);
+            CHECK(drv.getInt(0) == 1);
+            CHECK(drv.getStdString(1) == "Mary");
+            REQUIRE(drv.nextRow() == false);
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow() == true);
+            CHECK(drv.getInt(0) == 1);
+            CHECK(drv.getStdString(1) == "2018-07-14T20:36:26");
+            REQUIRE(drv.nextRow() == false);
+
+            SqlRepository<UserMock>::remove(&user);
+
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow() == false);
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow() == false);
+        }
     }
 }

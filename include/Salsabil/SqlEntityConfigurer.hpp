@@ -156,14 +156,14 @@ namespace Salsabil {
         }
 
         template<typename GetMethodType, typename SetMethodType>
-        static void setOneToOneTransientField(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, GetMethodType getter, SetMethodType setter, CascadeType cascade = CascadeType::None) {
+        static void setOneToOneTransientField(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, GetMethodType getter, SetMethodType setter, int cascade = CascadeType::None) {
             SALSABIL_LOG_DEBUG("Setting one-to-one transient relational field (methods): " + targetTableName);
             using FieldType = typename Utility::Traits<GetMethodType>::ReturnType;
             mTransientFieldList.push_back(new SqlRelationOneToOneTransientImpl<ClassType, FieldType>(targetTableName, columnNameMap, RelationType::OneToOne, new AccessWrapperMethodImpl<ClassType, FieldType, GetMethodType, SetMethodType>(getter, setter), cascade));
         }
 
         template<typename GetMethodType, typename SetMethodType>
-        static void setOneToOneTransientField(const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter, CascadeType cascade = CascadeType::None) {
+        static void setOneToOneTransientField(const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter, int cascade = CascadeType::None) {
             setOneToOneTransientField(targetTableName,{
                 {primaryFieldList().at(0)->name(), targetColumnName}
             }, getter, setter, cascade);
