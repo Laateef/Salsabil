@@ -156,5 +156,21 @@ TEST_CASE("SqlRelationOneToManyAttributeImpl") {
             CHECK(drv.getInt(2) == user.id);
             REQUIRE_FALSE(drv.nextRow());
         }
+
+        SUBCASE(" remove entity from database ") {
+            drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
+            drv.execute("INSERT INTO session(id, time, user_id) values(1, '2017-01-23T08:54:22', 1)");
+            drv.execute("INSERT INTO session(id, time, user_id) values(2, '2018-07-23T10:19:02', 1)");
+
+            userConfig.setOneToManyField(&UserMock::sessions, "session", "user_id", CascadeType::Remove);
+
+            SqlRepository<UserMock>::remove(&user);
+
+            drv.execute("select * from user");
+            REQUIRE_FALSE(drv.nextRow());
+
+            drv.execute("select * from session");
+            REQUIRE_FALSE(drv.nextRow());
+        }
     }
 }
