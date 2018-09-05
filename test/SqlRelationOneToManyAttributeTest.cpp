@@ -127,5 +127,34 @@ TEST_CASE("SqlRelationOneToManyAttributeImpl") {
             CHECK(drv.getInt(2) == user.id);
             REQUIRE_FALSE(drv.nextRow());
         }
+
+        SUBCASE(" update entity in database ") {
+            drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
+            drv.execute("INSERT INTO session(id, time, user_id) values(1, '2017-01-23T08:54:22', 1)");
+            drv.execute("INSERT INTO session(id, time, user_id) values(2, '2018-07-23T10:19:02', 1)");
+
+            userConfig.setOneToManyField(&UserMock::sessions, "session", "user_id", CascadeType::Update);
+
+            user.sessions.at(0)->time = "2018-09-05T21:44:31";
+
+            SqlRepository<UserMock>::update(&user);
+
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == user.id);
+            CHECK(drv.getStdString(1) == user.name);
+            REQUIRE_FALSE(drv.nextRow());
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == session1.id);
+            CHECK(drv.getStdString(1) == session1.time);
+            CHECK(drv.getInt(2) == user.id);
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == session2.id);
+            CHECK(drv.getStdString(1) == session2.time);
+            CHECK(drv.getInt(2) == user.id);
+            REQUIRE_FALSE(drv.nextRow());
+        }
     }
 }
