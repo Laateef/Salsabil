@@ -43,14 +43,14 @@ TEST_CASE(" SqlRelation with composite primary key ") {
         SqlEntityConfigurer<UserMock> userConfig;
         userConfig.setDriver(&drv);
         userConfig.setTableName("user");
-        userConfig.setPrimaryField("id", UserMock::getId, UserMock::setId);
-        userConfig.setPrimaryField("name", UserMock::getName, UserMock::setName);
+        userConfig.setPrimaryField("id", &UserMock::getId, &UserMock::setId);
+        userConfig.setPrimaryField("name", &UserMock::getName, &UserMock::setName);
 
         SqlEntityConfigurer<SessionMock> sessionConfig;
         sessionConfig.setDriver(&drv);
         sessionConfig.setTableName("session");
-        sessionConfig.setPrimaryField("id", SessionMock::getId, SessionMock::setId);
-        sessionConfig.setField("time", SessionMock::getTime, SessionMock::setTime);
+        sessionConfig.setPrimaryField("id", &SessionMock::getId, &SessionMock::setId);
+        sessionConfig.setField("time", &SessionMock::getTime, &SessionMock::setTime);
 
         SUBCASE(" fetching entities ") {
             drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
@@ -69,7 +69,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 sessionConfig.setOneToOnePersistentField("user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, SessionMock::getUser, SessionMock::setUser);
+                }, &SessionMock::getUser, &SessionMock::setUser);
 
                 UserMock* user = SqlRepository<UserMock>::fetch({1, "Ali"});
                 REQUIRE(user != nullptr);
@@ -83,7 +83,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 sessionConfig.setOneToOnePersistentField("user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, SessionMock::getUser, SessionMock::setUser);
+                }, &SessionMock::getUser, &SessionMock::setUser);
 
                 SessionMock* session1 = SqlRepository<SessionMock>::fetch(1);
 
@@ -114,7 +114,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 userConfig.setOneToOneTransientField("session",{
                     {"id", "user_id"},
                     {"name", "user_name"}
-                }, UserMock::getSession, UserMock::setSession);
+                }, &UserMock::getSession, &UserMock::setSession);
 
                 UserMock* user = SqlRepository<UserMock>::fetch({1, "Sami"});
 
@@ -130,10 +130,10 @@ TEST_CASE(" SqlRelation with composite primary key ") {
             }
 
             SUBCASE(" one-to-many relation ") {
-                userConfig.setOneToManyField("session",{
+                userConfig.setOneToManyField(&UserMock::getSessions, &UserMock::setSessions, "session",{
                     {"name", "user_name"},
                     {"id", "user_id"}
-                }, UserMock::getSessions, UserMock::setSessions);
+                });
 
                 UserMock* user = SqlRepository<UserMock>::fetch({1, "Ali"});
 
@@ -155,7 +155,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 mapping.setLeftMapping("user_name", "name");
                 mapping.setRightMapping("session_id", "id");
 
-                userConfig.setManyToManyField(mapping, UserMock::getSessions, UserMock::setSessions);
+                userConfig.setManyToManyField(mapping, &UserMock::getSessions, &UserMock::setSessions);
 
                 UserMock* user = SqlRepository<UserMock>::fetch({1, "Ali"});
 
@@ -185,8 +185,9 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Ali");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete user;
             }
@@ -195,7 +196,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 sessionConfig.setOneToOnePersistentField("user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, SessionMock::getUser, SessionMock::setUser);
+                }, &SessionMock::getUser, &SessionMock::setUser);
 
                 UserMock* user = new UserMock;
                 user->setId(1);
@@ -211,13 +212,15 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 5);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
+                CHECK(drv.getInt(0) == session->getId());
+                CHECK(drv.getStdString(1) == session->getTime());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete user;
                 delete session;
@@ -227,7 +230,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 sessionConfig.setManyToOneField("user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, SessionMock::getUser, SessionMock::setUser);
+                }, &SessionMock::getUser, &SessionMock::setUser);
 
                 UserMock* user = new UserMock;
                 user->setId(1);
@@ -250,16 +253,18 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 5);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
+                CHECK(drv.getInt(0) == session1->getId());
+                CHECK(drv.getStdString(1) == session1->getTime());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 6);
-                CHECK(drv.getStdString(1) == "2018-07-02T12:47:13");
+                CHECK(drv.getInt(0) == session2->getId());
+                CHECK(drv.getStdString(1) == session2->getTime());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete user;
                 delete session1;
@@ -267,10 +272,10 @@ TEST_CASE(" SqlRelation with composite primary key ") {
             }
 
             SUBCASE(" one-to-many relation ") {
-                userConfig.setOneToManyField("session",{
+                userConfig.setOneToManyField(&UserMock::getSessions, &UserMock::setSessions, "session",{
                     {"name", "user_name"},
                     {"id", "user_id"}
-                }, UserMock::getSessions, UserMock::setSessions);
+                });
 
                 SessionMock* session1 = new SessionMock;
                 session1->setId(7);
@@ -291,16 +296,18 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 7);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
+                CHECK(drv.getInt(0) == session1->getId());
+                CHECK(drv.getStdString(1) == session1->getTime());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 8);
-                CHECK(drv.getStdString(1) == "2018-03-11T17:46:52");
+                CHECK(drv.getInt(0) == session2->getId());
+                CHECK(drv.getStdString(1) == session2->getTime());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete session1;
                 delete session2;
@@ -313,7 +320,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 mapping.setLeftMapping("user_name", "name");
                 mapping.setRightMapping("session_id", "id");
 
-                userConfig.setManyToManyField(mapping, UserMock::getSessions, UserMock::setSessions);
+                userConfig.setManyToManyField(mapping, &UserMock::getSessions, &UserMock::setSessions);
 
                 SessionMock* session1 = new SessionMock;
                 session1->setId(7);
@@ -334,27 +341,29 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 7);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
+                CHECK(drv.getInt(0) == session1->getId());
+                CHECK(drv.getStdString(1) == session1->getTime());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 8);
-                CHECK(drv.getStdString(1) == "2018-03-11T17:46:52");
+                CHECK(drv.getInt(0) == session2->getId());
+                CHECK(drv.getStdString(1) == session2->getTime());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from user_session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
-                CHECK(drv.getInt(2) == 7);
-
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                CHECK(drv.getInt(2) == session1->getId());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
-                CHECK(drv.getInt(2) == 8);
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                CHECK(drv.getInt(2) == session2->getId());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete session1;
                 delete session2;
@@ -372,14 +381,14 @@ TEST_CASE(" SqlRelation with composite primary key ") {
         SqlEntityConfigurer<UserMock> userConfig;
         userConfig.setDriver(&drv);
         userConfig.setTableName("user");
-        userConfig.setPrimaryField("name", UserMock::getName, UserMock::setName);
-        userConfig.setPrimaryField("id", UserMock::getId, UserMock::setId);
+        userConfig.setPrimaryField("name", &UserMock::getName, &UserMock::setName);
+        userConfig.setPrimaryField("id", &UserMock::getId, &UserMock::setId);
 
         SqlEntityConfigurer<SessionMock> sessionConfig;
         sessionConfig.setDriver(&drv);
         sessionConfig.setTableName("session");
-        sessionConfig.setPrimaryField("id", SessionMock::getId, SessionMock::setId);
-        sessionConfig.setField("time", SessionMock::getTime, SessionMock::setTime);
+        sessionConfig.setPrimaryField("id", &SessionMock::getId, &SessionMock::setId);
+        sessionConfig.setField("time", &SessionMock::getTime, &SessionMock::setTime);
 
         SUBCASE(" fetching entities ") {
             drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
@@ -398,7 +407,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 sessionConfig.setOneToOnePersistentField("user",{
                     {"user_name", "name"},
                     {"user_id", "id"}
-                }, SessionMock::getUser, SessionMock::setUser);
+                }, &SessionMock::getUser, &SessionMock::setUser);
 
                 SessionMock* session = SqlRepository<SessionMock>::fetch(1);
 
@@ -417,7 +426,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 userConfig.setOneToOneTransientField("session",{
                     {"id", "user_id"},
                     {"name", "user_name"}
-                }, UserMock::getSession, UserMock::setSession);
+                }, &UserMock::getSession, &UserMock::setSession);
 
                 UserMock* user = SqlRepository<UserMock>::fetch({"Sami", 1});
 
@@ -433,10 +442,10 @@ TEST_CASE(" SqlRelation with composite primary key ") {
             }
 
             SUBCASE(" one-to-many relation ") {
-                userConfig.setOneToManyField("session",{
+                userConfig.setOneToManyField(&UserMock::getSessions, &UserMock::setSessions, "session",{
                     {"id", "user_id"},
                     {"name", "user_name"}
-                }, UserMock::getSessions, UserMock::setSessions);
+                });
 
                 UserMock* user = SqlRepository<UserMock>::fetch({"Ali", 1});
 
@@ -458,7 +467,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 mapping.setLeftMapping("user_name", "name");
                 mapping.setRightMapping("session_id", "id");
 
-                userConfig.setManyToManyField(mapping, UserMock::getSessions, UserMock::setSessions);
+                userConfig.setManyToManyField(mapping, &UserMock::getSessions, &UserMock::setSessions);
 
                 UserMock* user = SqlRepository<UserMock>::fetch({"Ali", 1});
 
@@ -488,8 +497,9 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Ali");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete user;
             }
@@ -498,7 +508,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 sessionConfig.setOneToOnePersistentField("user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, SessionMock::getUser, SessionMock::setUser);
+                }, &SessionMock::getUser, &SessionMock::setUser);
 
                 UserMock* user = new UserMock;
                 user->setId(1);
@@ -514,15 +524,17 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 5);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-                CHECK(drv.getStdString(2) == "Sarah");
-                CHECK(drv.getInt(3) == 1);
+                CHECK(drv.getInt(0) == session->getId());
+                CHECK(drv.getStdString(1) == session->getTime());
+                CHECK(drv.getStdString(2) == user->getName());
+                CHECK(drv.getInt(3) == user->getId());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete user;
                 delete session;
@@ -532,7 +544,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 sessionConfig.setManyToOneField("user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, SessionMock::getUser, SessionMock::setUser);
+                }, &SessionMock::getUser, &SessionMock::setUser);
 
                 UserMock* user = new UserMock;
                 user->setId(1);
@@ -555,20 +567,22 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 5);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-                CHECK(drv.getStdString(2) == "Sarah");
-                CHECK(drv.getInt(3) == 1);
+                CHECK(drv.getInt(0) == session1->getId());
+                CHECK(drv.getStdString(1) == session1->getTime());
+                CHECK(drv.getStdString(2) == user->getName());
+                CHECK(drv.getInt(3) == user->getId());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 6);
-                CHECK(drv.getStdString(1) == "2018-07-02T12:47:13");
-                CHECK(drv.getStdString(2) == "Sarah");
-                CHECK(drv.getInt(3) == 1);
+                CHECK(drv.getInt(0) == session2->getId());
+                CHECK(drv.getStdString(1) == session2->getTime());
+                CHECK(drv.getStdString(2) == user->getName());
+                CHECK(drv.getInt(3) == user->getId());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete user;
                 delete session1;
@@ -576,44 +590,40 @@ TEST_CASE(" SqlRelation with composite primary key ") {
             }
 
             SUBCASE(" one-to-many relation ") {
-                userConfig.setOneToManyField("session",{
+                userConfig.setOneToManyField(&UserMock::getSessions, &UserMock::setSessions, "session",{
                     {"name", "user_name"},
                     {"id", "user_id"}
-                }, UserMock::getSessions, UserMock::setSessions);
+                }, CascadeType::Persist);
 
-                SessionMock* session1 = new SessionMock;
-                session1->setId(7);
-                session1->setTime("2018-01-23T08:54:22");
+                SessionMock session1;
+                session1.setId(7);
+                session1.setTime("2018-01-23T08:54:22");
 
-                SessionMock* session2 = new SessionMock;
-                session2->setId(8);
-                session2->setTime("2018-03-11T17:46:52");
+                SessionMock session2;
+                session2.setId(8);
+                session2.setTime("2018-03-11T17:46:52");
 
-                UserMock* user = new UserMock;
-                user->setId(1);
-                user->setName("Sarah");
-                user->setSessions({session1, session2});
+                UserMock user;
+                user.setId(1);
+                user.setName("Sarah");
+                user.setSessions({&session1, &session2});
 
-                SqlRepository<SessionMock>::persist(session1);
-                SqlRepository<SessionMock>::persist(session2);
-                SqlRepository<UserMock>::persist(user);
+                SqlRepository<UserMock>::persist(&user);
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user.getId());
+                CHECK(drv.getStdString(1) == user.getName());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 7);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
+                CHECK(drv.getInt(0) == session1.getId());
+                CHECK(drv.getStdString(1) == session1.getTime());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 8);
-                CHECK(drv.getStdString(1) == "2018-03-11T17:46:52");
-
-                delete session1;
-                delete session2;
-                delete user;
+                CHECK(drv.getInt(0) == session2.getId());
+                CHECK(drv.getStdString(1) == session2.getTime());
+                REQUIRE_FALSE(drv.nextRow());
             }
 
             SUBCASE(" many-to-many relation ") {
@@ -622,7 +632,7 @@ TEST_CASE(" SqlRelation with composite primary key ") {
                 mapping.setLeftMapping("user_name", "name");
                 mapping.setRightMapping("session_id", "id");
 
-                userConfig.setManyToManyField(mapping, UserMock::getSessions, UserMock::setSessions);
+                userConfig.setManyToManyField(mapping, &UserMock::getSessions, &UserMock::setSessions);
 
                 SessionMock* session1 = new SessionMock;
                 session1->setId(7);
@@ -643,29 +653,29 @@ TEST_CASE(" SqlRelation with composite primary key ") {
 
                 drv.execute("select * from user");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 1);
-                CHECK(drv.getStdString(1) == "Sarah");
+                CHECK(drv.getInt(0) == user->getId());
+                CHECK(drv.getStdString(1) == user->getName());
                 REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 7);
-                CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
+                CHECK(drv.getInt(0) == session1->getId());
+                CHECK(drv.getStdString(1) == session1->getTime());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 8);
-                CHECK(drv.getStdString(1) == "2018-03-11T17:46:52");
+                CHECK(drv.getInt(0) == session2->getId());
+                CHECK(drv.getStdString(1) == session2->getTime());
+                REQUIRE_FALSE(drv.nextRow());
 
                 drv.execute("select * from user_session");
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 7);
-                CHECK(drv.getStdString(1) == "Sarah");
-                CHECK(drv.getInt(2) == 1);
-
-
+                CHECK(drv.getInt(0) == session1->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                CHECK(drv.getInt(2) == user->getId());
                 REQUIRE(drv.nextRow());
-                CHECK(drv.getInt(0) == 8);
-                CHECK(drv.getStdString(1) == "Sarah");
-                CHECK(drv.getInt(2) == 1);
+                CHECK(drv.getInt(0) == session2->getId());
+                CHECK(drv.getStdString(1) == user->getName());
+                CHECK(drv.getInt(2) == user->getId());
+                REQUIRE_FALSE(drv.nextRow());
 
                 delete session1;
                 delete session2;

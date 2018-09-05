@@ -38,16 +38,59 @@ namespace Salsabil {
         using FieldItemPureType = typename Utility::Traits<FieldItemType>::UnqualifiedType;
         std::map<std::string, std::string> mColumnNameMap;
         std::unique_ptr<AccessWrapper<ClassType, FieldType>> mAccessWrapper;
+        int mCascade;
 
     public:
 
-        SqlRelationOneToManyImpl(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper) :
+        SqlRelationOneToManyImpl(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, RelationType type, AccessWrapper<ClassType, FieldType>* accessWrapper, int cascade) :
         SqlRelation<ClassType>(targetTableName, type),
         mColumnNameMap(columnNameMap),
-        mAccessWrapper(accessWrapper) {
+        mAccessWrapper(accessWrapper),
+        mCascade(cascade) {
         }
 
-        virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) {
+        virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) override {
+            if (mCascade & CascadeType::Persist) {
+
+                std::map<std::string, std::string> columnNameValueMap;
+                auto primaryFieldList = SqlEntityConfigurer<ClassType>::primaryFieldList();
+                for (std::size_t idx = 0; idx < primaryFieldList.size(); ++idx) {
+                    columnNameValueMap.insert({mColumnNameMap.at(primaryFieldList.at(idx)->name()), primaryFieldList.at(idx)->fetchFromInstance(classInstance).toString()});
+                }
+
+                FieldType fieldInstanceContainer;
+                mAccessWrapper->get(classInstance, &fieldInstanceContainer);
+
+                for (auto fieldInstanceItem : fieldInstanceContainer) {
+                    std::map<std::string, std::string> whereConditionMap(columnNameValueMap);
+
+                    FieldItemPureType* pFieldInstanceItem = Utility::pointerizeInstance(&fieldInstanceItem);
+                    for (const auto field : SqlEntityConfigurer<FieldItemPureType>::primaryFieldList()) {
+                        //                    whereConditionMap.insert({field->name(), field->fetchFromInstance(pFieldInstanceItem).toString()});
+                        whereConditionMap.insert({field->name(), field->fetchFromInstance(pFieldInstanceItem).toString()});
+                    }
+                    for (const auto field : SqlEntityConfigurer<FieldItemPureType>::fieldList())
+                        whereConditionMap.insert({field->name(), field->fetchFromInstance(pFieldInstanceItem).toString()});
+
+                    //                std::string sqlStatement = SqlGenerator::update(SqlRelation<ClassType>::tableName(), columnNameValueMap, whereConditionMap);
+                    //                    for (auto p : columnNameValueMap)
+                    //                        std::cout << "[" << p.first << ", " << p.second << "]" << "\t";
+                    std::string sqlStatement = SqlGenerator::insert(SqlRelation<ClassType>::tableName(), whereConditionMap);
+                    SALSABIL_LOG_INFO(sqlStatement);
+                    driver->execute(sqlStatement);
+                }
+            }
+        }
+
+        virtual void readFromDriver(SqlDriver* driver, ClassType* classInstance) override {
+            fetch(driver, classInstance);
+        }
+
+        //        virtual void writeToDriver(SqlDriver*, const ClassType* classInstance) override {
+        //            persist(classInstance);
+        //        }
+
+        virtual void fetch(SqlDriver* driver, ClassType* classInstance) override {
             std::map<std::string, std::string> columnNameValueMap;
             auto primaryFieldList = SqlEntityConfigurer<ClassType>::primaryFieldList();
             for (std::size_t idx = 0; idx < primaryFieldList.size(); ++idx) {
@@ -67,6 +110,8 @@ namespace Salsabil {
                     f->readFromDriver(pFieldInstance, f->column());
                 for (const auto& f : SqlEntityConfigurer<FieldItemPureType>::fieldList())
                     f->readFromDriver(pFieldInstance, f->column());
+                for (const auto& r : SqlEntityConfigurer<FieldItemPureType>::transientFieldList())
+                    r->fetch(driver, pFieldInstance);
 
                 fieldInstanceContainer.push_back(pFieldInstance);
             }
@@ -74,29 +119,44 @@ namespace Salsabil {
             mAccessWrapper->set(classInstance, &fieldInstanceContainer);
         }
 
-        virtual void writeToDriver(SqlDriver* driver, const ClassType* classInstance) {
+        virtual void persist(const ClassType* classInstance) override {
+            if (mCascade & CascadeType::Persist) {
+                FieldType fieldInstanceContainer;
+                mAccessWrapper->get(classInstance, &fieldInstanceContainer);
 
-            std::map<std::string, std::string> columnNameValueMap;
-            auto primaryFieldList = SqlEntityConfigurer<ClassType>::primaryFieldList();
-            for (std::size_t idx = 0; idx < primaryFieldList.size(); ++idx) {
-                columnNameValueMap.insert({mColumnNameMap.at(primaryFieldList.at(idx)->name()), primaryFieldList.at(idx)->fetchFromInstance(classInstance).toString()});
-            }
-
-            FieldType fieldInstanceContainer;
-            mAccessWrapper->get(classInstance, &fieldInstanceContainer);
-
-            for (auto fieldInstanceItem : fieldInstanceContainer) {
-                std::map<std::string, std::string> whereConditionMap;
-
-                FieldItemPureType* pFieldInstanceItem = Utility::pointerizeInstance(&fieldInstanceItem);
-                for (const auto& field : SqlEntityConfigurer<FieldItemPureType>::primaryFieldList()) {
-                    whereConditionMap.insert({field->name(), field->fetchFromInstance(pFieldInstanceItem).toString()});
+                for (auto fieldInstanceItem : fieldInstanceContainer) {
+                    SqlRepository<FieldItemPureType>::persist(Utility::pointerizeInstance(&fieldInstanceItem));
                 }
-                std::string sqlStatement = SqlGenerator::update(SqlRelation<ClassType>::tableName(), columnNameValueMap, whereConditionMap);
-                SALSABIL_LOG_INFO(sqlStatement);
-                driver->execute(sqlStatement);
             }
         }
+
+        virtual void update(const ClassType* classInstance) override {
+            if (mCascade & CascadeType::Update) {
+                FieldType fieldInstanceContainer;
+                mAccessWrapper->get(classInstance, &fieldInstanceContainer);
+
+                for (auto fieldInstanceItem : fieldInstanceContainer) {
+                    SqlRepository<FieldItemPureType>::update(Utility::pointerizeInstance(&fieldInstanceItem));
+                }
+            }
+        }
+
+        virtual void remove(const ClassType* classInstance) override {
+            if (mCascade & CascadeType::Remove) {
+                FieldType fieldInstanceContainer;
+                mAccessWrapper->get(classInstance, &fieldInstanceContainer);
+
+                for (auto fieldInstanceItem : fieldInstanceContainer) {
+                    SqlRepository<FieldItemPureType>::remove(Utility::pointerizeInstance(&fieldInstanceItem));
+                }
+            }
+        }
+
+        //        FieldItemPureType* pointerizedFieldInstance(const ClassType* classInstance) {
+        //            FieldType fieldInstance;
+        //            mAccessWrapper->get(classInstance, &fieldInstance);
+        //            return Utility::pointerizeInstance(&fieldInstance);
+        //        }
     };
 }
 #endif // SALSABIL_SQLRELATIONONETOMANYIMPL_HPP

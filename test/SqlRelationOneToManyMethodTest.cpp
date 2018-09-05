@@ -40,36 +40,37 @@ TEST_CASE("SqlRelationOneToManyMethodImpl") {
     SqlEntityConfigurer<SessionMock> sessionConfig;
     sessionConfig.setDriver(&drv);
     sessionConfig.setTableName("session");
-    sessionConfig.setPrimaryField("id", SessionMock::getId, SessionMock::setId);
-    sessionConfig.setField("time", SessionMock::getTime, SessionMock::setTime);
+    sessionConfig.setPrimaryField("id", &SessionMock::getId, &SessionMock::setId);
+    sessionConfig.setField("time", &SessionMock::getTime, &SessionMock::setTime);
 
     SqlEntityConfigurer<UserMock> userConfig;
     userConfig.setDriver(&drv);
     userConfig.setTableName("user");
-    userConfig.setPrimaryField("id", UserMock::getId, UserMock::setId);
-    userConfig.setField("name", UserMock::getName, UserMock::setName);
-    userConfig.setOneToManyField("session", "user_id", UserMock::getSessions, UserMock::setSessions);
+    userConfig.setPrimaryField("id", &UserMock::getId, &UserMock::setId);
+    userConfig.setField("name", &UserMock::getName, &UserMock::setName);
 
     SUBCASE("fetching entities") {
+        userConfig.setOneToManyField(&UserMock::getSessions, &UserMock::setSessions, "session", "user_id");
+
         drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
         drv.execute("INSERT INTO session(id, time, user_id) values(1, '2018-01-23T08:54:22', 1)");
         drv.execute("INSERT INTO session(id, time, user_id) values(2, '2018-01-27T01:48:44', 1)");
 
-        UserMock* obj = SqlRepository<UserMock>::fetch(1);
+        UserMock* user = SqlRepository<UserMock>::fetch(1);
 
-        REQUIRE(obj != nullptr);
-        CHECK(obj->getId() == 1);
-        CHECK(obj->getName() == "Ali");
-        REQUIRE(obj->getSessions().size() == 2);
-        CHECK(obj->getSessions().at(0)->getId() == 1);
-        CHECK(obj->getSessions().at(0)->getTime() == "2018-01-23T08:54:22");
-        CHECK(obj->getSessions().at(1)->getId() == 2);
-        CHECK(obj->getSessions().at(1)->getTime() == "2018-01-27T01:48:44");
+        REQUIRE(user != nullptr);
+        CHECK(user->getId() == 1);
+        CHECK(user->getName() == "Ali");
+        REQUIRE(user->getSessions().size() == 2);
+        CHECK(user->getSessions().at(0)->getId() == 1);
+        CHECK(user->getSessions().at(0)->getTime() == "2018-01-23T08:54:22");
+        CHECK(user->getSessions().at(1)->getId() == 2);
+        CHECK(user->getSessions().at(1)->getTime() == "2018-01-27T01:48:44");
 
-        for (auto obj : obj->getSessions())
-            delete obj;
+        for (auto session : user->getSessions())
+            delete session;
 
-        delete obj;
+        delete user;
     }
 
     SUBCASE("persisting entities") {
@@ -77,39 +78,54 @@ TEST_CASE("SqlRelationOneToManyMethodImpl") {
         user.setId(1);
         user.setName("Ali");
 
+        std::vector<SessionMock*> sessionList;
         SessionMock session1;
         session1.setId(1);
-        session1.setTime("2018-01-23T08:54:22");
-
+        session1.setTime("2018-07-09T08:09:44");
+        sessionList.push_back(&session1);
         SessionMock session2;
         session2.setId(2);
-        session2.setTime("2018-01-27T01:48:44");
+        session2.setTime("2018-07-23T10:19:02");
+        sessionList.push_back(&session2);
 
-        std::vector<SessionMock*> vec;
-        vec.push_back(&session1);
-        vec.push_back(&session2);
-        user.setSessions(vec);
+        user.setSessions(sessionList);
 
-        SqlRepository<SessionMock>::persist(&session1);
-        SqlRepository<SessionMock>::persist(&session2);
-        SqlRepository<UserMock>::persist(&user);
+        SUBCASE(" save entity into database without cascading ") {
+            userConfig.setOneToManyField(&UserMock::getSessions, &UserMock::setSessions, "session", "user_id", CascadeType::None);
 
-        drv.execute("select * from user");
-        REQUIRE(drv.nextRow() == true);
-        CHECK(drv.getInt(0) == 1);
-        CHECK(drv.getStdString(1) == "Ali");
-        REQUIRE(drv.nextRow() == false);
+            SqlRepository<UserMock>::persist(&user);
 
-        drv.execute("select * from session");
-        REQUIRE(drv.nextRow() == true);
-        CHECK(drv.getInt(0) == 1);
-        CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-        CHECK(drv.getInt(2) == 1);
-        REQUIRE(drv.nextRow() == true);
-        CHECK(drv.getInt(0) == 2);
-        CHECK(drv.getStdString(1) == "2018-01-27T01:48:44");
-        CHECK(drv.getInt(2) == 1);
-        REQUIRE(drv.nextRow() == false);
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == user.getId());
+            CHECK(drv.getStdString(1) == user.getName());
+            REQUIRE_FALSE(drv.nextRow());
 
+            drv.execute("select * from session");
+            REQUIRE_FALSE(drv.nextRow());
+        }
+
+        SUBCASE(" save entity into database with cascading ") {
+            userConfig.setOneToManyField(&UserMock::getSessions, &UserMock::setSessions, "session", "user_id", CascadeType::Persist);
+
+            SqlRepository<UserMock>::persist(&user);
+
+            drv.execute("select * from user");
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == user.getId());
+            CHECK(drv.getStdString(1) == user.getName());
+            REQUIRE_FALSE(drv.nextRow());
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == session1.getId());
+            CHECK(drv.getStdString(1) == session1.getTime());
+            CHECK(drv.getInt(2) == user.getId());
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == session2.getId());
+            CHECK(drv.getStdString(1) == session2.getTime());
+            CHECK(drv.getInt(2) == user.getId());
+            REQUIRE_FALSE(drv.nextRow());
+        }
     }
 }

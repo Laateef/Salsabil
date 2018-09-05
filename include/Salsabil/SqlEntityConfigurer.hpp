@@ -170,31 +170,31 @@ namespace Salsabil {
         }
 
         template<typename AttributeType>
-        static void setOneToManyField(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, AttributeType attribute) {
+        static void setOneToManyField(AttributeType attribute, const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, int cascade = CascadeType::None) {
             SALSABIL_LOG_DEBUG("Setting one-to-many relational field (attribute): " + targetTableName);
             using FieldType = typename Utility::Traits<AttributeType>::AttributeType;
-            mTransientFieldList.push_back(new SqlRelationOneToManyImpl<ClassType, FieldType>(targetTableName, columnNameMap, RelationType::OneToMany, new AccessWrapperAttributeImpl<ClassType, FieldType, AttributeType>(attribute)));
+            mTransientFieldList.push_back(new SqlRelationOneToManyImpl<ClassType, FieldType>(targetTableName, columnNameMap, RelationType::OneToMany, new AccessWrapperAttributeImpl<ClassType, FieldType, AttributeType>(attribute), cascade));
         }
 
         template<typename AttributeType>
-        static void setOneToManyField(const std::string& targetTableName, const std::string& targetColumnName, AttributeType attribute) {
-            setOneToManyField(targetTableName,{
+        static void setOneToManyField(AttributeType attribute, const std::string& targetTableName, const std::string& targetColumnName, int cascade = CascadeType::None) {
+            setOneToManyField(attribute, targetTableName,{
                 {primaryFieldList().at(0)->name(), targetColumnName}
-            }, attribute);
+            }, cascade);
         }
 
         template<typename GetMethodType, typename SetMethodType>
-        static void setOneToManyField(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, GetMethodType getter, SetMethodType setter) {
+        static void setOneToManyField(GetMethodType getter, SetMethodType setter, const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, int cascade = CascadeType::None) {
             SALSABIL_LOG_DEBUG("Setting one-to-many relational field (methods): " + targetTableName);
             using FieldType = typename Utility::Traits<GetMethodType>::ReturnType;
-            mTransientFieldList.push_back(new SqlRelationOneToManyImpl<ClassType, FieldType>(targetTableName, columnNameMap, RelationType::OneToMany, new AccessWrapperMethodImpl<ClassType, FieldType, GetMethodType, SetMethodType>(getter, setter)));
+            mTransientFieldList.push_back(new SqlRelationOneToManyImpl<ClassType, FieldType>(targetTableName, columnNameMap, RelationType::OneToMany, new AccessWrapperMethodImpl<ClassType, FieldType, GetMethodType, SetMethodType>(getter, setter), cascade));
         }
 
         template<typename GetMethodType, typename SetMethodType>
-        static void setOneToManyField(const std::string& targetTableName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
-            setOneToManyField(targetTableName,{
+        static void setOneToManyField(GetMethodType getter, SetMethodType setter, const std::string& targetTableName, const std::string& targetColumnName, int cascade = CascadeType::None) {
+            setOneToManyField(getter, setter, targetTableName,{
                 {primaryFieldList().at(0)->name(), targetColumnName}
-            }, getter, setter);
+            }, cascade);
         }
 
         template<typename AttributeType>
