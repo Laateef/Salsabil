@@ -47,7 +47,7 @@ TEST_CASE("SqlRelationManyToOneMethodImpl") {
     sessionConfig.setTableName("session");
     sessionConfig.setPrimaryField("id", SessionMock::getId, SessionMock::setId);
     sessionConfig.setField("time", SessionMock::getTime, SessionMock::setTime);
-    sessionConfig.setManyToOneField("user", "user_id", "id", SessionMock::getUser, SessionMock::setUser);
+    sessionConfig.setManyToOneField(SessionMock::getUser, SessionMock::setUser, "user", "user_id", "id");
 
     SUBCASE("fetching entities") {
         drv.execute("INSERT INTO user(id, name) values(1, 'Ali')");
@@ -94,24 +94,40 @@ TEST_CASE("SqlRelationManyToOneMethodImpl") {
         session2.setUser(&user);
 
         SqlRepository<UserMock>::persist(&user);
-        SqlRepository<SessionMock>::persist(&session1);
-        SqlRepository<SessionMock>::persist(&session2);
 
-        drv.execute("select * from user");
-        REQUIRE(drv.nextRow() == true);
-        CHECK(drv.getInt(0) == 1);
-        CHECK(drv.getStdString(1) == "Ali");
-        REQUIRE(drv.nextRow() == false);
+        SUBCASE(" save entity into database ") {
+            sessionConfig.setManyToOneField(&SessionMock::getUser, &SessionMock::setUser, "user", "user_id", "id");
 
-        drv.execute("select * from session");
-        REQUIRE(drv.nextRow() == true);
-        CHECK(drv.getInt(0) == 1);
-        CHECK(drv.getStdString(1) == "2018-01-23T08:54:22");
-        CHECK(drv.getInt(2) == 1);
-        REQUIRE(drv.nextRow() == true);
-        CHECK(drv.getInt(0) == 2);
-        CHECK(drv.getStdString(1) == "2018-02-18T01:48:44");
-        CHECK(drv.getInt(2) == 1);
-        REQUIRE(drv.nextRow() == false);
+            SqlRepository<SessionMock>::persist(&session1);
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == session1.getId());
+            CHECK(drv.getStdString(1) == session1.getTime());
+            CHECK(drv.getInt(2) == session1.getUser()->getId());
+            REQUIRE_FALSE(drv.nextRow());
+        }
+
+        SUBCASE(" update entity in database ") {
+            drv.execute("INSERT INTO user(id, name) values(2, 'Latif')");
+            drv.execute("INSERT INTO session(id, time, user_id) values(1, '2018-01-23T08:54:22', 1)");
+            drv.execute("INSERT INTO session(id, time, user_id) values(2, '2018-07-23T10:19:02', 2)");
+
+            sessionConfig.setManyToOneField(&SessionMock::getUser, &SessionMock::setUser, "user", "user_id", "id");
+
+            session2.setUser(&user);
+            SqlRepository<SessionMock>::update(&session2);
+
+            drv.execute("select * from session");
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == session1.getId());
+            CHECK(drv.getStdString(1) == session1.getTime());
+            CHECK(drv.getInt(2) == user.getId());
+            REQUIRE(drv.nextRow());
+            CHECK(drv.getInt(0) == session2.getId());
+            CHECK(drv.getStdString(1) == session2.getTime());
+            CHECK(drv.getInt(2) == user.getId());
+            REQUIRE_FALSE(drv.nextRow());
+        }
     }
 }

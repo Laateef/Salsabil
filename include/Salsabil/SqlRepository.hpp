@@ -153,6 +153,11 @@ namespace Salsabil {
             for (auto field : SqlEntityConfigurer<ClassType>::fieldList())
                 columnValueMap.insert({field->name(), field->fetchFromInstance(instance).toString()});
 
+            for (auto field : SqlEntityConfigurer<ClassType>::relationalPersistentFieldList()) {
+                auto m = field->parseFrom(instance);
+                columnValueMap.insert(m.begin(), m.end());
+            }
+
             const std::string& sqlStatement = SqlGenerator::update(SqlEntityConfigurer<ClassType>::tableName(), columnValueMap, primaryColumnValueMap);
 
             SALSABIL_LOG_INFO(sqlStatement);

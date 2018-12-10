@@ -198,7 +198,7 @@ namespace Salsabil {
         }
 
         template<typename AttributeType>
-        static void setManyToOneField(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, AttributeType attribute) {
+        static void setManyToOneField(AttributeType attribute, const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap) {
             SALSABIL_LOG_DEBUG("Setting many-to-one relational field (attribute): " + targetTableName);
             using FieldType = typename Utility::Traits<AttributeType>::AttributeType;
             mRelationalFieldList.push_back(new SqlRelationalFieldImpl<ClassType, FieldType>(columnNameMap, new AccessWrapperAttributeImpl<ClassType, FieldType, AttributeType>(attribute)));
@@ -206,14 +206,14 @@ namespace Salsabil {
         }
 
         template<typename AttributeType>
-        static void setManyToOneField(const std::string& targetTableName, const std::string& sourceColumnName, const std::string& targetColumnName, AttributeType attribute) {
-            setManyToOneField(targetTableName,{
+        static void setManyToOneField(AttributeType attribute, const std::string& targetTableName, const std::string& sourceColumnName, const std::string& targetColumnName) {
+            setManyToOneField(attribute, targetTableName,{
                 {sourceColumnName, targetColumnName}
-            }, attribute);
+            });
         }
 
         template<typename GetMethodType, typename SetMethodType>
-        static void setManyToOneField(const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap, GetMethodType getter, SetMethodType setter) {
+        static void setManyToOneField(GetMethodType getter, SetMethodType setter, const std::string& targetTableName, const std::map<std::string, std::string>& columnNameMap) {
             SALSABIL_LOG_DEBUG("Setting many-to-one relational field (methods): " + targetTableName);
             using FieldType = typename Utility::Traits<GetMethodType>::ReturnType;
 
@@ -222,10 +222,10 @@ namespace Salsabil {
         }
 
         template<typename GetMethodType, typename SetMethodType>
-        static void setManyToOneField(const std::string& targetTableName, const std::string& sourceColumnName, const std::string& targetColumnName, GetMethodType getter, SetMethodType setter) {
-            setManyToOneField(targetTableName,{
+        static void setManyToOneField(GetMethodType getter, SetMethodType setter, const std::string& targetTableName, const std::string& sourceColumnName, const std::string& targetColumnName) {
+            setManyToOneField(getter, setter, targetTableName,{
                 {sourceColumnName, targetColumnName}
-            }, getter, setter);
+            });
         }
 
         template<typename AttributeType>

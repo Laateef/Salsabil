@@ -227,10 +227,10 @@ TEST_CASE(" SqlRelation with composite primary key ") {
             }
 
             SUBCASE(" many-to-one relation ") {
-                sessionConfig.setManyToOneField("user",{
+                sessionConfig.setManyToOneField(&SessionMock::getUser, &SessionMock::setUser, "user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, &SessionMock::getUser, &SessionMock::setUser);
+                });
 
                 UserMock* user = new UserMock;
                 user->setId(1);
@@ -541,10 +541,10 @@ TEST_CASE(" SqlRelation with composite primary key ") {
             }
 
             SUBCASE(" many-to-one relation ") {
-                sessionConfig.setManyToOneField("user",{
+                sessionConfig.setManyToOneField(&SessionMock::getUser, &SessionMock::setUser, "user",{
                     {"user_id", "id"},
                     {"user_name", "name"}
-                }, &SessionMock::getUser, &SessionMock::setUser);
+                });
 
                 UserMock* user = new UserMock;
                 user->setId(1);
